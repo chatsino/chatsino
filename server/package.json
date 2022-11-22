@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn share && node ./esbuild",
+    "build:production": "node ./esbuild",
     "start": "NODE_ENV=development yarn build && node build/chatsino | npx pino-pretty",
     "recreate": "cd .. && ./recreate.sh && cd ./server",
     "share": "cd .. && ./share.sh && cd ./server",
