@@ -20,6 +20,9 @@ services:
     ports:
       - 6379:6379
 
+  client:
+    build: ./client
+
 volumes:
   database:
     driver: local

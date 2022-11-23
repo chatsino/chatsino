@@ -23,12 +23,9 @@
     "yup": "^0.32.11"
   },
   "scripts": {
-    "start": "yarn share && HTTPS=true SSL_CRT_FILE=../server/.ssh/localhost.pem SSL_KEY_FILE=../server/.ssh/localhost-key.pem react-scripts start",
-    "build": "yarn share && react-scripts build",
+    "start": "HTTPS=true SSL_CRT_FILE=../server/.ssh/localhost.pem SSL_KEY_FILE=../server/.ssh/localhost-key.pem react-scripts start",
+    "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "recreate": "cd .. && ./recreate.sh && cd ./server",
-    "share": "cd .. && ./share.sh && cd ./server",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public"
   },
