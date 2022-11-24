@@ -91,14 +91,14 @@ async function runAsServer() {
   logger.info("Initializing error handling.");
 
   process
-    .on("uncaughtException", (error) => {
-      logger.fatal({ error }, "Detected an uncaught exception.");
+    .on("uncaughtException", (error, origin) => {
+      logger.fatal({ error, origin }, "Detected an uncaught exception.");
       socketController.shutdown();
       httpsController.shutdown();
       process.exit(1);
     })
-    .on("unhandledRejection", (error) => {
-      logger.fatal({ error }, "Detected an unhandled rejection.");
+    .on("unhandledRejection", (error, origin) => {
+      logger.fatal({ error, origin }, "Detected an unhandled rejection.");
       socketController.shutdown();
       httpsController.shutdown();
       process.exit(1);
