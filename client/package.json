@@ -25,6 +25,7 @@
   "scripts": {
     "start": "HTTPS=true SSL_CRT_FILE=../server/.ssh/localhost.pem SSL_KEY_FILE=../server/.ssh/localhost-key.pem react-scripts start",
     "build": "react-scripts build",
+    "build:production": "yarn build && cp ./build /usr/share/nginx/html",
     "serve": "yarn build && npx serve -s build",
     "test": "react-scripts test",
     "storybook": "start-storybook -p 6006 -s public",
