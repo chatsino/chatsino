@@ -5,7 +5,7 @@ import {
   sourcedSocketMessageSchema,
   SourcedSocketMessage,
 } from "schemas";
-import { CLIENT_MESSAGE_CHANNEL, sendMessage } from "sockets";
+import { ROUTE_REQUEST_CHANNEL, sendMessage } from "sockets";
 
 export enum SocketMessages {
   SuccessResponse = "success-response",
@@ -13,7 +13,10 @@ export enum SocketMessages {
 }
 
 export function initializeSocketManager() {
-  subscriber.subscribe(CLIENT_MESSAGE_CHANNEL, routeSocketRequest);
+  // Incoming socket requests are routed to the feature-specific manager.
+  subscriber.subscribe(ROUTE_REQUEST_CHANNEL, routeSocketRequest);
+
+  // Outgoing socket responses sent once the route-specific manager has handled the request.
   subscriber.subscribe(
     SocketMessages.SuccessResponse,
     sendSuccessSocketMessage

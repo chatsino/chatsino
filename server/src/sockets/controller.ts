@@ -1,19 +1,18 @@
+import { validateTicket } from "auth";
 import * as config from "config";
 import { Request } from "express";
+import { createLogger } from "logger";
 import { publisher } from "persistence";
-import {
-  SafeClient,
-  socketMessageSchema,
-  sourcedSocketMessageSchema,
-} from "schemas";
+import { SafeClient, socketMessageSchema } from "schemas";
 import { Duplex } from "stream";
 import { RawData, WebSocket, WebSocketServer } from "ws";
-import { SOCKETS_LOGGER } from "./common";
+
+const SOCKETS_LOGGER = createLogger("Sockets");
 
 export const WEBSOCKET_SERVER = new WebSocketServer({ noServer: true });
 export const WEBSOCKET_TO_CLIENT_MAP = new Map<WebSocket, SafeClient>();
 export const WEBSOCKET_TO_ALIVE_MAP = new Map<WebSocket, boolean>();
-export const CLIENT_MESSAGE_CHANNEL = "client-message";
+export const ROUTE_REQUEST_CHANNEL = "route-request";
 
 WEBSOCKET_SERVER.on("connection", handleConnection);
 
@@ -36,6 +35,26 @@ export async function createWebSocket(
 }
 
 // #region Incoming
+export async function handleUpgrade(
+  request: Request,
+  socket: Duplex,
+  head: Buffer
+) {
+  SOCKETS_LOGGER.info("Validating ticket.");
+
+  const client = await validateTicket(request);
+
+  if (!client) {
+    SOCKETS_LOGGER.info(
+      "Unable to validate ticket: denying connection attempt."
+    );
+    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+    return socket.destroy();
+  }
+
+  return createWebSocket(request, socket, head, client);
+}
+
 export function handleConnection(websocket: WebSocket) {
   SOCKETS_LOGGER.info("New connection established.");
   websocket.on("message", handleMessage);
@@ -65,7 +84,7 @@ export async function handleMessage(websocket: WebSocket, data: RawData) {
   await socketMessageSchema.validate(message);
 
   publisher.publish(
-    CLIENT_MESSAGE_CHANNEL,
+    ROUTE_REQUEST_CHANNEL,
     JSON.stringify({
       ...message,
       from: client,

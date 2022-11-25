@@ -6,6 +6,7 @@ import { createLogger } from "logger";
 import * as managers from "managers";
 import { applyMiddleware } from "middleware";
 import { applyRoutes } from "routes";
+import { handleUpgrade } from "sockets";
 import waitPort from "wait-port";
 
 const SERVER_LOGGER = createLogger("Server");
@@ -34,6 +35,7 @@ const SERVER_LOGGER = createLogger("Server");
   );
 
   SERVER_LOGGER.info("Adding websocket capabilities.");
+  server.on("upgrade", handleUpgrade);
 
   SERVER_LOGGER.info("Initializing feature managers.");
   initializeFeatureManagers();
@@ -42,7 +44,7 @@ const SERVER_LOGGER = createLogger("Server");
   handleUncaughtExceptionsAndRejections();
 
   server.listen(config.PORT, () =>
-    SERVER_LOGGER.info(`Listening on port ${config.PORT}.`)
+    SERVER_LOGGER.info(`Server listening on port ${config.PORT}.`)
   );
 })();
 
@@ -74,6 +76,7 @@ async function waitForDatabaseAndCache() {
 }
 
 function initializeFeatureManagers() {
+  managers.initializeSocketManager();
   managers.initializeBlackjackManager();
   managers.initializeChatroomManager();
 }

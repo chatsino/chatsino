@@ -1,8 +1,8 @@
 import Chance from "chance";
+import { now } from "helpers";
 import * as commonConfig from "../common/config";
 import * as gameConfig from "./roulette.config";
 import type { RouletteBetKind } from "./roulette.config";
-import { now } from "../__src/helpers";
 
 const config = {
   ...commonConfig,

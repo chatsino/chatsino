@@ -54,7 +54,7 @@ export async function validateTicket(request: Request) {
     return null;
   }
 
-  clearCachedValue(encryptedTicket);
+  await clearCachedValue(encryptedTicket);
 
   return client;
 }
