@@ -1,3 +1,5 @@
+import { ClientPermissionLevel } from "../__src/repositories";
+
 export const PERMISSION_RANKING: ClientPermissionLevel[] = [
   "visitor",
   "user",

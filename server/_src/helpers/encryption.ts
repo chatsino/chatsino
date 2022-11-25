@@ -1,5 +1,5 @@
-import * as config from "config";
 import crypto from "crypto";
+import * as config from "../__src/config";
 
 const algorithm = "aes-256-cbc";
 const key = config.TICKET_SECRET;
