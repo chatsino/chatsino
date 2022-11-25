@@ -72,16 +72,6 @@ export async function handleMessage(websocket: WebSocket, data: RawData) {
     })
   );
 }
-
-export async function handleSourcedMessage(messageString: string) {
-  const message = await sourcedSocketMessageSchema.validate(
-    JSON.parse(messageString)
-  );
-
-  // Sanitize
-
-  publisher.publish(message.kind, JSON.stringify(message));
-}
 // #endregion
 
 // #region Outgoing

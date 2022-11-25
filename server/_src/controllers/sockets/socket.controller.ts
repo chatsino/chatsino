@@ -23,6 +23,7 @@ export class SocketController extends BaseSocketController {
       CLIENT_MESSAGE_CHANNEL,
       this.handleSubscribedClientMessage
     );
+
     subscriber.subscribe(
       SubcontrollerEvents.SuccessResponse,
       this.handleSendSuccessResponse

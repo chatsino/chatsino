@@ -2,7 +2,7 @@ import { validateTicket } from "auth";
 import { Request } from "express";
 import { Duplex } from "stream";
 import { SOCKETS_LOGGER } from "./common";
-import { createWebSocket } from "./manager";
+import { createWebSocket } from "./controller";
 
 export async function upgrade(request: Request, socket: Duplex, head: Buffer) {
   SOCKETS_LOGGER.info("A client is attempting to open a WebSocket connection.");
