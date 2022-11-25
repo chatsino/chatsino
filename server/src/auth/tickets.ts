@@ -7,6 +7,7 @@ import {
   setCachedValue,
 } from "persistence";
 import { decrypt, encrypt, now } from "helpers";
+import { Client } from "schemas";
 
 export interface Ticket {
   issuedAt: number;

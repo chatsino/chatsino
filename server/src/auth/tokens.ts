@@ -1,1 +1,3 @@
-export const tokens = "";
+export async function validateToken(tokenString: string) {
+  return false;
+}

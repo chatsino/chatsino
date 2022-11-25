@@ -1,8 +1,9 @@
 import * as config from "config";
 import express from "express";
 import { readFileSync } from "fs";
-import { createServer, Server } from "https";
+import { createServer } from "https";
 import { createLogger } from "logger";
+import * as managers from "managers";
 import { applyMiddleware } from "middleware";
 import { applyRoutes } from "routes";
 import waitPort from "wait-port";
@@ -33,6 +34,9 @@ const SERVER_LOGGER = createLogger("Server");
   );
 
   SERVER_LOGGER.info("Adding websocket capabilities.");
+
+  SERVER_LOGGER.info("Initializing feature managers.");
+  initializeFeatureManagers();
 
   SERVER_LOGGER.info("Handling uncaught exceptions and rejections.");
   handleUncaughtExceptionsAndRejections();
@@ -67,6 +71,11 @@ async function waitForDatabaseAndCache() {
       process.exit(1);
     }
   }
+}
+
+function initializeFeatureManagers() {
+  managers.initializeBlackjackManager();
+  managers.initializeChatroomManager();
 }
 
 function handleUncaughtExceptionsAndRejections() {

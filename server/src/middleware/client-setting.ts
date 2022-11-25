@@ -1,3 +1,4 @@
+import { validateToken } from "auth";
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest } from "./authenticated-route";
 
@@ -13,8 +14,7 @@ export async function clientSettingMiddleware(
     return next();
   }
 
-  const authenticationService = new AuthenticationService();
-  const tokenData = await authenticationService.validateToken(accessToken);
+  const tokenData = await validateToken(accessToken);
 
   if (!tokenData) {
     res.clearCookie("accessToken");

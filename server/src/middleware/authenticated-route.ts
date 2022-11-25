@@ -1,5 +1,6 @@
 import { NextFunction, Response, Request } from "express";
 import { errorResponse, meetsPermissionRequirement } from "helpers";
+import { AuthenticatedClient, ClientPermissionLevel } from "schemas";
 
 export interface AuthenticatedRequest extends Request {
   client: null | AuthenticatedClient;
