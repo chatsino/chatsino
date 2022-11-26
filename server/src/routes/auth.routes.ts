@@ -13,7 +13,7 @@ export function applyAuthRoutes(api: Router) {
   authRouter.get("/signout", signoutRoute);
   authRouter.get("/ticket", ticketRoute);
 
-  api.use("/auth", authRouter);
+  return api.use("/auth", authRouter);
 }
 
 export async function signupRoute(req: Request, res: Response) {

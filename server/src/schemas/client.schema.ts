@@ -1,6 +1,6 @@
 import * as config from "config";
 import * as yup from "yup";
-import type { ClientPermissionLevel } from "persistence";
+import type { ClientPermissionLevel } from "models";
 
 export const PASSWORD_MESSAGE = `A password must include a minimum of ${config.MINIMUM_PASSWORD_SIZE} characters.`;
 

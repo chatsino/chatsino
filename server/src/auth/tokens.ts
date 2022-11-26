@@ -1,7 +1,8 @@
 import * as config from "config";
 import { Response } from "express";
-import { SafeClient } from "models";
+import { getClientByIdentifier, SafeClient } from "models";
 import { ensureRedisInitialized, jwtRedis } from "persistence";
+import { clientSchema } from "schemas";
 
 export async function createToken(
   label: string,
@@ -50,4 +51,29 @@ export async function assignToken(res: Response, client: SafeClient) {
 export async function revokeToken(res: Response, client: SafeClient) {
   await destroyToken(`Tokens/Access/${client.username}`);
   return res.clearCookie("token");
+}
+
+export async function validateToken(tokenString: string) {
+  try {
+    if (!tokenString) {
+      return null;
+    }
+
+    await verifyToken(tokenString);
+
+    const client = await clientSchema.validate(await decodeToken(tokenString));
+    const actualClient = await getClientByIdentifier(client.id);
+
+    if (
+      !actualClient ||
+      client.username !== actualClient.username ||
+      client.permissionLevel !== actualClient.permissionLevel
+    ) {
+      return null;
+    }
+
+    return actualClient;
+  } catch {
+    return null;
+  }
 }

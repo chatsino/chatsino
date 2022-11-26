@@ -14,15 +14,15 @@ export async function clientSettingMiddleware(
     return next();
   }
 
-  const tokenData = await validateToken(accessToken);
+  const client = await validateToken(accessToken);
 
-  if (!tokenData) {
+  if (!client) {
     res.clearCookie("accessToken");
     req.client = null;
     return next();
   }
 
-  req.client = tokenData;
+  req.client = client;
 
   return next();
 }

@@ -1,12 +1,14 @@
+import bodyParser from "body-parser";
 import * as config from "config";
-import express, { Router } from "express";
+import cookieParser from "cookie-parser";
+import express, { Express, Router } from "express";
 import { readFileSync } from "fs";
 import { createServer } from "https";
 import { createLogger } from "logger";
 import * as managers from "managers";
-import { applyMiddleware } from "middleware";
+import { clientSettingMiddleware } from "middleware";
 import { initializeRedis } from "persistence";
-import { applyRoutes } from "routes";
+import { applyAdminRoutes, applyAuthRoutes } from "routes";
 import { handleUpgrade } from "sockets";
 import waitPort from "wait-port";
 
@@ -77,6 +79,23 @@ async function waitForDatabaseAndCache() {
       process.exit(1);
     }
   }
+}
+
+function applyMiddleware(app: Express) {
+  return app.use(
+    bodyParser.json(),
+    cookieParser(config.COOKIE_SECRET),
+    clientSettingMiddleware
+  );
+}
+
+function applyRoutes(app: Express) {
+  const api = Router();
+
+  applyAdminRoutes(api);
+  applyAuthRoutes(api);
+
+  return app.use("/api", api);
 }
 
 function initializeFeatureManagers() {

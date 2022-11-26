@@ -2,8 +2,9 @@ import { validateTicket } from "auth";
 import * as config from "config";
 import { Request } from "express";
 import { createLogger } from "logger";
+import { SafeClient } from "models";
 import { publisher } from "persistence";
-import { SafeClient, socketMessageSchema } from "schemas";
+import { socketMessageSchema } from "schemas";
 import { Duplex } from "stream";
 import { RawData, WebSocket, WebSocketServer } from "ws";
 
