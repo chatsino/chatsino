@@ -6,7 +6,7 @@ const INCOMING_REQUEST_LOGGER = createLogger("Incoming Request");
 
 export function requestLoggingMiddleware(
   req: AuthenticatedRequest,
-  _: Response,
+  res: Response,
   next: NextFunction
 ) {
   INCOMING_REQUEST_LOGGER.info(
@@ -16,6 +16,7 @@ export function requestLoggingMiddleware(
       path: req.path,
       params: req.params,
       body: req.body,
+      token: req.cookies.token ?? null,
     },
     "A new request was made."
   );

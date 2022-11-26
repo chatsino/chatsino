@@ -6,10 +6,12 @@ const CHANCE = new Chance();
 
 describe("Auth Routes", () => {
   let existingUsername = "";
+  let existingPassword = "";
+  const signupRoute = "/api/auth/signup";
+  const signinRoute = "/api/auth/signin";
+  const signoutRoute = "/api/auth/signout";
 
   describe("signupRoute", () => {
-    const signupRoute = "/api/auth/signup";
-
     it("should create a client and assign a token successfully.", async () => {
       const username = CHANCE.word({ length: 12 });
       const password = CHANCE.word({ length: 8 });
@@ -26,6 +28,7 @@ describe("Auth Routes", () => {
       expect(client).toBeDefined();
 
       existingUsername = username;
+      existingPassword = password;
     });
 
     it("should fail to create a client and assign a token if the body validation fails.", async () => {
@@ -64,26 +67,75 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe.skip("signinRoute", () => {
-    it("should assign a token successfully.", () => {
-      expect(true).toBe(false);
+  describe("signinRoute", () => {
+    it("should assign a token successfully.", async () => {
+      const { client } = await makeRequest<{ client: SafeClient }>(
+        "post",
+        signinRoute,
+        {
+          username: existingUsername,
+          password: existingPassword,
+        }
+      );
+
+      expect(client).toBeDefined();
     });
 
-    it("should fail to assign a token if the body validation fails.", () => {
-      expect(true).toBe(false);
+    it("should fail to assign a token if the body validation fails.", async () => {
+      try {
+        await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+          username: existingUsername,
+        });
+      } catch (error) {
+        expect((error as Error).message).toBe(
+          "A password must include a minimum of 8 characters."
+        );
+      }
+
+      expect.hasAssertions();
     });
 
-    it("should fail to assign a token if password validation fails.", () => {
-      expect(true).toBe(false);
+    it("should fail to assign a token if password validation fails.", async () => {
+      try {
+        await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+          username: existingUsername,
+          password: CHANCE.word({ length: 8 }),
+        });
+      } catch (error) {
+        expect((error as Error).message).toBe("Incorrect password.");
+      }
+
+      expect.hasAssertions();
+    });
+
+    it("should fail to assign a token if no such client with username exists.", async () => {
+      try {
+        await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+          username: CHANCE.word({ length: 12 }),
+          password: CHANCE.word({ length: 8 }),
+        });
+      } catch (error) {
+        expect((error as Error).message).toBe("Unable to sign in.");
+      }
+
+      expect.hasAssertions();
     });
   });
 
-  describe.skip("signoutRoute", () => {
-    it("should revoke a token successfully.", () => {
-      expect(true).toBe(false);
+  describe("signoutRoute", () => {
+    it("should revoke a token successfully.", async () => {
+      await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+        username: existingUsername,
+        password: existingPassword,
+      });
+
+      await makeRequest("post", signoutRoute);
+
+      // The request succeeded, so the test passes.
+      expect(true).toBe(true);
     });
 
-    it("should fail to revoke a token if the request has no associated client.", () => {
+    it.skip("should fail to revoke a token if the request has no associated client.", () => {
       expect(true).toBe(false);
     });
   });

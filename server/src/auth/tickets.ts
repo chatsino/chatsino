@@ -1,7 +1,7 @@
 import * as config from "config";
 import { Request } from "express";
 import { decrypt, encrypt, now } from "helpers";
-import { SafeClient, getClientByIdentifier } from "models";
+import { ClientNotFoundError, SafeClient, getClientByIdentifier } from "models";
 import querystring from "node:querystring";
 import { clearCachedValue, getCachedValue, setCachedValue } from "persistence";
 
@@ -77,5 +77,3 @@ export function decryptTicket(encryptedTicket: string) {
 
   return ticket;
 }
-
-export class ClientNotFoundError extends Error {}

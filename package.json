@@ -4,6 +4,7 @@
   "author": "some guy",
   "license": "MIT",
   "scripts": {
-    "build:client": "cd ./client && yarn build && cd .."
+    "build:client": "cd ./client && yarn build && cd ..",
+    "start": "docker-compose up"
   }
 }

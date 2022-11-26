@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { ValidationError } from "yup";
 
 export const successResponse = (
   res: Response,
@@ -18,3 +19,17 @@ export const errorResponse = (res: Response, message: string) =>
     result: "Error",
     message,
   });
+
+export function handleGenericErrors(
+  res: Response,
+  error: unknown,
+  fallback: string
+) {
+  if (error instanceof ValidationError) {
+    return errorResponse(res, error.errors.join(", "));
+  }
+
+  if (error instanceof Error) {
+    return errorResponse(res, fallback);
+  }
+}

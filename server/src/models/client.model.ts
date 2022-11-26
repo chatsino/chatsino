@@ -124,9 +124,18 @@ export async function verifyClientPassword(
     const unsafeClient = await postgres<Client>("clients")
       .where("id", client.id)
       .first();
+
+    if (!unsafeClient) {
+      throw new ClientNotFoundError();
+    }
+
     const hash = await generatePasswordHash(password, unsafeClient!.salt);
 
-    return hash ? client : null;
+    if (hash !== unsafeClient.hash) {
+      throw new IncorrectPasswordError();
+    }
+
+    return client;
   } else {
     return null;
   }
@@ -264,11 +273,12 @@ export async function changeClientPermissionLevel(
   return updateClient(clientIdentifier, { permissionLevel });
 }
 
+export class IncorrectPasswordError extends Error {}
 export class ClientWithUsernameExistsError extends Error {
   constructor(username: string) {
     super();
     this.message = `The username "${username}" is taken.`;
   }
 }
-
 export class CannotChargeClientError extends Error {}
+export class ClientNotFoundError extends Error {}

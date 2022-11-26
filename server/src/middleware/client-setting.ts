@@ -7,14 +7,14 @@ export async function clientSettingMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  const accessToken = req.cookies.accessToken;
+  const token = req.cookies.token;
 
-  if (!accessToken) {
+  if (!token) {
     req.chatsinoClient = null;
     return next();
   }
 
-  const client = await validateToken(accessToken);
+  const client = await validateToken(token);
 
   if (!client) {
     res.clearCookie("token");
