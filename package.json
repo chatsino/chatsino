@@ -4,6 +4,6 @@
   "author": "some guy",
   "license": "MIT",
   "scripts": {
-    "build": "echo 'start'"
+    "build:client": "cd ./client && yarn build && cd .."
   }
 }

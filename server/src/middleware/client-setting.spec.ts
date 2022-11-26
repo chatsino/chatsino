@@ -1,31 +1,28 @@
 import Chance from "chance";
 import { Response } from "express";
+import { TestGenerator } from "helpers";
 import { AuthenticatedRequest } from "./authenticated-route";
 import { clientSettingMiddleware } from "./client-setting";
 
 const CHANCE = new Chance();
 
-const SAMPLE_AUTHENTICATED_CLIENT = {
+const SAMPLE_AUTHENTICATED_CLIENT = TestGenerator.createSafeClient({
   username: CHANCE.name(),
   permissionLevel: "admin:unlimited",
-};
+});
 
 let _validateTokenResponse: null | typeof SAMPLE_AUTHENTICATED_CLIENT =
   SAMPLE_AUTHENTICATED_CLIENT;
 
-jest.mock("services", () => ({
-  ...jest.requireActual("services"),
-  AuthenticationService: class {
-    public async validateToken() {
-      return _validateTokenResponse;
-    }
-  },
+jest.mock("auth", () => ({
+  ...jest.requireActual("auth"),
+  validateToken: () => _validateTokenResponse,
 }));
 
 describe("clientSettingMiddleware", () => {
   it("should properly set the request client if everything works out", async () => {
     const request = {
-      client: null,
+      chatsinoClient: null,
       cookies: {
         accessToken: "AN_ACCESS_TOKEN",
       },
@@ -35,7 +32,7 @@ describe("clientSettingMiddleware", () => {
 
     await clientSettingMiddleware(request, response, next);
 
-    expect(request.client).toEqual(SAMPLE_AUTHENTICATED_CLIENT);
+    expect(request.chatsinoClient).toEqual(SAMPLE_AUTHENTICATED_CLIENT);
     expect(next).toHaveBeenCalled();
   });
 
@@ -49,7 +46,7 @@ describe("clientSettingMiddleware", () => {
 
     await clientSettingMiddleware(request, response, next);
 
-    expect(request.client).toBeNull();
+    expect(request.chatsinoClient).toBeNull();
     expect(next).toHaveBeenCalled();
   });
 
@@ -69,7 +66,7 @@ describe("clientSettingMiddleware", () => {
 
     await clientSettingMiddleware(request, response, next);
 
-    expect(request.client).toBeNull();
+    expect(request.chatsinoClient).toBeNull();
     expect(response.clearCookie).toHaveBeenCalledWith("accessToken");
     expect(next).toHaveBeenCalled();
   });

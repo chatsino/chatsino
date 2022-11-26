@@ -1,29 +1,29 @@
 import Chance from "chance";
-import type { AuthenticatedClient, Client } from "persistence";
+import type { Client, SafeClient } from "models";
 
-const chance = new Chance();
+const CHANCE = new Chance();
 
 export class TestGenerator {
   public static createClient(overrides: Partial<Client> = {}): Client {
     return {
-      id: chance.integer(),
-      username: chance.name(),
+      id: CHANCE.integer(),
+      username: CHANCE.name(),
       permissionLevel: "admin:unlimited",
-      hash: chance.hash(),
-      salt: chance.hash(),
+      hash: CHANCE.hash(),
+      salt: CHANCE.hash(),
       chips: 0,
+      createdAt: new Date().toString(),
+      updatedAt: new Date().toString(),
       ...overrides,
     };
   }
 
-  public static createAuthenticatedClient(
-    overrides: Partial<AuthenticatedClient> = {}
-  ): AuthenticatedClient {
-    return {
-      id: chance.integer(),
-      username: chance.name(),
-      permissionLevel: "admin:unlimited",
-      ...overrides,
-    };
+  public static createSafeClient(overrides: Partial<Client> = {}): SafeClient {
+    const {
+      hash: _,
+      salt: __,
+      ...safeClient
+    } = TestGenerator.createClient(overrides);
+    return safeClient;
   }
 }

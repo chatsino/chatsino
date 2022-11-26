@@ -10,19 +10,19 @@ export async function clientSettingMiddleware(
   const accessToken = req.cookies.accessToken;
 
   if (!accessToken) {
-    req.client = null;
+    req.chatsinoClient = null;
     return next();
   }
 
   const client = await validateToken(accessToken);
 
   if (!client) {
-    res.clearCookie("accessToken");
-    req.client = null;
+    res.clearCookie("token");
+    req.chatsinoClient = null;
     return next();
   }
 
-  req.client = client;
+  req.chatsinoClient = client;
 
   return next();
 }

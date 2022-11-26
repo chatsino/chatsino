@@ -24,10 +24,7 @@
   },
   "scripts": {
     "start": "HTTPS=true SSL_CRT_FILE=../server/.ssh/localhost.pem SSL_KEY_FILE=../server/.ssh/localhost-key.pem react-scripts start",
-    "build": "react-scripts build",
-    "build:production": "yarn build && yarn nginx:move",
-    "nginx:move": "mv ./build ./html && rm -rf /var/www/chatsino.app/html && mv ./html /var/www/chatsino.app",
-    "serve": "yarn build && npx serve -s build",
+    "build": "react-scripts build && mv ./build ../server/public",
     "test": "react-scripts test",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public"

@@ -1,19 +1,27 @@
 import { assignToken, issueTicket, revokeToken } from "auth";
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse } from "helpers";
+import { createLogger } from "logger";
 import { AuthenticatedRequest } from "middleware";
-import { createClient, verifyClientPassword } from "models";
+import {
+  ClientWithUsernameExistsError,
+  createClient,
+  verifyClientPassword,
+} from "models";
 import { clientSigninSchema, clientSignupSchema } from "schemas";
+import { ValidationError } from "yup";
 
-export function applyAuthRoutes(api: Router) {
+export const AUTH_ROUTER_LOGGER = createLogger("Auth Router");
+
+export function createAuthRouter() {
   const authRouter = Router();
 
-  authRouter.get("/signup", signupRoute);
-  authRouter.get("/signin", signinRoute);
-  authRouter.get("/signout", signoutRoute);
-  authRouter.get("/ticket", ticketRoute);
+  authRouter.post("/signup", signupRoute);
+  authRouter.post("/signin", signinRoute);
+  authRouter.post("/signout", signoutRoute);
+  authRouter.post("/ticket", ticketRoute);
 
-  return api.use("/auth", authRouter);
+  return authRouter;
 }
 
 export async function signupRoute(req: Request, res: Response) {
@@ -21,17 +29,25 @@ export async function signupRoute(req: Request, res: Response) {
     const { username, password } = await clientSignupSchema.validate(req.body);
     const client = await createClient(username, password);
 
-    if (!client) {
-      throw new Error();
-    }
-
     await assignToken(res, client);
 
     return successResponse(res, "Successfully signed up.", {
       client,
     });
-  } catch {
-    return errorResponse(res, "Unable to sign up.");
+  } catch (error) {
+    AUTH_ROUTER_LOGGER.error({ error }, "A request to sign up failed.");
+
+    if (error instanceof ValidationError) {
+      return errorResponse(res, error.errors.join(", "));
+    }
+
+    if (error instanceof ClientWithUsernameExistsError) {
+      return errorResponse(res, error.message);
+    }
+
+    if (error instanceof Error) {
+      return errorResponse(res, "Unable to sign up.");
+    }
   }
 }
 
@@ -54,13 +70,13 @@ export async function signinRoute(req: Request, res: Response) {
 
 export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
   try {
-    const { client } = req;
+    const { chatsinoClient } = req;
 
-    if (!client) {
+    if (!chatsinoClient) {
       throw new Error();
     }
 
-    await revokeToken(res, client);
+    await revokeToken(res, chatsinoClient);
 
     return successResponse(res, "Successfully signed out.");
   } catch {
@@ -71,16 +87,16 @@ export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
 export async function ticketRoute(req: AuthenticatedRequest, res: Response) {
   try {
     const {
-      client,
+      chatsinoClient,
       socket: { remoteAddress },
     } = req;
 
-    if (!client || !remoteAddress) {
+    if (!chatsinoClient || !remoteAddress) {
       throw new Error();
     }
 
     return successResponse(res, "Ticket assigned.", {
-      ticket: await issueTicket(client.username, remoteAddress),
+      ticket: await issueTicket(chatsinoClient.username, remoteAddress),
     });
   } catch {
     return errorResponse(res, "Unable to assign ticket.");

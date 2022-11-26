@@ -1,7 +1,8 @@
 import * as config from "config";
 import { generatePasswordHash, generatePasswordSaltHash } from "helpers";
+import { createLogger } from "logger";
 import { postgres, getCachedValue, setCachedValue } from "persistence";
-import { PERMISSION_RANKING, clientSignupSchema } from "schemas";
+import { PERMISSION_RANKING, clientSigninSchema } from "schemas";
 
 export type ClientPermissionLevel =
   | "visitor"
@@ -16,16 +17,24 @@ export interface Client {
   chips: number;
   hash: string;
   salt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type SafeClient = Omit<Client, "hash" | "salt">;
 
 export type ClientIdentifier = number | string;
 
+export const CLIENT_MODEL_LOGGER = createLogger("Client Model");
+
 export async function createClientTable() {
   const exists = await postgres.schema.hasTable("clients");
 
-  if (!exists) {
+  if (exists) {
+    CLIENT_MODEL_LOGGER.info("Clients table exists.");
+  } else {
+    CLIENT_MODEL_LOGGER.info("Creating clients table.");
+
     return postgres.schema.createTable("clients", (table) => {
       table.increments("id", { primaryKey: true });
       table.string("username").unique().notNullable();
@@ -47,7 +56,7 @@ export async function createClient(
   permissionLevel: ClientPermissionLevel = "user"
 ) {
   try {
-    await clientSignupSchema.validate({ username, password });
+    await clientSigninSchema.validate({ username, password });
 
     const { salt, hash } = await generatePasswordSaltHash(password);
 
@@ -60,9 +69,21 @@ export async function createClient(
 
     const client = await getClientByIdentifier(username);
 
-    return client ?? null;
+    if (!client) {
+      throw new Error("Client was not found after creation.");
+    }
+
+    return client;
   } catch (error) {
-    return null;
+    if (error instanceof Error) {
+      const asPostgresError = error as { constraint?: string };
+
+      if (asPostgresError.constraint === "clients_username_unique") {
+        throw new ClientWithUsernameExistsError(username);
+      }
+    }
+
+    throw error;
   }
 }
 
@@ -241,6 +262,13 @@ export async function changeClientPermissionLevel(
   permissionLevel: ClientPermissionLevel
 ) {
   return updateClient(clientIdentifier, { permissionLevel });
+}
+
+export class ClientWithUsernameExistsError extends Error {
+  constructor(username: string) {
+    super();
+    this.message = `The username "${username}" is taken.`;
+  }
 }
 
 export class CannotChargeClientError extends Error {}

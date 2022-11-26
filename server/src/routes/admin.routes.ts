@@ -8,14 +8,14 @@ import {
 } from "models";
 import { adminChangePermissionSchema, adminPaymentSchema } from "schemas";
 
-export function applyAdminRoutes(api: Router) {
+export function createAdminRouter() {
   const adminRouter = Router();
 
-  adminRouter.post("/charge", chargeClientRoute);
-  adminRouter.post("/pay", payClientRoute);
+  adminRouter.post("/charge-client", chargeClientRoute);
+  adminRouter.post("/pay-client", payClientRoute);
   adminRouter.post("/change-permission", changeClientPermissionRoute);
 
-  return api.use("/admin", adminRouter);
+  return adminRouter;
 }
 
 export async function chargeClientRoute(req: Request, res: Response) {

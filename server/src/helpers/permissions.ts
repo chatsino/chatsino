@@ -1,4 +1,4 @@
-import { ClientPermissionLevel } from "schemas";
+import { ClientPermissionLevel } from "models";
 
 export const PERMISSION_RANKING: ClientPermissionLevel[] = [
   "visitor",

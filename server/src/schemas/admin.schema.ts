@@ -1,5 +1,5 @@
-import * as yup from "yup";
 import { PERMISSION_RANKING } from "helpers";
+import * as yup from "yup";
 
 export const adminPaymentSchema = yup.object({
   clientId: yup.number().required(),

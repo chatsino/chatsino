@@ -6,9 +6,11 @@ import { readFileSync } from "fs";
 import { createServer } from "https";
 import { createLogger } from "logger";
 import * as managers from "managers";
-import { clientSettingMiddleware } from "middleware";
+import * as middleware from "middleware";
+import * as models from "models";
+import path from "path";
 import { initializeRedis } from "persistence";
-import { applyAdminRoutes, applyAuthRoutes } from "routes";
+import * as routes from "routes";
 import { handleUpgrade } from "sockets";
 import waitPort from "wait-port";
 
@@ -20,6 +22,9 @@ const SERVER_LOGGER = createLogger("Server");
   SERVER_LOGGER.info("Waiting for database and cache.");
   await waitForDatabaseAndCache();
   SERVER_LOGGER.info("Database and cache are available.");
+
+  SERVER_LOGGER.info("Initializing postgres.");
+  await initializePostgres();
 
   SERVER_LOGGER.info("Initializing redis.");
   await initializeRedis();
@@ -81,19 +86,25 @@ async function waitForDatabaseAndCache() {
   }
 }
 
+function initializePostgres() {
+  return Promise.all([models.createClientTable()]);
+}
+
 function applyMiddleware(app: Express) {
   return app.use(
+    express.static(path.join(__dirname, "..", "public")),
     bodyParser.json(),
     cookieParser(config.COOKIE_SECRET),
-    clientSettingMiddleware
+    middleware.requestLoggingMiddleware,
+    middleware.clientSettingMiddleware
   );
 }
 
 function applyRoutes(app: Express) {
   const api = Router();
 
-  applyAdminRoutes(api);
-  applyAuthRoutes(api);
+  api.use("/admin", routes.createAdminRouter());
+  api.use("/auth", routes.createAuthRouter());
 
   return app.use("/api", api);
 }

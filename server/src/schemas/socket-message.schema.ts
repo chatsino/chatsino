@@ -1,5 +1,6 @@
+import { SafeClient } from "models";
 import * as yup from "yup";
-import { SafeClient, clientSchema } from "./client.schema";
+import { clientSchema } from "./client.schema";
 
 export interface SocketMessage {
   kind: string;
