@@ -5,6 +5,7 @@ import { createServer } from "https";
 import { createLogger } from "logger";
 import * as managers from "managers";
 import { applyMiddleware } from "middleware";
+import { initializeRedis } from "persistence";
 import { applyRoutes } from "routes";
 import { handleUpgrade } from "sockets";
 import waitPort from "wait-port";
@@ -17,6 +18,9 @@ const SERVER_LOGGER = createLogger("Server");
   SERVER_LOGGER.info("Waiting for database and cache.");
   await waitForDatabaseAndCache();
   SERVER_LOGGER.info("Database and cache are available.");
+
+  SERVER_LOGGER.info("Initializing redis.");
+  await initializeRedis();
 
   SERVER_LOGGER.info("Initializing app.");
   const app = express();

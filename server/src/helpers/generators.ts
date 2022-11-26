@@ -1,6 +1,5 @@
 import Chance from "chance";
-import type { Client } from "../__src/repositories";
-import type { AuthenticatedClient } from "../__src/services";
+import type { AuthenticatedClient, Client } from "persistence";
 
 const chance = new Chance();
 

@@ -1,35 +1,44 @@
+import * as config from "config";
 import * as yup from "yup";
+import type { ClientPermissionLevel } from "persistence";
 
-export type ClientPermissionLevel =
-  | "visitor"
-  | "user"
-  | "admin:limited"
-  | "admin:unlimited";
+export const PASSWORD_MESSAGE = `A password must include a minimum of ${config.MINIMUM_PASSWORD_SIZE} characters.`;
 
-export interface Client {
-  id: number;
-  username: string;
-  permissionLevel: ClientPermissionLevel;
-  chips: number;
-  hash: string;
-  salt: string;
-}
-
-export type SafeClient = Omit<Client, "hash" | "salt">;
-
-export interface AuthenticatedClient {
-  id: number;
-  username: string;
-  permissionLevel: ClientPermissionLevel;
-}
+export const PERMISSION_RANKING: ClientPermissionLevel[] = [
+  "visitor",
+  "user",
+  "admin:limited",
+  "admin:unlimited",
+];
 
 export const clientPermissionLevelSchema = yup
   .string()
-  .oneOf(["visitor", "user", "admin:limited", "admin:unlimited"]);
+  .oneOf(PERMISSION_RANKING);
 
 export const clientSchema = yup.object({
   id: yup.number().required(),
   username: yup.string().required(),
   permissionLevel: clientPermissionLevelSchema.required(),
   chips: yup.number().positive().required(),
+});
+
+export const clientSigninSchema = yup.object({
+  username: yup.string().required("A username is required."),
+  password: yup
+    .string()
+    .min(config.MINIMUM_PASSWORD_SIZE, PASSWORD_MESSAGE)
+    .required(PASSWORD_MESSAGE),
+});
+
+export const clientSignupSchema = clientSigninSchema.shape({
+  passwordAgain: yup
+    .string()
+    .min(config.MINIMUM_PASSWORD_SIZE, PASSWORD_MESSAGE)
+    .test({
+      name: "match",
+      exclusive: false,
+      message: "Passwords must match.",
+      test: (value, context) => value === context.parent.password,
+    })
+    .required("Please re-enter your chosen password."),
 });

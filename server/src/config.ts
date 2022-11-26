@@ -17,8 +17,18 @@ export const SSL_CERTIFICATE_PATH = path.join(
   "../.ssh/localhost.pem"
 );
 
+// Postgres
+export const POSTGRES_CONNECTION_STRING =
+  process.env.POSTGRES_CONNECTION_STRING ?? "";
+
 // Cache
 export const TICKET_CACHE_TTL_SECONDS = 10;
+export const CLIENT_CACHE_TTL_SECONDS = 60 * 3;
 
 // Sockets
 export const CONNECTION_STATUS_CHECK_RATE_MS = 1000 * 30;
+
+// Auth
+export const MINIMUM_PASSWORD_SIZE = 8;
+export const PASSWORD_SALT_SIZE = 128;
+export const PASSWORD_HASH_SIZE = 60;

@@ -24,3 +24,14 @@ export function decrypt(text: { iv: string; encryptedData: string }) {
 
   return decrypted.toString();
 }
+
+export async function generatePasswordSaltHash(input: string) {
+  const salt = crypto.randomBytes(config.PASSWORD_SALT_SIZE).toString("hex");
+  const hash: string = await new Promise((resolve, reject) =>
+    crypto.scrypt(input, salt, config.PASSWORD_HASH_SIZE, (err, hash) =>
+      err ? reject(err) : resolve(hash.toString("hex"))
+    )
+  );
+
+  return { salt, hash };
+}
