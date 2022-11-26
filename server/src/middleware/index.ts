@@ -4,6 +4,9 @@ import * as config from "config";
 import { Express } from "express";
 import { clientSettingMiddleware } from "./client-setting";
 
+export * from "./authenticated-route";
+export * from "./client-setting";
+
 export function applyMiddleware(app: Express) {
   app.use(
     bodyParser.json(),

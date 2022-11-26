@@ -1,5 +1,5 @@
 import * as config from "config";
-import express from "express";
+import express, { Router } from "express";
 import { readFileSync } from "fs";
 import { createServer } from "https";
 import { createLogger } from "logger";

@@ -1,5 +1,5 @@
 import * as config from "config";
-import { generatePasswordSaltHash } from "helpers";
+import { generatePasswordHash, generatePasswordSaltHash } from "helpers";
 import { postgres, getCachedValue, setCachedValue } from "persistence";
 import { PERMISSION_RANKING, clientSignupSchema } from "schemas";
 
@@ -20,11 +20,7 @@ export interface Client {
 
 export type SafeClient = Omit<Client, "hash" | "salt">;
 
-export interface AuthenticatedClient {
-  id: number;
-  username: string;
-  permissionLevel: ClientPermissionLevel;
-}
+export type ClientIdentifier = number | string;
 
 export async function createClientTable() {
   const exists = await postgres.schema.hasTable("clients");
@@ -62,14 +58,16 @@ export async function createClient(
       permissionLevel,
     });
 
-    return true;
+    const client = await getClientByIdentifier(username);
+
+    return client ?? null;
   } catch (error) {
-    return false;
+    return null;
   }
 }
 
 export async function updateClient(
-  clientIdentifier: number | string,
+  clientIdentifier: ClientIdentifier,
   update: Partial<Client>
 ) {
   const client = await getClientByIdentifier(clientIdentifier);
@@ -80,6 +78,36 @@ export async function updateClient(
     return true;
   } else {
     return false;
+  }
+}
+
+export async function deleteClient(clientIdentifier: ClientIdentifier) {
+  const client = await getClientByIdentifier(clientIdentifier);
+
+  if (client) {
+    await postgres<Client>("clients").where("id", client.id).delete();
+
+    return true;
+  } else {
+    return false;
+  }
+}
+
+export async function verifyClientPassword(
+  clientIdentifier: ClientIdentifier,
+  password: string
+) {
+  const client = await getClientByIdentifier(clientIdentifier);
+
+  if (client) {
+    const unsafeClient = await postgres<Client>("clients")
+      .where("id", client.id)
+      .first();
+    const hash = await generatePasswordHash(password, unsafeClient!.salt);
+
+    return hash ? client : null;
+  } else {
+    return null;
   }
 }
 
@@ -149,7 +177,7 @@ export async function getClientByUsername(
 }
 
 export function getClientByIdentifier(
-  clientIdentifier: number | string,
+  clientIdentifier: ClientIdentifier,
   breakCache = false
 ) {
   return typeof clientIdentifier === "number"
@@ -157,19 +185,19 @@ export function getClientByIdentifier(
     : getClientByUsername(clientIdentifier, breakCache);
 }
 
-export async function getClientChipBalance(clientIdentifier: number | string) {
+export async function getClientChipBalance(clientIdentifier: ClientIdentifier) {
   return (await getClientByIdentifier(clientIdentifier, true))?.chips ?? 0;
 }
 
 export async function canClientAfford(
-  clientIdentifier: number | string,
+  clientIdentifier: ClientIdentifier,
   amount: number
 ) {
   return (await getClientChipBalance(clientIdentifier)) > amount;
 }
 
 export async function chargeClient(
-  clientIdentifier: number | string,
+  clientIdentifier: ClientIdentifier,
   amount: number
 ) {
   const client = await getClientByIdentifier(clientIdentifier);
@@ -189,7 +217,7 @@ export async function chargeClient(
 }
 
 export async function payClient(
-  clientIdentifier: number | string,
+  clientIdentifier: ClientIdentifier,
   amount: number
 ) {
   const client = await getClientByIdentifier(clientIdentifier);
@@ -209,7 +237,7 @@ export async function payClient(
 }
 
 export async function changeClientPermissionLevel(
-  clientIdentifier: number | string,
+  clientIdentifier: ClientIdentifier,
   permissionLevel: ClientPermissionLevel
 ) {
   return updateClient(clientIdentifier, { permissionLevel });

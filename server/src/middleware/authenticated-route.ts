@@ -1,9 +1,9 @@
 import { NextFunction, Response, Request } from "express";
 import { errorResponse, meetsPermissionRequirement } from "helpers";
-import { AuthenticatedClient, ClientPermissionLevel } from "schemas";
+import { ClientPermissionLevel, SafeClient } from "models";
 
 export interface AuthenticatedRequest extends Request {
-  client: null | AuthenticatedClient;
+  client: null | SafeClient;
 }
 
 export function authenticatedRouteMiddleware(

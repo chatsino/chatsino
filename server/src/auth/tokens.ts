@@ -1,4 +1,6 @@
 import * as config from "config";
+import { Response } from "express";
+import { SafeClient } from "models";
 import { ensureRedisInitialized, jwtRedis } from "persistence";
 
 export async function createToken(
@@ -35,6 +37,17 @@ export function destroyToken(label: string) {
   return jwtRedis!.destroy(label);
 }
 
-export async function validateToken(tokenString: string) {
-  return false;
+export async function assignToken(res: Response, client: SafeClient) {
+  const token = await createToken(
+    `Tokens/Access/${client.username}`,
+    client,
+    config.JWT_ACCESS_EXPIRATON_TIME_SECONDS
+  );
+
+  return res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
+}
+
+export async function revokeToken(res: Response, client: SafeClient) {
+  await destroyToken(`Tokens/Access/${client.username}`);
+  return res.clearCookie("token");
 }

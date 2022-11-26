@@ -1,13 +1,9 @@
+import * as config from "config";
 import { Request } from "express";
-import querystring from "node:querystring";
-import {
-  clearCachedValue,
-  getCachedValue,
-  getClientByUsername,
-  setCachedValue,
-} from "persistence";
 import { decrypt, encrypt, now } from "helpers";
-import { Client } from "schemas";
+import { SafeClient, getClientByIdentifier } from "models";
+import querystring from "node:querystring";
+import { clearCachedValue, getCachedValue, setCachedValue } from "persistence";
 
 export interface Ticket {
   issuedAt: number;
@@ -16,7 +12,7 @@ export interface Ticket {
 }
 
 export async function issueTicket(username: string, remoteAddress: string) {
-  const client = await getClientByUsername(username);
+  const client = await getClientByIdentifier(username);
 
   if (!client) {
     throw new ClientNotFoundError();
@@ -28,7 +24,11 @@ export async function issueTicket(username: string, remoteAddress: string) {
     username,
   });
 
-  await setCachedValue(encryptedTicket, client);
+  await setCachedValue(
+    `Tickets/${encryptedTicket}`,
+    JSON.stringify(client),
+    config.TICKET_CACHE_TTL_SECONDS
+  );
 
   return encryptedTicket;
 }
@@ -42,7 +42,9 @@ export async function validateTicket(request: Request) {
     return null;
   }
 
-  const client = await getCachedValue<Client>(encryptedTicket);
+  const client = (await getCachedValue(
+    `Tickets/${encryptedTicket}`
+  )) as SafeClient;
 
   if (!client) {
     return null;
@@ -54,7 +56,7 @@ export async function validateTicket(request: Request) {
     return null;
   }
 
-  await clearCachedValue(encryptedTicket);
+  await clearCachedValue(`Tickets/${encryptedTicket}`);
 
   return client;
 }

@@ -1,3 +1,3 @@
-import { Express } from "express";
+import { Router } from "express";
 
-export function applyStaticRoutes(app: Express) {}
+export function applyStaticRoutes(api: Router) {}
