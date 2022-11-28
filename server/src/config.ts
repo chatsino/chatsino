@@ -10,10 +10,17 @@ export const COOKIE_SECRET = process.env.COOKIE_SECRET ?? "";
 export const TICKET_SECRET = process.env.TICKET_SECRET ?? "";
 
 // SSL
-export const SSL_KEY_PATH = path.join(__dirname, "../.ssh/localhost-key.pem");
+export const SSL_KEY_PATH = path.join(
+  __dirname,
+  "..",
+  ".ssh",
+  "localhost-key.pem"
+);
 export const SSL_CERTIFICATE_PATH = path.join(
   __dirname,
-  "../.ssh/localhost.pem"
+  "..",
+  ".ssh",
+  "localhost.pem"
 );
 
 // Postgres

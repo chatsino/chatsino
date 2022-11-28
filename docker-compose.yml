@@ -18,9 +18,11 @@ services:
     container_name: cache
     image: redis
     restart: always
-    command: ["redis-server", "--port", "6379"]
+    command: ["redis-server", "--port", "6379", "--appendonly", "yes"]
     ports:
       - 6379:6379
+    volumes:
+      - ./cache:/data
 
   server:
     container_name: server
