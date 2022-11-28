@@ -19,7 +19,10 @@ import { handleUpgrade, initializeSocketServer } from "sockets";
 const SERVER_LOGGER = createLogger("Server");
 
 export async function startServer() {
-  SERVER_LOGGER.info({ version: config.VERSION }, "Chatsino started up.");
+  SERVER_LOGGER.info(
+    { environment: process.env.NODE_ENV, version: config.VERSION },
+    "Chatsino started up."
+  );
 
   SERVER_LOGGER.info("Waiting for database and cache.");
   await waitForDatabaseAndCache();
@@ -72,8 +75,8 @@ function applyMiddleware(app: Express) {
   return app.use(
     bodyParser.json(),
     cookieParser(config.COOKIE_SECRET),
-    middleware.requestLoggingMiddleware,
-    middleware.clientSettingMiddleware
+    middleware.clientSettingMiddleware,
+    middleware.requestLoggingMiddleware
   );
 }
 

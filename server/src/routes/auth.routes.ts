@@ -17,25 +17,19 @@ export const AUTH_ROUTER_LOGGER = createLogger("Auth Router");
 export function createAuthRouter() {
   const authRouter = Router();
 
-  authRouter.get("/validate", validateRoute);
   authRouter.post("/signup", signupRoute);
   authRouter.post("/signin", signinRoute);
   authRouter.post("/signout", signoutRoute);
+  authRouter.get("/validate", validateRoute);
   authRouter.get("/ticket", ticketRoute);
 
   return authRouter;
 }
 
 export async function validateRoute(req: AuthenticatedRequest, res: Response) {
-  try {
-    return successResponse(res, "Validation request succeeded.", {
-      client: req.chatsinoClient,
-    });
-  } catch (error) {
-    AUTH_ROUTER_LOGGER.error({ error }, "A request to validate failed.");
-
-    return handleGenericErrors(res, error, "A request to validate failed.");
-  }
+  return successResponse(res, "Validation request succeeded.", {
+    client: req.chatsinoClient,
+  });
 }
 
 export async function signupRoute(req: Request, res: Response) {
@@ -68,9 +62,10 @@ export async function signinRoute(req: Request, res: Response) {
       throw new Error();
     }
 
-    await assignToken(res, client);
+    const token =
+      (await assignToken(res, client)) ?? "<assigned to httpOnly cookie>";
 
-    return successResponse(res, "Successfully signed in.", { client });
+    return successResponse(res, "Successfully signed in.", { client, token });
   } catch (error) {
     AUTH_ROUTER_LOGGER.error({ error }, "A request to sign in failed.");
 

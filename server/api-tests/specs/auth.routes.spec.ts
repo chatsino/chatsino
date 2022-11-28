@@ -1,5 +1,12 @@
 import Chance from "chance";
-import { makeRequest } from "../utils";
+import {
+  expectErrorMessage,
+  getTicket,
+  makeRequest,
+  signin,
+  signout,
+  validate,
+} from "../utils";
 import type { Client } from "persistence";
 
 const CHANCE = new Chance();
@@ -9,7 +16,6 @@ describe("Auth Routes", () => {
   let existingPassword = "";
   const signupRoute = "/api/auth/signup";
   const signinRoute = "/api/auth/signin";
-  const signoutRoute = "/api/auth/signout";
 
   describe("signupRoute", () => {
     it("should create a client and assign a token successfully.", async () => {
@@ -42,7 +48,7 @@ describe("Auth Routes", () => {
           passwordAgain: CHANCE.word({ length: 8 }),
         });
       } catch (error) {
-        expect((error as Error).message).toBe("Passwords must match.");
+        expectErrorMessage(error, "Passwords must match.");
       }
 
       expect.hasAssertions();
@@ -58,7 +64,8 @@ describe("Auth Routes", () => {
           passwordAgain: password,
         });
       } catch (error) {
-        expect((error as Error).message).toBe(
+        expectErrorMessage(
+          error,
           `The username "${existingUsername}" is taken.`
         );
       }
@@ -69,14 +76,7 @@ describe("Auth Routes", () => {
 
   describe("signinRoute", () => {
     it("should assign a token successfully.", async () => {
-      const { client } = await makeRequest<{ client: Client }>(
-        "post",
-        signinRoute,
-        {
-          username: existingUsername,
-          password: existingPassword,
-        }
-      );
+      const client = await signin(existingUsername, existingPassword);
 
       expect(client).toBeDefined();
     });
@@ -87,7 +87,8 @@ describe("Auth Routes", () => {
           username: existingUsername,
         });
       } catch (error) {
-        expect((error as Error).message).toBe(
+        expectErrorMessage(
+          error,
           "A password must include a minimum of 8 characters."
         );
       }
@@ -97,12 +98,9 @@ describe("Auth Routes", () => {
 
     it("should fail to assign a token if password validation fails.", async () => {
       try {
-        await makeRequest<{ client: Client }>("post", signinRoute, {
-          username: existingUsername,
-          password: CHANCE.word({ length: 8 }),
-        });
+        await signin(existingUsername, CHANCE.word({ length: 8 }));
       } catch (error) {
-        expect((error as Error).message).toBe("Incorrect password.");
+        expectErrorMessage(error, "Incorrect password.");
       }
 
       expect.hasAssertions();
@@ -110,12 +108,9 @@ describe("Auth Routes", () => {
 
     it("should fail to assign a token if no such client with username exists.", async () => {
       try {
-        await makeRequest<{ client: Client }>("post", signinRoute, {
-          username: CHANCE.word({ length: 12 }),
-          password: CHANCE.word({ length: 8 }),
-        });
+        await signin(CHANCE.word({ length: 12 }), CHANCE.word({ length: 8 }));
       } catch (error) {
-        expect((error as Error).message).toBe("Unable to sign in.");
+        expectErrorMessage(error, "Unable to sign in.");
       }
 
       expect.hasAssertions();
@@ -124,29 +119,57 @@ describe("Auth Routes", () => {
 
   describe("signoutRoute", () => {
     it("should revoke a token successfully.", async () => {
-      await makeRequest<{ client: Client }>("post", signinRoute, {
-        username: existingUsername,
-        password: existingPassword,
-      });
+      await signin(existingUsername, existingPassword);
+      const client = (await validate()) as Client;
+      expect(client.username).toBe(existingUsername);
 
-      await makeRequest("post", signoutRoute);
-
-      // The request succeeded, so the test passes.
-      expect(true).toBe(true);
+      await signout();
+      const clientAfterSignout = await validate();
+      expect(clientAfterSignout).toBeNull();
     });
 
-    it.skip("should fail to revoke a token if the request has no associated client.", () => {
-      expect(true).toBe(false);
+    it("should fail to revoke a token if the request has no associated client.", async () => {
+      try {
+        await signout();
+      } catch (error) {
+        expectErrorMessage(error, "Unable to sign out.");
+      }
+
+      expect.hasAssertions();
     });
   });
 
-  describe.skip("ticketRoute", () => {
-    it("should issue a ticket successfully.", () => {
-      expect(true).toBe(false);
+  describe("validateRoute", () => {
+    it("should retrieve a client only when a user is signed in.", async () => {
+      const clientBefore = (await validate()) as Client;
+      expect(clientBefore).toBeNull();
+
+      await signin(existingUsername, existingPassword);
+      const clientAfterSignin = (await validate()) as Client;
+      expect(clientAfterSignin.username).toBe(existingUsername);
+
+      await signout();
+      const clientAfterSignout = await validate();
+      expect(clientAfterSignout).toBeNull();
+    });
+  });
+
+  describe("ticketRoute", () => {
+    it("should issue a ticket successfully.", async () => {
+      await signin(existingUsername, existingPassword);
+      const ticket = await getTicket();
+      expect(ticket.length).toBeGreaterThan(0);
+      await signout();
     });
 
-    it("should fail to issue a ticket if the request has no associated client.", () => {
-      expect(true).toBe(false);
+    it("should fail to issue a ticket if the request has no associated client.", async () => {
+      try {
+        await getTicket();
+      } catch (error) {
+        expectErrorMessage(error, "Unable to assign ticket.");
+      }
+
+      expect.hasAssertions();
     });
   });
 });

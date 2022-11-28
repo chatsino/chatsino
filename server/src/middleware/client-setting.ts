@@ -7,7 +7,10 @@ export async function clientSettingMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  const token = req.cookies[TOKEN_KEY];
+  const token =
+    process.env.NODE_ENV === "test"
+      ? req.headers.authorization
+      : req.cookies[TOKEN_KEY];
 
   if (!token) {
     req.chatsinoClient = null;

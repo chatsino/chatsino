@@ -47,7 +47,11 @@ export async function assignToken(res: Response, client: Client) {
     config.JWT_ACCESS_EXPIRATON_TIME_SECONDS
   );
 
-  return res.cookie(TOKEN_KEY, token, { httpOnly: true, sameSite: "strict" });
+  res.cookie(TOKEN_KEY, token, { httpOnly: true, sameSite: "strict" });
+
+  if (process.env.NODE_ENV === "test") {
+    return token;
+  }
 }
 
 export async function revokeToken(res: Response, client: Client) {

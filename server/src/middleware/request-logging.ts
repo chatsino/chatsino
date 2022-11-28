@@ -17,6 +17,7 @@ export function requestLoggingMiddleware(
         path: req.path,
         params: req.params,
         body: req.body,
+        authorization: req.headers.authorization,
       },
       "A new request was made."
     );

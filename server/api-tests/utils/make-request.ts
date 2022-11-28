@@ -21,6 +21,10 @@ export const axios = axiosLib.create({
   }),
 });
 
+export function setAuthorizationHeader(token: string) {
+  axios.defaults.headers.authorization = token;
+}
+
 export async function makeRequest<T>(
   method: "get" | "post",
   route: string,
