@@ -2,7 +2,7 @@
   "name": "client",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://localhost:8080",
+  "proxy": "https://localhost:3001",
   "dependencies": {
     "@ant-design/icons": "^4.8.0",
     "@testing-library/jest-dom": "^5.14.1",

@@ -20,8 +20,8 @@ export const clientSchema = yup.object({
   username: yup.string().required(),
   permissionLevel: clientPermissionLevelSchema.required(),
   chips: yup.number().min(0).required(),
-  createdAt: yup.date().required(),
-  updatedAt: yup.date().required(),
+  createdAt: yup.string().required(),
+  updatedAt: yup.string().required(),
 });
 
 export const clientSigninSchema = yup.object({

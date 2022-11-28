@@ -18,7 +18,7 @@ export function Chatsino() {
   );
 
   useEffect(() => {
-    if (!hasInitialized.current) {
+    if (!hasInitialized.current && entered) {
       hasInitialized.current = true;
       initialize();
     }

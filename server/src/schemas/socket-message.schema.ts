@@ -12,12 +12,12 @@ export interface SourcedSocketMessage extends SocketMessage {
 }
 
 // #region Incoming
-export const socketMessageSchema = yup.object({
+export const socketRequestSchema = yup.object({
   kind: yup.string().required(),
   args: yup.object().optional().default({}),
 });
 
-export const sourcedSocketMessageSchema = socketMessageSchema.shape({
+export const sourcedSocketRequestSchema = socketRequestSchema.shape({
   from: clientSchema.required(),
 });
 // #endregion

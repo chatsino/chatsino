@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useCallback, useState } from "react";
-import { useChat } from "./useChat";
+import { useChat } from "hooks";
 
 export function Chat() {
   const [messageDraft, setMessageDraft] = useState("");

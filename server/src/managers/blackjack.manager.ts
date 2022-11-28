@@ -1,28 +1,37 @@
 import { subscriber } from "persistence";
+import { createLogger } from "logger";
 
-export enum BlackjackSocketMessages {
+export const BLACKJACK_LOGGER = createLogger("Blackjack");
+
+export enum BlackjackSocketRequests {
   GetActiveBlackjackGame = "get-active-blackjack-game",
   StartBlackjackGame = "start-blackjack-game",
   TakeBlackjackAction = "take-blackjack-action",
 }
 
 export function initializeBlackjackManager() {
-  subscriber.on(
-    BlackjackSocketMessages.GetActiveBlackjackGame,
+  subscriber.subscribe(
+    BlackjackSocketRequests.GetActiveBlackjackGame,
     handleGetActiveBlackjackGame
   );
-  subscriber.on(
-    BlackjackSocketMessages.StartBlackjackGame,
+  subscriber.subscribe(
+    BlackjackSocketRequests.StartBlackjackGame,
     handleStartBlackjackGame
   );
-  subscriber.on(
-    BlackjackSocketMessages.TakeBlackjackAction,
+  subscriber.subscribe(
+    BlackjackSocketRequests.TakeBlackjackAction,
     handleTakeBlackjackAction
   );
 }
 
-export function handleGetActiveBlackjackGame() {}
+export function handleGetActiveBlackjackGame() {
+  BLACKJACK_LOGGER.info(BlackjackSocketRequests.GetActiveBlackjackGame);
+}
 
-export function handleStartBlackjackGame() {}
+export function handleStartBlackjackGame() {
+  BLACKJACK_LOGGER.info(BlackjackSocketRequests.StartBlackjackGame);
+}
 
-export function handleTakeBlackjackAction() {}
+export function handleTakeBlackjackAction() {
+  BLACKJACK_LOGGER.info(BlackjackSocketRequests.TakeBlackjackAction);
+}

@@ -10,14 +10,11 @@ export interface ChatMessage {
   updatedAt: number;
 }
 
-export enum ChatSocketMessages {
-  // Incoming
-  SendChatMessage = "sendChatMessage",
-  ListChatrooms = "listChatrooms",
-  ListChatroomMessages = "listChatroomMessages",
-
-  // Outgoing
-  NewChatMessage = "newChatMessage",
+export enum ChatroomSocketRequests {
+  SendChatMessage = "send-chat-message",
+  ListChatrooms = "list-chatrooms",
+  ListChatroomMessages = "list-chatroom-messages",
+  NewChatMessage = "new-chat-message",
 }
 
 export const CHAT_SUBSCRIBER_NAME = "chat";
@@ -39,7 +36,7 @@ export function useChat(chatroomId = DEFAULT_CHATROOM_ID) {
   useEffect(() => {
     subscribe(
       CHAT_SUBSCRIBER_NAME,
-      ChatSocketMessages.NewChatMessage,
+      ChatroomSocketRequests.NewChatMessage,
       ({ data, error }) => {
         if (error) {
           setError(error);
@@ -51,14 +48,14 @@ export function useChat(chatroomId = DEFAULT_CHATROOM_ID) {
     );
 
     return () => {
-      unsubscribe(CHAT_SUBSCRIBER_NAME, ChatSocketMessages.NewChatMessage);
+      unsubscribe(CHAT_SUBSCRIBER_NAME, ChatroomSocketRequests.NewChatMessage);
     };
   }, [subscribe, unsubscribe]);
 
   const sendChatMessage = useCallback(
     (message: string) => {
       if (message.length > 0) {
-        makeRequest(ChatSocketMessages.SendChatMessage, {
+        makeRequest(ChatroomSocketRequests.SendChatMessage, {
           message,
           room: DEFAULT_CHATROOM_ID,
         });

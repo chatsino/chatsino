@@ -1,6 +1,5 @@
-import { useClient, useSocket } from "hooks";
+import { useBlackjack, useClient, useSocket } from "hooks";
 import { useEffect, useRef } from "react";
-import { useBlackjack } from "./useBlackjack";
 
 export function Blackjack() {
   const { client } = useClient();

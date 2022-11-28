@@ -52,6 +52,10 @@ export function SocketProvider({ children }: PropsWithChildren) {
 
   const initialize = useCallback(async () => {
     try {
+      if (attemptingToReconnect.current) {
+        clearTimeout(attemptingToReconnect.current);
+      }
+
       if (socket.current) {
         socket.current.close();
         socket.current = null;
@@ -70,7 +74,7 @@ export function SocketProvider({ children }: PropsWithChildren) {
         console.info("Opened connection.", event);
 
         if (attemptingToReconnect.current) {
-          clearInterval(attemptingToReconnect.current);
+          clearTimeout(attemptingToReconnect.current);
         }
 
         setInitialized(true);
@@ -79,7 +83,7 @@ export function SocketProvider({ children }: PropsWithChildren) {
       socket.current.onclose = function handleSocketClose(event) {
         console.info("Closed connection.", event);
 
-        attemptingToReconnect.current = setInterval(
+        attemptingToReconnect.current = setTimeout(
           initialize,
           config.SOCKET_RECONNECT_ATTEMPT_RATE
         );
@@ -110,6 +114,8 @@ export function SocketProvider({ children }: PropsWithChildren) {
           kind,
           args,
         };
+
+        console.log({ sending: JSON.stringify(request) });
 
         socket.current?.send(JSON.stringify(request));
       }

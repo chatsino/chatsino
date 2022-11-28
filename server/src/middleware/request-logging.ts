@@ -17,7 +17,6 @@ export function requestLoggingMiddleware(
         path: req.path,
         params: req.params,
         body: req.body,
-        token: req.cookies.token ?? null,
       },
       "A new request was made."
     );

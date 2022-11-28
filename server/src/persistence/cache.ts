@@ -3,19 +3,21 @@ import { now } from "helpers";
 import JWTRedis from "jwt-redis";
 import { createClient } from "redis";
 
-export const redis = createClient({
-  url: config.REDIS_CONNECTION_STRING,
-});
-export const publisher = redis.duplicate();
-export const subscriber = publisher.duplicate();
+export const [redis, publisher, subscriber] = Array.from({ length: 3 }, () =>
+  createClient({
+    url: config.REDIS_CONNECTION_STRING,
+  })
+);
 
 export let jwtRedis: null | JWTRedis = null;
 let initialized = false;
 
 export async function initializeRedis() {
   if (!initialized) {
-    redis.on("error", handleRedisError);
-    await redis.connect();
+    for (const client of [redis, publisher, subscriber]) {
+      await client.connect();
+    }
+
     jwtRedis = new JWTRedis(redis as any);
     initialized = true;
   }

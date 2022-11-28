@@ -11,7 +11,7 @@ import * as models from "models";
 import path from "path";
 import { initializeRedis } from "persistence";
 import * as routes from "routes";
-import { handleUpgrade } from "sockets";
+import { handleUpgrade, initializeSocketServer } from "sockets";
 import waitPort from "wait-port";
 
 const SERVER_LOGGER = createLogger("Server");
@@ -46,13 +46,16 @@ export async function startServer() {
   );
 
   SERVER_LOGGER.info("Adding websocket capabilities.");
+  initializeSocketServer();
   server.on("upgrade", handleUpgrade);
 
   SERVER_LOGGER.info("Initializing feature managers.");
   initializeFeatureManagers();
 
-  SERVER_LOGGER.info("Handling uncaught exceptions and rejections.");
-  handleUncaughtExceptionsAndRejections();
+  if (process.env.NODE_ENV === "production") {
+    SERVER_LOGGER.info("Handling uncaught exceptions and rejections.");
+    handleUncaughtExceptionsAndRejections();
+  }
 
   server.listen(config.PORT, () =>
     SERVER_LOGGER.info(`Server listening on port ${config.PORT}.`)
@@ -91,8 +94,13 @@ function initializePostgres() {
 }
 
 function applyMiddleware(app: Express) {
+  // In development environments, the developer is running a local server.
+  // In test and production environments, the server serves a static build.
+  if (process.env.NODE_ENV !== "development") {
+    app.use(express.static(path.join(__dirname, "..", "public")));
+  }
+
   return app.use(
-    express.static(path.join(__dirname, "..", "public")),
     bodyParser.json(),
     cookieParser(config.COOKIE_SECRET),
     middleware.clientSettingMiddleware,
@@ -110,7 +118,6 @@ function applyRoutes(app: Express) {
 }
 
 function initializeFeatureManagers() {
-  managers.initializeSocketManager();
   managers.initializeBlackjackManager();
   managers.initializeChatroomManager();
 }

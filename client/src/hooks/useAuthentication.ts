@@ -23,7 +23,7 @@ export function useAuthentication() {
         password,
       });
 
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
       console.error({ error }, "Unable to sign in.");
       throw error;

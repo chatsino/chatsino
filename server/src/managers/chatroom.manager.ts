@@ -1,20 +1,23 @@
 import { subscriber } from "persistence";
 
-export enum ChatroomSocketMessages {
-  // Incoming
+export enum ChatroomSocketRequests {
   SendChatMessage = "send-chat-message",
   ListChatrooms = "list-chatrooms",
   ListChatroomMessages = "list-chatroom-messages",
-
-  // Outgoing
   NewChatMessage = "new-chat-message",
 }
 
 export function initializeChatroomManager() {
-  subscriber.on(ChatroomSocketMessages.SendChatMessage, handleSendChatMessage);
-  subscriber.on(ChatroomSocketMessages.ListChatrooms, handleListChatrooms);
-  subscriber.on(
-    ChatroomSocketMessages.ListChatroomMessages,
+  subscriber.subscribe(
+    ChatroomSocketRequests.SendChatMessage,
+    handleSendChatMessage
+  );
+  subscriber.subscribe(
+    ChatroomSocketRequests.ListChatrooms,
+    handleListChatrooms
+  );
+  subscriber.subscribe(
+    ChatroomSocketRequests.ListChatroomMessages,
     handleListChatroomMessages
   );
 }
