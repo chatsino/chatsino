@@ -17,7 +17,7 @@ describe("Auth Routes", () => {
   const signupRoute = "/api/auth/signup";
   const signinRoute = "/api/auth/signin";
 
-  describe("signupRoute", () => {
+  describe("/api/auth/signup", () => {
     it("should create a client and assign a token successfully.", async () => {
       const username = CHANCE.word({ length: 12 });
       const password = CHANCE.word({ length: 8 });
@@ -74,7 +74,7 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("signinRoute", () => {
+  describe("/api/auth/signin", () => {
     it("should assign a token successfully.", async () => {
       const client = await signin(existingUsername, existingPassword);
 
@@ -117,7 +117,7 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("signoutRoute", () => {
+  describe("/api/auth/signout", () => {
     it("should revoke a token successfully.", async () => {
       await signin(existingUsername, existingPassword);
       const client = (await validate()) as Client;
@@ -139,7 +139,7 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("validateRoute", () => {
+  describe("/api/auth/validate", () => {
     it("should retrieve a client only when a user is signed in.", async () => {
       const clientBefore = (await validate()) as Client;
       expect(clientBefore).toBeNull();
@@ -154,7 +154,7 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("ticketRoute", () => {
+  describe("/api/auth/ticket", () => {
     it("should issue a ticket successfully.", async () => {
       await signin(existingUsername, existingPassword);
       const ticket = await getTicket();
