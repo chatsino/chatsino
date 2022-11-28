@@ -1,6 +1,6 @@
 import Chance from "chance";
 import { makeRequest } from "../utils";
-import type { SafeClient } from "models";
+import type { Client } from "persistence";
 
 const CHANCE = new Chance();
 
@@ -15,7 +15,7 @@ describe("Auth Routes", () => {
     it("should create a client and assign a token successfully.", async () => {
       const username = CHANCE.word({ length: 12 });
       const password = CHANCE.word({ length: 8 });
-      const { client } = await makeRequest<{ client: SafeClient }>(
+      const { client } = await makeRequest<{ client: Client }>(
         "post",
         "/api/auth/signup",
         {
@@ -36,7 +36,7 @@ describe("Auth Routes", () => {
       const password = CHANCE.word({ length: 8 });
 
       try {
-        await makeRequest<{ client: SafeClient }>("post", signupRoute, {
+        await makeRequest<{ client: Client }>("post", signupRoute, {
           username,
           password,
           passwordAgain: CHANCE.word({ length: 8 }),
@@ -52,7 +52,7 @@ describe("Auth Routes", () => {
       const password = CHANCE.word({ length: 8 });
 
       try {
-        await makeRequest<{ client: SafeClient }>("post", signupRoute, {
+        await makeRequest<{ client: Client }>("post", signupRoute, {
           username: existingUsername,
           password,
           passwordAgain: password,
@@ -69,7 +69,7 @@ describe("Auth Routes", () => {
 
   describe("signinRoute", () => {
     it("should assign a token successfully.", async () => {
-      const { client } = await makeRequest<{ client: SafeClient }>(
+      const { client } = await makeRequest<{ client: Client }>(
         "post",
         signinRoute,
         {
@@ -83,7 +83,7 @@ describe("Auth Routes", () => {
 
     it("should fail to assign a token if the body validation fails.", async () => {
       try {
-        await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+        await makeRequest<{ client: Client }>("post", signinRoute, {
           username: existingUsername,
         });
       } catch (error) {
@@ -97,7 +97,7 @@ describe("Auth Routes", () => {
 
     it("should fail to assign a token if password validation fails.", async () => {
       try {
-        await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+        await makeRequest<{ client: Client }>("post", signinRoute, {
           username: existingUsername,
           password: CHANCE.word({ length: 8 }),
         });
@@ -110,7 +110,7 @@ describe("Auth Routes", () => {
 
     it("should fail to assign a token if no such client with username exists.", async () => {
       try {
-        await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+        await makeRequest<{ client: Client }>("post", signinRoute, {
           username: CHANCE.word({ length: 12 }),
           password: CHANCE.word({ length: 8 }),
         });
@@ -124,7 +124,7 @@ describe("Auth Routes", () => {
 
   describe("signoutRoute", () => {
     it("should revoke a token successfully.", async () => {
-      await makeRequest<{ client: SafeClient }>("post", signinRoute, {
+      await makeRequest<{ client: Client }>("post", signinRoute, {
         username: existingUsername,
         password: existingPassword,
       });

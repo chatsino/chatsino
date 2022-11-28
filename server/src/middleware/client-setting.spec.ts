@@ -6,7 +6,7 @@ import { clientSettingMiddleware } from "./client-setting";
 
 const CHANCE = new Chance();
 
-const SAMPLE_AUTHENTICATED_CLIENT = TestGenerator.createSafeClient({
+const SAMPLE_AUTHENTICATED_CLIENT = TestGenerator.createClient({
   username: CHANCE.name(),
   permissionLevel: "admin:unlimited",
 });

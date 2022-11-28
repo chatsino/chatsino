@@ -2,8 +2,8 @@ import { validateTicket } from "auth";
 import * as config from "config";
 import { Request } from "express";
 import { createLogger } from "logger";
-import { SafeClient } from "models";
-import { publisher, subscriber } from "persistence";
+import { Client } from "persistence";
+import { PUBLISHER, SUBSCRIBER } from "persistence";
 import {
   socketErrorResponseSchema,
   socketSuccessResponseSchema,
@@ -18,7 +18,7 @@ export interface SocketRequest {
 }
 
 export interface SourcedSocketRequest extends SocketRequest {
-  from: SafeClient;
+  from: Client;
 }
 
 export interface SocketResponse {
@@ -42,16 +42,16 @@ export enum SocketResponseKind {
 export const SOCKETS_LOGGER = createLogger("Sockets");
 
 export const WEBSOCKET_SERVER = new WebSocketServer({ noServer: true });
-export const WEBSOCKET_TO_CLIENT_MAP = new Map<WebSocket, SafeClient>();
+export const WEBSOCKET_TO_CLIENT_MAP = new Map<WebSocket, Client>();
 export const WEBSOCKET_TO_ALIVE_MAP = new Map<WebSocket, boolean>();
 
 export function initializeSocketServer() {
   WEBSOCKET_SERVER.on("connection", handleConnection);
 
-  subscriber.subscribe(SocketResponseKind.SuccessResponse, (message) =>
+  SUBSCRIBER.subscribe(SocketResponseKind.SuccessResponse, (message) =>
     sendSuccessSocketResponse(JSON.parse(message))
   );
-  subscriber.subscribe(SocketResponseKind.ErrorResponse, (message) =>
+  SUBSCRIBER.subscribe(SocketResponseKind.ErrorResponse, (message) =>
     sendErrorSocketResponse(JSON.parse(message))
   );
 }
@@ -60,7 +60,7 @@ export async function createSocket(
   request: Request,
   socket: Duplex,
   head: Buffer,
-  client: SafeClient
+  client: Client
 ) {
   const websocket = await new Promise<WebSocket>((resolve) =>
     WEBSOCKET_SERVER.handleUpgrade(request, socket, head, resolve)
@@ -136,7 +136,7 @@ export async function handleSocketMessage(websocket: WebSocket, data: RawData) {
       from: client,
     });
 
-    publisher.publish(sourcedSocketRequest.kind, JSON.stringify(message));
+    PUBLISHER.publish(sourcedSocketRequest.kind, JSON.stringify(message));
   } catch (error) {
     SOCKETS_LOGGER.error({ error }, "Failed to handle a client message.");
   }

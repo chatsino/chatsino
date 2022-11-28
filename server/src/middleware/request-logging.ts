@@ -6,7 +6,7 @@ const INCOMING_REQUEST_LOGGER = createLogger("Incoming Request");
 
 export function requestLoggingMiddleware(
   req: AuthenticatedRequest,
-  res: Response,
+  _: Response,
   next: NextFunction
 ) {
   if (process.env.NODE_ENV === "development") {

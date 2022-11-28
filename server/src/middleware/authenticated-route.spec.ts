@@ -25,7 +25,7 @@ describe("authenticatedRouteMiddleware", () => {
   it("should allow a client to access a resource if their permission level matches the requirement", () => {
     const middleware = authenticatedRouteMiddleware("admin:limited");
     const request = {
-      chatsinoClient: TestGenerator.createSafeClient(),
+      chatsinoClient: TestGenerator.createClient(),
     } as AuthenticatedRequest;
     const response = null as unknown as Response;
     const next = jest.fn();
@@ -38,7 +38,7 @@ describe("authenticatedRouteMiddleware", () => {
   it("should prevent a client from accessing a resource if their permission level does not match the requirement", () => {
     const middleware = authenticatedRouteMiddleware("admin:unlimited");
     const request = {
-      chatsinoClient: TestGenerator.createSafeClient({
+      chatsinoClient: TestGenerator.createClient({
         permissionLevel: "admin:limited",
       }),
     } as AuthenticatedRequest;

@@ -9,7 +9,7 @@ import {
   createClient,
   IncorrectPasswordError,
   verifyClientPassword,
-} from "models";
+} from "persistence";
 import { clientSigninSchema, clientSignupSchema } from "schemas";
 
 export const AUTH_ROUTER_LOGGER = createLogger("Auth Router");

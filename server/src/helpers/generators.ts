@@ -1,10 +1,12 @@
 import Chance from "chance";
-import type { Client, SafeClient } from "models";
+import type { FullClient, Client } from "persistence";
 
 const CHANCE = new Chance();
 
 export class TestGenerator {
-  public static createClient(overrides: Partial<Client> = {}): Client {
+  public static createFullClient(
+    overrides: Partial<FullClient> = {}
+  ): FullClient {
     return {
       id: CHANCE.integer(),
       username: CHANCE.name(),
@@ -18,12 +20,12 @@ export class TestGenerator {
     };
   }
 
-  public static createSafeClient(overrides: Partial<Client> = {}): SafeClient {
+  public static createClient(overrides: Partial<FullClient> = {}): Client {
     const {
       hash: _,
       salt: __,
       ...safeClient
-    } = TestGenerator.createClient(overrides);
+    } = TestGenerator.createFullClient(overrides);
     return safeClient;
   }
 }

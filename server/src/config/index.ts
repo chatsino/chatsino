@@ -1,5 +1,6 @@
 import path from "path";
 
+// App
 export const VERSION = process.env.VERSION;
 export const PORT = process.env.PORT;
 

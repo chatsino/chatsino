@@ -1,7 +1,7 @@
 import * as config from "config";
 import { Response } from "express";
-import { getClientByIdentifier, SafeClient } from "models";
-import { ensureRedisInitialized, jwtRedis } from "persistence";
+import { getClientByIdentifier, Client } from "persistence";
+import { ensureCacheConnected, JWT_REDIS } from "persistence";
 import { clientSchema } from "schemas";
 
 export const TOKEN_KEY = "token";
@@ -11,9 +11,9 @@ export async function createToken(
   values: Record<string, unknown> = {},
   expiresIn: number
 ) {
-  ensureRedisInitialized();
+  ensureCacheConnected();
 
-  const token = await jwtRedis!.sign(
+  const token = await JWT_REDIS!.sign(
     {
       jti: label,
       ...values,
@@ -26,21 +26,21 @@ export async function createToken(
 }
 
 export function verifyToken(tokenString: string) {
-  ensureRedisInitialized();
-  return jwtRedis!.verify(tokenString, config.JWT_SECRET);
+  ensureCacheConnected();
+  return JWT_REDIS!.verify(tokenString, config.JWT_SECRET);
 }
 
 export function decodeToken(tokenString: string) {
-  ensureRedisInitialized();
-  return jwtRedis!.decode(tokenString);
+  ensureCacheConnected();
+  return JWT_REDIS!.decode(tokenString);
 }
 
 export function destroyToken(label: string) {
-  ensureRedisInitialized();
-  return jwtRedis!.destroy(label);
+  ensureCacheConnected();
+  return JWT_REDIS!.destroy(label);
 }
 
-export async function assignToken(res: Response, client: SafeClient) {
+export async function assignToken(res: Response, client: Client) {
   const token = await createToken(
     `Tokens/Access/${client.username}`,
     client,
@@ -50,7 +50,7 @@ export async function assignToken(res: Response, client: SafeClient) {
   return res.cookie(TOKEN_KEY, token, { httpOnly: true, sameSite: "strict" });
 }
 
-export async function revokeToken(res: Response, client: SafeClient) {
+export async function revokeToken(res: Response, client: Client) {
   await destroyToken(`Tokens/Access/${client.username}`);
   return res.clearCookie(TOKEN_KEY);
 }

@@ -1,4 +1,4 @@
-import { SafeClient } from "models";
+import { Client } from "persistence";
 import * as yup from "yup";
 import { clientSchema } from "./client.schema";
 
@@ -8,7 +8,7 @@ export interface SocketMessage {
 }
 
 export interface SourcedSocketMessage extends SocketMessage {
-  from: SafeClient;
+  from: Client;
 }
 
 // #region Incoming

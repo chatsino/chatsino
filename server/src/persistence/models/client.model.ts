@@ -10,7 +10,7 @@ export type ClientPermissionLevel =
   | "admin:limited"
   | "admin:unlimited";
 
-export interface Client {
+export interface FullClient {
   id: number;
   username: string;
   permissionLevel: ClientPermissionLevel;
@@ -21,7 +21,7 @@ export interface Client {
   updatedAt: string;
 }
 
-export type SafeClient = Omit<Client, "hash" | "salt">;
+export type Client = Omit<FullClient, "hash" | "salt">;
 
 export type ClientIdentifier = number | string;
 
@@ -74,7 +74,7 @@ export async function createClient(
 
     const { salt, hash } = await generatePasswordSaltHash(password);
 
-    await postgres<Client>("clients").insert({
+    await postgres<FullClient>("clients").insert({
       username,
       hash,
       salt,
@@ -103,12 +103,12 @@ export async function createClient(
 
 export async function updateClient(
   clientIdentifier: ClientIdentifier,
-  update: Partial<Client>
+  update: Partial<FullClient>
 ) {
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    await postgres<Client>("clients").where("id", client.id).update(update);
+    await postgres<FullClient>("clients").where("id", client.id).update(update);
 
     return true;
   } else {
@@ -120,7 +120,7 @@ export async function deleteClient(clientIdentifier: ClientIdentifier) {
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    await postgres<Client>("clients").where("id", client.id).delete();
+    await postgres<FullClient>("clients").where("id", client.id).delete();
 
     return true;
   } else {
@@ -135,7 +135,7 @@ export async function verifyClientPassword(
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    const unsafeClient = await postgres<Client>("clients")
+    const unsafeClient = await postgres<FullClient>("clients")
       .where("id", client.id)
       .first();
 
@@ -155,7 +155,7 @@ export async function verifyClientPassword(
   }
 }
 
-export function cacheClient(client: SafeClient) {
+export function cacheClient(client: Client) {
   const clientString = JSON.stringify(client);
 
   return Promise.all([
@@ -172,7 +172,7 @@ export function cacheClient(client: SafeClient) {
   ]);
 }
 
-export function safetifyClient(client: Client): SafeClient {
+export function safetifyClient(client: FullClient): Client {
   const { hash: _, salt: __, ...safeClient } = client;
   return safeClient;
 }
@@ -181,9 +181,9 @@ export async function getClientById(clientId: number, breakCache = false) {
   const cached = await getCachedValue(`Client/ById/${clientId}`);
 
   if (cached && !breakCache) {
-    return cached as SafeClient;
+    return cached as Client;
   } else {
-    const client = await postgres<Client>("clients")
+    const client = await postgres<FullClient>("clients")
       .where("id", clientId)
       .first();
 
@@ -204,9 +204,9 @@ export async function getClientByUsername(
   const cached = await getCachedValue(`Client/ByUsername/${username}`);
 
   if (cached && !breakCache) {
-    return cached as SafeClient;
+    return cached as Client;
   } else {
-    const client = await postgres<Client>("clients")
+    const client = await postgres<FullClient>("clients")
       .where("username", username)
       .first();
 
@@ -247,7 +247,7 @@ export async function chargeClient(
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    await postgres<Client>("clients")
+    await postgres<FullClient>("clients")
       .where("id", client.id)
       .decrement("chips", amount);
 
@@ -267,7 +267,7 @@ export async function payClient(
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    await postgres<Client>("clients")
+    await postgres<FullClient>("clients")
       .where("id", client.id)
       .increment("chips", amount);
 

@@ -1,7 +1,11 @@
 import * as config from "config";
 import { Request } from "express";
 import { decrypt, encrypt, now } from "helpers";
-import { ClientNotFoundError, SafeClient, getClientByIdentifier } from "models";
+import {
+  ClientNotFoundError,
+  Client,
+  getClientByIdentifier,
+} from "persistence";
 import querystring from "node:querystring";
 import { clearCachedValue, getCachedValue, setCachedValue } from "persistence";
 
@@ -42,9 +46,7 @@ export async function validateTicket(request: Request) {
     return null;
   }
 
-  const client = (await getCachedValue(
-    `Tickets/${encryptedTicket}`
-  )) as SafeClient;
+  const client = (await getCachedValue(`Tickets/${encryptedTicket}`)) as Client;
 
   if (!client) {
     return null;

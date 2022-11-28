@@ -1,4 +1,5 @@
 import * as config from "config";
+import * as models from "./models";
 import knex from "knex";
 
 export const postgres = knex({
@@ -6,3 +7,7 @@ export const postgres = knex({
   connection: config.POSTGRES_CONNECTION_STRING,
   searchPath: ["knex", "public"],
 });
+
+export function initializeDatabase() {
+  return Promise.all([models.createClientTable()]);
+}

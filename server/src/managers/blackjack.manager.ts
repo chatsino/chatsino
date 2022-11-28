@@ -1,4 +1,4 @@
-import { subscriber } from "persistence";
+import { SUBSCRIBER } from "persistence";
 import { createLogger } from "logger";
 
 export const BLACKJACK_LOGGER = createLogger("Blackjack");
@@ -10,15 +10,15 @@ export enum BlackjackSocketRequests {
 }
 
 export function initializeBlackjackManager() {
-  subscriber.subscribe(
+  SUBSCRIBER.subscribe(
     BlackjackSocketRequests.GetActiveBlackjackGame,
     handleGetActiveBlackjackGame
   );
-  subscriber.subscribe(
+  SUBSCRIBER.subscribe(
     BlackjackSocketRequests.StartBlackjackGame,
     handleStartBlackjackGame
   );
-  subscriber.subscribe(
+  SUBSCRIBER.subscribe(
     BlackjackSocketRequests.TakeBlackjackAction,
     handleTakeBlackjackAction
   );

@@ -1,10 +1,10 @@
-import { createClient, createClientTable, dropClientTable } from "models";
-import { initializeRedis } from "persistence";
+import { createClient, createClientTable, dropClientTable } from "persistence";
+import { initializeCache } from "persistence";
 
 const DEFAULT_PASSWORD = "password";
 
 export async function seed() {
-  await initializeRedis();
+  await initializeCache();
   await dropClientTable();
   await createClientTable();
   await createClient("admin", DEFAULT_PASSWORD, "admin:unlimited");

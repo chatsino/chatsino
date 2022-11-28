@@ -1,4 +1,4 @@
-import { subscriber } from "persistence";
+import { SUBSCRIBER } from "persistence";
 
 export enum ChatroomSocketRequests {
   SendChatMessage = "send-chat-message",
@@ -8,15 +8,15 @@ export enum ChatroomSocketRequests {
 }
 
 export function initializeChatroomManager() {
-  subscriber.subscribe(
+  SUBSCRIBER.subscribe(
     ChatroomSocketRequests.SendChatMessage,
     handleSendChatMessage
   );
-  subscriber.subscribe(
+  SUBSCRIBER.subscribe(
     ChatroomSocketRequests.ListChatrooms,
     handleListChatrooms
   );
-  subscriber.subscribe(
+  SUBSCRIBER.subscribe(
     ChatroomSocketRequests.ListChatroomMessages,
     handleListChatroomMessages
   );
