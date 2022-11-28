@@ -1,9 +1,7 @@
 import path from "path";
 
-// Ports
+export const VERSION = process.env.VERSION;
 export const PORT = process.env.PORT;
-export const POSTGRES_PORT = 5432;
-export const REDIS_PORT = 6379;
 
 // Secrets
 export const JWT_SECRET = process.env.JWT_SECRET ?? "";
@@ -18,10 +16,18 @@ export const SSL_CERTIFICATE_PATH = path.join(
 );
 
 // Postgres
+export const POSTGRES_HOST = process.env.POSTGRES_HOST;
+export const POSTGRES_PORT = 5432;
 export const POSTGRES_CONNECTION_STRING =
   process.env.POSTGRES_CONNECTION_STRING ?? "";
 
-// Cache
+// Redis
+export const REDIS_HOST = process.env.REDIS_HOST;
+export const REDIS_PORT = 6379;
+export const REDIS_CONNECTION_STRING =
+  process.env.REDIS_CONNECTION_STRING ?? "";
+
+// Caching
 export const TICKET_CACHE_TTL_SECONDS = 10;
 export const CLIENT_CACHE_TTL_SECONDS = 60 * 3;
 

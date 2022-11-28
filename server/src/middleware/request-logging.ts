@@ -9,16 +9,19 @@ export function requestLoggingMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  INCOMING_REQUEST_LOGGER.info(
-    {
-      client: req.chatsinoClient ?? null,
-      ip: req.ip,
-      path: req.path,
-      params: req.params,
-      body: req.body,
-      token: req.cookies.token ?? null,
-    },
-    "A new request was made."
-  );
+  if (process.env.NODE_ENV === "development") {
+    INCOMING_REQUEST_LOGGER.info(
+      {
+        client: req.chatsinoClient ?? null,
+        ip: req.ip,
+        path: req.path,
+        params: req.params,
+        body: req.body,
+        token: req.cookies.token ?? null,
+      },
+      "A new request was made."
+    );
+  }
+
   return next();
 }

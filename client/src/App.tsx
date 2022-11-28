@@ -23,11 +23,11 @@ function Inner() {
 
       const handleValidate = async () => {
         try {
-          const { client, chips } = await validate();
+          const client = await validate();
 
           if (client) {
             setClient(client);
-            setChips(chips);
+            setChips(client.chips);
           }
         } catch (error) {
           console.error(error);

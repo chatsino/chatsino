@@ -24,7 +24,7 @@
   },
   "scripts": {
     "start": "HTTPS=true SSL_CRT_FILE=../server/.ssh/localhost.pem SSL_KEY_FILE=../server/.ssh/localhost-key.pem react-scripts start",
-    "build": "react-scripts build && mv ./build ../server/public",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public"

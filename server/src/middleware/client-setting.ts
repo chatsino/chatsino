@@ -1,4 +1,4 @@
-import { validateToken } from "auth";
+import { TOKEN_KEY, validateToken } from "auth";
 import type { NextFunction, Response } from "express";
 import type { AuthenticatedRequest } from "./authenticated-route";
 
@@ -7,7 +7,7 @@ export async function clientSettingMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  const token = req.cookies.token;
+  const token = req.cookies[TOKEN_KEY];
 
   if (!token) {
     req.chatsinoClient = null;
@@ -17,7 +17,7 @@ export async function clientSettingMiddleware(
   const client = await validateToken(token);
 
   if (!client) {
-    res.clearCookie("token");
+    res.clearCookie(TOKEN_KEY);
     req.chatsinoClient = null;
     return next();
   }

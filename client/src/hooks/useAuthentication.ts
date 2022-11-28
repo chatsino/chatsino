@@ -1,19 +1,15 @@
 import { useCallback, useMemo } from "react";
 import { makeRequest } from "helpers";
-import { AuthenticatedClient } from "./useClient";
+import { SafeClient } from "schemas";
 
 export function useAuthentication() {
   const validate = useCallback(async () => {
     try {
-      const response = await makeRequest<{
-        client: AuthenticatedClient;
-        chips: number;
-      }>("get", "/validate");
+      const { client } = await makeRequest<{
+        client: SafeClient;
+      }>("get", "/auth/validate");
 
-      return {
-        client: response.client,
-        chips: response.chips,
-      };
+      return client;
     } catch (error) {
       console.error({ error }, "Unable to validate.");
       throw error;
@@ -22,12 +18,12 @@ export function useAuthentication() {
 
   const signin = useCallback(async (username: string, password: string) => {
     try {
-      await makeRequest<void>("post", "/signin", {
+      await makeRequest<void>("post", "/auth/signin", {
         username,
         password,
       });
 
-      window.location.reload();
+      // window.location.reload();
     } catch (error) {
       console.error({ error }, "Unable to sign in.");
       throw error;
@@ -36,7 +32,7 @@ export function useAuthentication() {
 
   const signout = useCallback(async () => {
     try {
-      await makeRequest<void>("post", "/signout");
+      await makeRequest<void>("post", "/auth/signout");
       window.location.reload();
     } catch (error) {
       console.error({ error }, "Unable to sign out.");
@@ -47,7 +43,7 @@ export function useAuthentication() {
   const signup = useCallback(
     async (username: string, password: string, passwordAgain: string) => {
       try {
-        await makeRequest<void>("post", "/signup", {
+        await makeRequest<void>("post", "/auth/signup", {
           username,
           password,
           passwordAgain,
@@ -66,7 +62,7 @@ export function useAuthentication() {
     try {
       const { ticket } = await makeRequest<{ ticket: string }>(
         "get",
-        "/ticket"
+        "/auth/ticket"
       );
 
       return ticket;

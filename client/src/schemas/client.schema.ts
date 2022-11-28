@@ -1,6 +1,20 @@
 import * as config from "config";
-import type { ClientPermissionLevel } from "models";
 import * as yup from "yup";
+
+export type ClientPermissionLevel =
+  | "visitor"
+  | "user"
+  | "admin:limited"
+  | "admin:unlimited";
+
+export interface SafeClient {
+  id: number;
+  username: string;
+  permissionLevel: ClientPermissionLevel;
+  chips: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const PASSWORD_MESSAGE = `A password must include a minimum of ${config.MINIMUM_PASSWORD_SIZE} characters.`;
 
@@ -19,7 +33,7 @@ export const clientSchema = yup.object({
   id: yup.number().required(),
   username: yup.string().required(),
   permissionLevel: clientPermissionLevelSchema.required(),
-  chips: yup.number().min(0).required(),
+  chips: yup.number().positive().required(),
   createdAt: yup.date().required(),
   updatedAt: yup.date().required(),
 });

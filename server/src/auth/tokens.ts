@@ -4,6 +4,8 @@ import { getClientByIdentifier, SafeClient } from "models";
 import { ensureRedisInitialized, jwtRedis } from "persistence";
 import { clientSchema } from "schemas";
 
+export const TOKEN_KEY = "token";
+
 export async function createToken(
   label: string,
   values: Record<string, unknown> = {},
@@ -45,12 +47,12 @@ export async function assignToken(res: Response, client: SafeClient) {
     config.JWT_ACCESS_EXPIRATON_TIME_SECONDS
   );
 
-  return res.cookie("token", token, { httpOnly: true, sameSite: "strict" });
+  return res.cookie(TOKEN_KEY, token, { httpOnly: true, sameSite: "strict" });
 }
 
 export async function revokeToken(res: Response, client: SafeClient) {
   await destroyToken(`Tokens/Access/${client.username}`);
-  return res.clearCookie("token");
+  return res.clearCookie(TOKEN_KEY);
 }
 
 export async function validateToken(tokenString: string) {
@@ -73,7 +75,7 @@ export async function validateToken(tokenString: string) {
     }
 
     return actualClient;
-  } catch {
+  } catch (error) {
     return null;
   }
 }

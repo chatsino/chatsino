@@ -1,2 +1,2 @@
-export * from "./postgres";
+export * from "./database";
 export * from "./cache";

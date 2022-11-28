@@ -1,8 +1,11 @@
+import * as config from "config";
 import { now } from "helpers";
 import JWTRedis from "jwt-redis";
 import { createClient } from "redis";
 
-export const redis = createClient();
+export const redis = createClient({
+  url: config.REDIS_CONNECTION_STRING,
+});
 export const publisher = redis.duplicate();
 export const subscriber = publisher.duplicate();
 
@@ -52,8 +55,8 @@ export function ensureRedisInitialized() {
   }
 }
 
-export function handleRedisError() {
-  //
+export function handleRedisError(error: unknown) {
+  console.error({ error });
 }
 
 export class RedisNotInitializedError extends Error {}

@@ -1,2 +1,4 @@
-build
 node_modules
+./client/.storybook
+./client/node_modules
+./server/node_modules

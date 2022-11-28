@@ -6,23 +6,12 @@ import React, {
   useMemo,
   useState,
 } from "react";
-
-export type ClientPermissionLevel =
-  | "visitor"
-  | "user"
-  | "admin:limited"
-  | "admin:unlimited";
-
-export interface AuthenticatedClient {
-  id: number;
-  username: string;
-  permissionLevel: ClientPermissionLevel;
-}
+import { SafeClient } from "schemas";
 
 export interface ClientContextType {
-  client: null | AuthenticatedClient;
+  client: null | SafeClient;
   chips: number;
-  setClient: Dispatch<React.SetStateAction<null | AuthenticatedClient>>;
+  setClient: Dispatch<React.SetStateAction<null | SafeClient>>;
   setChips: Dispatch<React.SetStateAction<number>>;
 }
 
@@ -34,7 +23,7 @@ const ClientContext = createContext<ClientContextType>({
 });
 
 export function ClientProvider({ children }: PropsWithChildren) {
-  const [client, setClient] = useState<null | AuthenticatedClient>(null);
+  const [client, setClient] = useState<null | SafeClient>(null);
   const [chips, setChips] = useState(0);
   const value = useMemo(
     () => ({

@@ -10,13 +10,16 @@ const options = {
   bundle: true,
   minify: process.env.NODE_ENV === "production",
   define: {
+    "process.env.NODE_ENV": `"${process.env.NODE_ENV ?? "development"}"`,
+    "process.env.VERSION": `"${package.version}"`,
     "process.env.SCRIPT": process.env.SCRIPT
       ? `"${process.env.SCRIPT}"`
       : undefined,
-    "process.env.NODE_ENV": `"${process.env.NODE_ENV ?? "development"}"`,
-    "process.env.VERSION": `"${package.version}"`,
     "process.env.PORT": process.env.PORT,
+    "process.env.POSTGRES_HOST": `"${process.env.POSTGRES_HOST}"`,
     "process.env.POSTGRES_CONNECTION_STRING": `"${process.env.POSTGRES_CONNECTION_STRING}"`,
+    "process.env.REDIS_HOST": `"${process.env.REDIS_HOST}"`,
+    "process.env.REDIS_CONNECTION_STRING": `"${process.env.REDIS_CONNECTION_STRING}"`,
     "process.env.JWT_SECRET": `"${process.env.JWT_SECRET}"`,
     "process.env.COOKIE_SECRET": `"${process.env.COOKIE_SECRET}"`,
     "process.env.TICKET_SECRET": `"${process.env.TICKET_SECRET}"`,

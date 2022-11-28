@@ -25,7 +25,7 @@ export function decrypt(text: { iv: string; encryptedData: string }) {
   return decrypted.toString();
 }
 
-export function generatePasswordSalt(input: string) {
+export function generatePasswordSalt() {
   return crypto.randomBytes(config.PASSWORD_SALT_SIZE).toString("hex");
 }
 
@@ -41,7 +41,7 @@ export function generatePasswordHash(
 }
 
 export async function generatePasswordSaltHash(input: string) {
-  const salt = generatePasswordSalt(input);
+  const salt = generatePasswordSalt();
   const hash = await generatePasswordHash(input, salt);
 
   return { salt, hash };
