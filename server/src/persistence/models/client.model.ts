@@ -51,16 +51,14 @@ export async function createClientTable() {
 }
 
 export async function dropClientTable() {
-  if (process.env.NODE_ENV !== "production") {
-    const exists = await postgres.schema.hasTable("clients");
+  const exists = await postgres.schema.hasTable("clients");
 
-    if (exists) {
-      CLIENT_MODEL_LOGGER.info("Dropping clients table.");
+  if (exists) {
+    CLIENT_MODEL_LOGGER.info("Dropping clients table.");
 
-      return postgres.schema.dropTable("clients");
-    } else {
-      CLIENT_MODEL_LOGGER.info("Clients table does not exist.");
-    }
+    return postgres.schema.dropTable("clients");
+  } else {
+    CLIENT_MODEL_LOGGER.info("Clients table does not exist.");
   }
 }
 

@@ -12,7 +12,7 @@ import {
 } from "persistence";
 import { clientSigninSchema, clientSignupSchema } from "schemas";
 
-export const AUTH_ROUTER_LOGGER = createLogger("Auth Router");
+export const AUTH_ROUTER_LOGGER = createLogger("Authentication");
 
 export function createAuthRouter() {
   const authRouter = Router();

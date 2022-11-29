@@ -31,26 +31,18 @@ services:
       dockerfile: Dockerfile
     ports:
       - 3001:3001
-
-  nginx:
-    container_name: nginx
-    image: nginx:1.15-alpine
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/snippets:/etc/nginx/snippets
-      - ./nginx/ssl:/etc/ssl/certs
-      - static-html:/var/www/html
+    depends_on:
+      - database
+      - cache
 
   client:
     container_name: client
     build:
       context: ./client
       dockerfile: Dockerfile
-    volumes:
-      - static-html:/var/www/html
+    ports:
+      - 80:80
+      - 443:443
 
   adminer:
     container_name: adminer
@@ -69,6 +61,3 @@ services:
       - cache
     ports:
       - 8001:8001
-
-volumes:
-  static-html:

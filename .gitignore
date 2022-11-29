@@ -18,7 +18,7 @@ database
 cache
 
 # nginx
-nginx/ssl
+client/nginx/ssl
 
 # misc
 /**/.DS_Store

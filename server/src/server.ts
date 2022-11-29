@@ -22,9 +22,14 @@ export async function startServer() {
     "Chatsino started up."
   );
 
-  SERVER_LOGGER.info("Waiting for database and cache.");
+  SERVER_LOGGER.info(
+    {
+      database: { host: config.POSTGRES_HOST, port: config.POSTGRES_PORT },
+      cache: { host: config.REDIS_HOST, port: config.REDIS_PORT },
+    },
+    "Waiting for database and cache."
+  );
   await waitForDatabaseAndCache();
-  SERVER_LOGGER.info("Database and cache are available.");
 
   SERVER_LOGGER.info("Initializing postgres.");
   await initializeDatabase();
@@ -68,8 +73,12 @@ function applyMiddleware(app: Express) {
 }
 
 function applyRoutes(app: Express) {
-  app.use("/admin", routes.createAdminRouter());
-  app.use("/auth", routes.createAuthRouter());
+  const api = Router();
+
+  api.use("/admin", routes.createAdminRouter());
+  api.use("/auth", routes.createAuthRouter());
+
+  return app.use("/api", api);
 }
 
 function initializeFeatureManagers() {

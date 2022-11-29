@@ -38,7 +38,7 @@ export async function issueTicket(username: string, remoteAddress: string) {
 }
 
 export async function validateTicket(request: Request) {
-  const { "/?ticket": ticketQueryParam } = querystring.parse(request.url);
+  const { "/api?ticket": ticketQueryParam } = querystring.parse(request.url);
   const encryptedTicket = ticketQueryParam as string;
   const { remoteAddress } = request.socket;
 
