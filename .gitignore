@@ -17,6 +17,9 @@ database
 # cache
 cache
 
+# nginx
+nginx/ssl
+
 # misc
 /**/.DS_Store
 /**/.env.local
