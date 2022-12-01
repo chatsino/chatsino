@@ -20,11 +20,29 @@ jest.mock("auth", () => ({
 }));
 
 describe("clientSettingMiddleware", () => {
-  it("should properly set the request client if everything works out", async () => {
+  it("should properly set the request client if everything works out (with header)", async () => {
     const request = {
       chatsinoClient: null,
+      headers: {
+        authorization: "AN_ACCESS_TOKEN",
+      },
+      cookies: {},
+    } as AuthenticatedRequest;
+    const response = null as unknown as Response;
+    const next = jest.fn();
+
+    await clientSettingMiddleware(request, response, next);
+
+    expect(request.chatsinoClient).toEqual(SAMPLE_AUTHENTICATED_CLIENT);
+    expect(next).toHaveBeenCalled();
+  });
+
+  it("should properly set the request client if everything works out (with cookie)", async () => {
+    const request = {
+      chatsinoClient: null,
+      headers: {},
       cookies: {
-        accessToken: "AN_ACCESS_TOKEN",
+        token: "AN_ACCESS_TOKEN",
       },
     } as AuthenticatedRequest;
     const response = null as unknown as Response;
@@ -39,6 +57,7 @@ describe("clientSettingMiddleware", () => {
   it("should set a client to null if there is no access token present", async () => {
     const request = {
       client: undefined,
+      headers: {},
       cookies: {},
     } as unknown as AuthenticatedRequest;
     const response = null as unknown as Response;
@@ -55,8 +74,9 @@ describe("clientSettingMiddleware", () => {
 
     const request = {
       client: undefined,
+      headers: {},
       cookies: {
-        accessToken: "AN_ACCESS_TOKEN",
+        token: "AN_ACCESS_TOKEN",
       },
     } as unknown as AuthenticatedRequest;
     const response = {
@@ -67,7 +87,7 @@ describe("clientSettingMiddleware", () => {
     await clientSettingMiddleware(request, response, next);
 
     expect(request.chatsinoClient).toBeNull();
-    expect(response.clearCookie).toHaveBeenCalledWith("accessToken");
+    expect(response.clearCookie).toHaveBeenCalledWith("token");
     expect(next).toHaveBeenCalled();
   });
 });

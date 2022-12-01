@@ -52,6 +52,7 @@ export enum SocketResponseKind {
   BroadcastToSubscription = "broadcast-to-subscription",
   BroadcastToAll = "broadcast-to-all",
   ClientSubscribed = "client-subscribed",
+  ClientUnsubscribed = "client-unsubscribed",
 }
 
 export const SOCKETS_LOGGER = createLogger("Sockets");
@@ -82,6 +83,9 @@ export class SocketServer {
     );
     SUBSCRIBER.subscribe(SocketResponseKind.ClientSubscribed, (message) =>
       this.handleClientSubscription(JSON.parse(message))
+    );
+    SUBSCRIBER.subscribe(SocketResponseKind.ClientUnsubscribed, (message) =>
+      this.handleClientUnsubscription(JSON.parse(message))
     );
   }
 
@@ -278,11 +282,44 @@ export class SocketServer {
           to: client.id,
           kind: SocketResponseKind.ClientSubscribed,
           data: {
-            message: `${client.username} is subscribed to ${subscription}`,
+            message: `${client.username} is subscribed to ${subscription}.`,
           },
         });
       }
     }
+  }
+
+  private async handleClientUnsubscription({
+    kind,
+    args,
+    from,
+  }: SourcedSocketMessage) {
+    SOCKETS_LOGGER.info(
+      { kind, args, from: from.id },
+      "A client has unsubscribed."
+    );
+
+    const { subscription } = await clientSubscriptionSchema.validate(args);
+
+    if (!this.subscriptions[subscription]) {
+      return this.sendErrorResponse({
+        to: from.id,
+        kind: SocketResponseKind.ClientUnsubscribed,
+        error: `Subscription "${subscription}" does not exist.`,
+      });
+    }
+
+    for (const websocket of this.getClientWebsockets(from.id)) {
+      this.subscriptions[subscription].delete(websocket);
+    }
+
+    return this.sendSuccessResponse({
+      to: from.id,
+      kind: SocketResponseKind.ClientUnsubscribed,
+      data: {
+        message: `${from.username} is no longer subscribed to ${subscription}.`,
+      },
+    });
   }
 
   private clearSubscriptions(websocket: WebSocket) {
