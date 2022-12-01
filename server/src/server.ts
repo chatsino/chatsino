@@ -12,7 +12,7 @@ import {
   waitForDatabaseAndCache,
 } from "persistence";
 import * as routes from "routes";
-import { handleUpgrade, initializeSocketServer } from "sockets";
+import { SocketServer } from "socket-server";
 
 const SERVER_LOGGER = createLogger("Server");
 
@@ -42,12 +42,10 @@ export async function startServer() {
   applyMiddleware(app);
   applyRoutes(app);
 
-  SERVER_LOGGER.info("Initializing server.");
+  SERVER_LOGGER.info("Initializing HTTPS and WebSocket servers.");
   const server = createServer(app);
-
-  SERVER_LOGGER.info("Adding websocket capabilities.");
-  initializeSocketServer();
-  server.on("upgrade", handleUpgrade);
+  const socketServer = new SocketServer();
+  server.on("upgrade", socketServer.handleUpgrade.bind(socketServer));
 
   SERVER_LOGGER.info("Initializing feature managers.");
   initializeFeatureManagers();

@@ -26,6 +26,7 @@ services:
 
   server:
     container_name: server
+    restart: unless-stopped
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -37,6 +38,7 @@ services:
 
   client:
     container_name: client
+    restart: always
     build:
       context: ./client
       dockerfile: Dockerfile
@@ -47,7 +49,7 @@ services:
   adminer:
     container_name: adminer
     image: adminer
-    restart: always
+    restart: unless-stopped
     depends_on:
       - database
     ports:
@@ -56,7 +58,7 @@ services:
   redisinsight:
     container_name: redisinsight
     image: redislabs/redisinsight
-    restart: always
+    restart: unless-stopped
     depends_on:
       - cache
     ports:
