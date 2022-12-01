@@ -37,10 +37,11 @@ export async function signupRoute(req: Request, res: Response) {
     const { username, password } = await clientSignupSchema.validate(req.body);
     const client = await createClient(username, password);
 
-    await assignToken(res, client);
+    const token = await assignToken(res, client);
 
     return successResponse(res, "Successfully signed up.", {
       client,
+      token,
     });
   } catch (error) {
     AUTH_ROUTER_LOGGER.error({ error }, "A request to sign up failed.");
@@ -62,8 +63,7 @@ export async function signinRoute(req: Request, res: Response) {
       throw new Error();
     }
 
-    const token =
-      (await assignToken(res, client)) ?? "<assigned to httpOnly cookie>";
+    const token = await assignToken(res, client);
 
     return successResponse(res, "Successfully signed in.", { client, token });
   } catch (error) {

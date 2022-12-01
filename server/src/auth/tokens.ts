@@ -49,9 +49,7 @@ export async function assignToken(res: Response, client: Client) {
 
   res.cookie(TOKEN_KEY, token, { httpOnly: true, sameSite: "strict" });
 
-  if (process.env.NODE_ENV === "test") {
-    return token;
-  }
+  return token;
 }
 
 export async function revokeToken(res: Response, client: Client) {

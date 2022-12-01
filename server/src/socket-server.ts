@@ -2,11 +2,13 @@ import { validateTicket } from "auth";
 import * as config from "config";
 import { Request } from "express";
 import { createLogger } from "logger";
-import { Client } from "persistence";
+import { Client, ClientIdentifier } from "persistence";
 import { PUBLISHER, SUBSCRIBER } from "persistence";
 import {
+  clientSubscriptionSchema,
   socketErrorResponseSchema,
   socketSuccessResponseSchema,
+  SourcedSocketMessage,
   sourcedSocketRequestSchema,
 } from "schemas";
 import { Duplex } from "stream";
@@ -34,39 +36,64 @@ export interface SocketErrorResponse extends SocketResponse {
   error: unknown;
 }
 
+export interface SocketClientSubscription {
+  clientIdentifier: ClientIdentifier;
+  subscription: string;
+}
+
+export interface SocketSubscriptionPublished {
+  subscription: string;
+  data: object;
+}
+
 export enum SocketResponseKind {
   SuccessResponse = "success-response",
   ErrorResponse = "error-response",
+  BroadcastToSubscription = "broadcast-to-subscription",
+  BroadcastToAll = "broadcast-to-all",
+  ClientSubscribed = "client-subscribed",
 }
 
 export const SOCKETS_LOGGER = createLogger("Sockets");
 
-export class CannotVerifyMessageError extends Error {}
-
 export class SocketServer {
-  server = new WebSocketServer({ noServer: true });
-  clients = new Map<WebSocket, Client>();
-  heartbeats = new Map<WebSocket, boolean>();
-  subscriptions: Record<string, Set<WebSocket>> = {};
-  checkingConnectionStatuses: NodeJS.Timeout;
+  private server = new WebSocketServer({ noServer: true });
+  private clients = new Map<WebSocket, Client>();
+  private heartbeats = new Map<WebSocket, boolean>();
+  private subscriptions: Record<string, Set<WebSocket>> = {};
+  public checkingConnectionStatuses: NodeJS.Timeout;
 
   public constructor() {
+    this.server.on("connection", this.handleConnection.bind(this));
+    this.checkingConnectionStatuses = this.checkConnectionStatuses();
+
     SUBSCRIBER.subscribe(SocketResponseKind.SuccessResponse, (message) =>
       this.sendSuccessResponse(JSON.parse(message))
     );
     SUBSCRIBER.subscribe(SocketResponseKind.ErrorResponse, (message) =>
       this.sendErrorResponse(JSON.parse(message))
     );
-
-    this.server.on("connection", this.handleConnection.bind(this));
-
-    this.checkingConnectionStatuses = this.checkConnectionStatuses();
+    SUBSCRIBER.subscribe(
+      SocketResponseKind.BroadcastToSubscription,
+      (message) => this.broadcastToSubscription(JSON.parse(message))
+    );
+    SUBSCRIBER.subscribe(SocketResponseKind.BroadcastToAll, (message) =>
+      this.broadcastToAll(JSON.parse(message))
+    );
+    SUBSCRIBER.subscribe(SocketResponseKind.ClientSubscribed, (message) =>
+      this.handleClientSubscription(JSON.parse(message))
+    );
   }
 
   public async handleUpgrade(request: Request, socket: Duplex, head: Buffer) {
+    SOCKETS_LOGGER.info(
+      "Received a request to upgrade to a WebSocket connection."
+    );
+
     const client = await validateTicket(request);
 
     if (!client) {
+      SOCKETS_LOGGER.info("The request to upgrade was denied.");
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
       return socket.destroy();
     }
@@ -104,6 +131,7 @@ export class SocketServer {
     );
 
     this.clients.delete(websocket);
+    this.clearSubscriptions(websocket);
   }
 
   private heartbeart(websocket: WebSocket) {
@@ -131,20 +159,40 @@ export class SocketServer {
         from: client,
       });
 
-      PUBLISHER.publish(sourcedSocketRequest.kind, JSON.stringify(message));
+      SOCKETS_LOGGER.info({ kind: message.kind }, "Publishing a message.");
+
+      PUBLISHER.publish(
+        sourcedSocketRequest.kind,
+        JSON.stringify(sourcedSocketRequest)
+      );
     } catch (error) {
       SOCKETS_LOGGER.error({ error }, "Failed to handle a client message.");
     }
   }
 
-  private sendSocketMessage<T extends object>(clientId: number, message: T) {
-    const websocketEntry = [...this.clients.entries()].find(
-      (entry) => entry[1].id === clientId
-    );
+  private getClientWebsockets(clientIdentifier: ClientIdentifier) {
+    return [...this.clients.entries()]
+      .filter((entry) => {
+        const [_, client] = entry;
 
-    if (websocketEntry) {
-      const [websocket] = websocketEntry;
+        SOCKETS_LOGGER.info({
+          id: client.id,
+          username: client.username,
+          clientIdentifier,
+        });
 
+        return typeof clientIdentifier === "number"
+          ? client.id === clientIdentifier
+          : client.username === clientIdentifier;
+      })
+      .map((entry) => entry[0]);
+  }
+
+  private sendSocketMessage<T extends object>(
+    clientIdentifier: ClientIdentifier,
+    message: T
+  ) {
+    for (const websocket of this.getClientWebsockets(clientIdentifier)) {
       if (websocket.readyState === websocket.OPEN) {
         websocket.send(JSON.stringify(message));
       }
@@ -183,11 +231,63 @@ export class SocketServer {
     }
   }
 
-  private broadcastSocketMessage<T extends object>(message: T) {
+  private broadcastToSubscription({
+    subscription,
+    data,
+  }: SocketSubscriptionPublished) {
+    const subscribers = this.subscriptions[subscription];
+
+    for (const websocket of [...subscribers]) {
+      if (websocket.readyState === websocket.OPEN) {
+        websocket.send(JSON.stringify(data));
+      }
+    }
+  }
+
+  private broadcastToAll(data: object) {
     for (const websocket of this.clients.keys()) {
       if (websocket.readyState === websocket.OPEN) {
-        websocket.send(JSON.stringify(message));
+        websocket.send(JSON.stringify(data));
       }
+    }
+  }
+
+  private async handleClientSubscription({
+    kind,
+    args,
+    from,
+  }: SourcedSocketMessage) {
+    SOCKETS_LOGGER.info(
+      { kind, args, from: from.id },
+      "A client has subscribed."
+    );
+
+    const { subscription } = await clientSubscriptionSchema.validate(args);
+
+    if (!this.subscriptions[subscription]) {
+      this.subscriptions[subscription] = new Set();
+    }
+
+    for (const websocket of this.getClientWebsockets(from.id)) {
+      this.subscriptions[subscription].add(websocket);
+
+      const client = this.clients.get(websocket);
+
+      if (client) {
+        return this.sendSuccessResponse({
+          to: client.id,
+          kind: SocketResponseKind.ClientSubscribed,
+          data: {
+            message: `${client.username} is subscribed to ${subscription}`,
+          },
+        });
+      }
+    }
+  }
+
+  private clearSubscriptions(websocket: WebSocket) {
+    for (const subscribers of Object.values(this.subscriptions)) {
+      subscribers.delete(websocket);
     }
   }
 
@@ -205,6 +305,7 @@ export class SocketServer {
             this.heartbeats.set(websocket, false);
             websocket.ping();
           } else {
+            this.terminate(websocket);
             websocket.terminate();
             terminatedConnections++;
           }
@@ -220,3 +321,5 @@ export class SocketServer {
     }, config.CONNECTION_STATUS_CHECK_RATE_MS);
   }
 }
+
+export class CannotVerifyMessageError extends Error {}

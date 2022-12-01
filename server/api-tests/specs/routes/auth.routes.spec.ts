@@ -3,10 +3,11 @@ import {
   expectErrorMessage,
   getTicket,
   makeRequest,
+  signup,
   signin,
   signout,
   validate,
-} from "../utils";
+} from "../../utils";
 import type { Client } from "persistence";
 
 const CHANCE = new Chance();
@@ -19,21 +20,11 @@ describe("Auth Routes", () => {
 
   describe("/api/auth/signup", () => {
     it("should create a client and assign a token successfully.", async () => {
-      const username = CHANCE.word({ length: 12 });
-      const password = CHANCE.word({ length: 8 });
-      const { client } = await makeRequest<{ client: Client }>(
-        "post",
-        "/api/auth/signup",
-        {
-          username,
-          password,
-          passwordAgain: password,
-        }
-      );
+      const { client, password } = await signup();
 
       expect(client).toBeDefined();
 
-      existingUsername = username;
+      existingUsername = client.username;
       existingPassword = password;
     });
 

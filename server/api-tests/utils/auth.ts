@@ -1,5 +1,25 @@
+import Chance from "chance";
 import { makeRequest, setAuthorizationHeader } from "./make-request";
 import type { Client } from "persistence";
+
+const CHANCE = new Chance();
+
+export async function signup() {
+  const username = CHANCE.word({ length: 12 });
+  const password = CHANCE.word({ length: 8 });
+  const { client, token } = await makeRequest<{
+    client: Client;
+    token: string;
+  }>("post", "/api/auth/signup", {
+    username,
+    password,
+    passwordAgain: password,
+  });
+
+  setAuthorizationHeader(token);
+
+  return { client, password };
+}
 
 export async function signin(username: string, password: string) {
   const { client, token } = await makeRequest<{
@@ -9,8 +29,6 @@ export async function signin(username: string, password: string) {
     username,
     password,
   });
-
-  expect(typeof token).toBe("string");
 
   setAuthorizationHeader(token);
 

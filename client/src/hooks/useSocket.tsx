@@ -115,8 +115,6 @@ export function SocketProvider({ children }: PropsWithChildren) {
           args,
         };
 
-        console.log({ sending: JSON.stringify(request) });
-
         socket.current?.send(JSON.stringify(request));
       }
     },

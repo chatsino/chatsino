@@ -20,6 +20,10 @@ export const socketRequestSchema = yup.object({
 export const sourcedSocketRequestSchema = socketRequestSchema.shape({
   from: clientSchema.required(),
 });
+
+export const clientSubscriptionSchema = yup.object({
+  subscription: yup.string().required(),
+});
 // #endregion
 
 // #region Outgoing

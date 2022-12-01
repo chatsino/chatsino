@@ -8,10 +8,10 @@
     "build:client": "cd ../client && yarn build && cp -r ./build ../server/public && cd ../server",
     "start": "NODE_ENV=development yarn build && node build/chatsino | npx pino-pretty",
     "start:test": "NODE_ENV=test yarn build && node build/chatsino | npx pino-pretty",
-    "start:production": "NODE_ENV=production yarn build && node build/chatsino",
+    "start:production": "NODE_ENV=production yarn build && node build/chatsino | npx pino-pretty",
     "script:seed:development": "NODE_ENV=development SCRIPT=seed yarn build && node build/chatsino",
     "script:seed:production": "NODE_ENV=production SCRIPT=seed yarn build && node build/chatsino",
-    "test:api": "jest --config=api-tests/jest.config.js",
+    "test:api": "NODE_TLS_REJECT_UNAUTHORIZED=0 jest --config=api-tests/jest.config.js",
     "test:unit": "jest --forceExit --coverage"
   },
   "dependencies": {

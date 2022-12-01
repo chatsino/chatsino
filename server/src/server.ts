@@ -62,6 +62,7 @@ export async function startServer() {
 
 function applyMiddleware(app: Express) {
   return app.use(
+    bodyParser.urlencoded({ extended: false }),
     bodyParser.json(),
     cookieParser(config.COOKIE_SECRET),
     middleware.clientSettingMiddleware,
