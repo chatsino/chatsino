@@ -245,6 +245,10 @@ export async function chargeClient(
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
+    if (client.chips - amount < 0) {
+      return false;
+    }
+
     await postgres<FullClient>("clients")
       .where("id", client.id)
       .decrement("chips", amount);
@@ -292,5 +296,4 @@ export class ClientWithUsernameExistsError extends Error {
     this.message = `The username "${username}" is taken.`;
   }
 }
-export class CannotChargeClientError extends Error {}
 export class ClientNotFoundError extends Error {}

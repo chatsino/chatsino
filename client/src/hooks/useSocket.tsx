@@ -14,6 +14,7 @@ import { useClient } from "./useClient";
 type Response = {
   data?: unknown;
   error?: string;
+  message: string;
 };
 
 type SubscriberData = Record<string, (response: Response) => unknown>; // Message Kind -> Message Handler
@@ -96,10 +97,10 @@ export function SocketProvider({ children }: PropsWithChildren) {
       socket.current.onmessage = function handleSocketMessage(event) {
         console.info("Received message.", event);
 
-        const { kind, data, error } = JSON.parse(event.data);
+        const { kind, data, error, message = "" } = JSON.parse(event.data);
 
         for (const subscriberData of Object.values(subscriberLookup.current)) {
-          subscriberData[kind]?.({ data, error });
+          subscriberData[kind]?.({ data, error, message });
         }
       };
     } catch (error) {

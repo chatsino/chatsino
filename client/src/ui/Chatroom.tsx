@@ -1,7 +1,6 @@
 import { PropsWithChildren, useState } from "react";
 import { ConfigProvider, FloatButton, Layout, theme } from "antd";
 import { SendOutlined } from "@ant-design/icons";
-import "antd/dist/reset.css";
 import "./Chatroom.css";
 
 export function Chatroom() {

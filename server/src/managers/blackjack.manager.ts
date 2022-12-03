@@ -1,5 +1,18 @@
-import { SUBSCRIBER } from "persistence";
+import { GameInProgressError, NoGameInProgressError } from "games";
 import { createLogger } from "logger";
+import {
+  SUBSCRIBER,
+  getClientBlackjackGame,
+  startBlackjackGame,
+  CannotAffordWagerError,
+} from "persistence";
+import {
+  getActiveBlackjackGameSchema,
+  SourcedSocketMessage,
+  startBlackjackGameActionSchema,
+} from "schemas";
+import { SocketServer } from "socket-server";
+import * as yup from "yup";
 
 export const BLACKJACK_LOGGER = createLogger("Blackjack");
 
@@ -24,14 +37,77 @@ export function initializeBlackjackManager() {
   );
 }
 
-export function handleGetActiveBlackjackGame() {
-  BLACKJACK_LOGGER.info(BlackjackSocketRequests.GetActiveBlackjackGame);
+export async function handleGetActiveBlackjackGame(message: string) {
+  const { kind, args, from } = JSON.parse(message) as SourcedSocketMessage;
+
+  try {
+    const { clientId } = await getActiveBlackjackGameSchema.validate(args);
+
+    return SocketServer.success(
+      from.id,
+      kind,
+      (await getClientBlackjackGame(clientId)).data
+    );
+  } catch (error) {
+    return handleBlackjackErrors(
+      from.id,
+      kind,
+      error,
+      "Unable to get active blackjack game."
+    );
+  }
 }
 
-export function handleStartBlackjackGame() {
-  BLACKJACK_LOGGER.info(BlackjackSocketRequests.StartBlackjackGame);
+export async function handleStartBlackjackGame(message: string) {
+  const { kind, args, from } = JSON.parse(message) as SourcedSocketMessage;
+
+  try {
+    const { wager } = await startBlackjackGameActionSchema.validate(args);
+
+    return SocketServer.success(
+      from.id,
+      kind,
+      (await startBlackjackGame(from.id, wager)).data
+    );
+  } catch (error) {
+    return handleBlackjackErrors(
+      from.id,
+      kind,
+      error,
+      "Unable to start a blackjack game."
+    );
+  }
 }
 
 export function handleTakeBlackjackAction() {
   BLACKJACK_LOGGER.info(BlackjackSocketRequests.TakeBlackjackAction);
+}
+
+export function handleBlackjackErrors(
+  to: number,
+  kind: string,
+  error: unknown,
+  fallback: string
+) {
+  const sendError = (message: string) => SocketServer.error(to, kind, message);
+
+  if (error instanceof CannotAffordWagerError) {
+    return sendError("You cannot afford that wager.");
+  }
+
+  if (error instanceof GameInProgressError) {
+    return sendError("You already have a blackjack game in progress.");
+  }
+
+  if (error instanceof NoGameInProgressError) {
+    return sendError("You do not have a game of blackjack in progress.");
+  }
+
+  if (error instanceof yup.ValidationError) {
+    return sendError("Validation errors detected.");
+  }
+
+  if (error instanceof Error) {
+    return sendError(fallback);
+  }
 }

@@ -1,3 +1,4 @@
+import { ConfigProvider, theme } from "antd";
 import { useEffect, useRef, useState } from "react";
 import { Chatsino, Signin, Signup } from "components";
 import {
@@ -5,6 +6,7 @@ import {
   SocketProvider,
   useAuthentication,
   useClient,
+  useServerMessages,
 } from "hooks";
 
 type AppScreen = "signin" | "signup" | "chatsino" | "error";
@@ -16,6 +18,8 @@ function Inner() {
   const initiallyValidated = useRef(false);
   const [validating, setValidating] = useState(true);
   const [validationError, setValidationError] = useState(false);
+
+  useServerMessages();
 
   useEffect(() => {
     if (!initiallyValidated.current) {
@@ -85,10 +89,16 @@ function Inner() {
 
 export function App() {
   return (
-    <ClientProvider>
-      <SocketProvider>
-        <Inner />
-      </SocketProvider>
-    </ClientProvider>
+    <ConfigProvider
+      theme={{
+        algorithm: [theme.darkAlgorithm, theme.compactAlgorithm],
+      }}
+    >
+      <ClientProvider>
+        <SocketProvider>
+          <Inner />
+        </SocketProvider>
+      </ClientProvider>
+    </ConfigProvider>
   );
 }

@@ -9,5 +9,8 @@ export const postgres = knex({
 });
 
 export function initializeDatabase() {
-  return Promise.all([models.createClientTable()]);
+  return Promise.all([
+    models.createClientTable(),
+    models.createBlackjackTable(),
+  ]);
 }

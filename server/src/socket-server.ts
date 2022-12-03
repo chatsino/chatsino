@@ -2,8 +2,7 @@ import { validateTicket } from "auth";
 import * as config from "config";
 import { Request } from "express";
 import { createLogger } from "logger";
-import { Client, ClientIdentifier } from "persistence";
-import { PUBLISHER, SUBSCRIBER } from "persistence";
+import { Client, ClientIdentifier, PUBLISHER, SUBSCRIBER } from "persistence";
 import {
   clientSubscriptionSchema,
   socketErrorResponseSchema,
@@ -53,11 +52,35 @@ export enum SocketResponseKind {
   BroadcastToAll = "broadcast-to-all",
   ClientSubscribed = "client-subscribed",
   ClientUnsubscribed = "client-unsubscribed",
+  ClientSuccessMessage = "client-success-message",
+  ClientErrorMessage = "client-error-message",
 }
 
 export const SOCKETS_LOGGER = createLogger("Sockets");
 
 export class SocketServer {
+  public static success(to: number, kind: string, data: unknown) {
+    return PUBLISHER.publish(
+      SocketResponseKind.SuccessResponse,
+      JSON.stringify({
+        to,
+        kind,
+        data,
+      })
+    );
+  }
+
+  public static error(to: number, kind: string, error: string) {
+    return PUBLISHER.publish(
+      SocketResponseKind.ErrorResponse,
+      JSON.stringify({
+        to,
+        kind,
+        error,
+      })
+    );
+  }
+
   private server = new WebSocketServer({ noServer: true });
   private clients = new Map<WebSocket, Client>();
   private heartbeats = new Map<WebSocket, boolean>();
@@ -203,9 +226,19 @@ export class SocketServer {
     }
   }
 
-  private async sendSuccessResponse({ to, kind, data }: SocketSuccessResponse) {
+  private async sendSuccessResponse(response: SocketSuccessResponse) {
     try {
-      await socketSuccessResponseSchema.validate({ to, kind, data });
+      const { to, kind, data } = await socketSuccessResponseSchema.validate(
+        response
+      );
+      const withMessage = data as unknown as { message: string };
+
+      if (withMessage.message) {
+        this.sendSocketMessage(to, {
+          kind: SocketResponseKind.ClientSuccessMessage,
+          message: withMessage.message,
+        });
+      }
 
       return this.sendSocketMessage(to, {
         kind,
@@ -213,15 +246,22 @@ export class SocketServer {
       });
     } catch (error) {
       SOCKETS_LOGGER.error(
-        { to, kind, data, error },
+        { response, error },
         "Failed to send a success message."
       );
     }
   }
 
-  private async sendErrorResponse({ to, kind, error }: SocketErrorResponse) {
+  private async sendErrorResponse(response: SocketErrorResponse) {
     try {
-      await socketErrorResponseSchema.validate({ to, kind, error });
+      const { to, kind, error } = await socketErrorResponseSchema.validate(
+        response
+      );
+
+      this.sendSocketMessage(to, {
+        kind: SocketResponseKind.ClientErrorMessage,
+        message: error,
+      });
 
       return this.sendSocketMessage(to, {
         kind,
@@ -229,7 +269,7 @@ export class SocketServer {
       });
     } catch (e) {
       SOCKETS_LOGGER.error(
-        { to, kind, error, thrown: e },
+        { response, thrown: e },
         "Failed to send an error message."
       );
     }
