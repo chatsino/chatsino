@@ -1,0 +1,13 @@
+{$DOMAIN:localhost} {
+    encode gzip
+
+    handle /api* {
+        reverse_proxy server:3001
+    }
+
+    handle {
+		root * /static
+		try_files {path} /index.html
+		file_server
+	}
+}

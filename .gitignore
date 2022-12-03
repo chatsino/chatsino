@@ -17,8 +17,8 @@ database
 # cache
 cache
 
-# nginx
-client/nginx/ssl
+# caddy
+caddy
 
 # misc
 /**/.DS_Store

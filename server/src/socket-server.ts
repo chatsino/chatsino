@@ -130,6 +130,7 @@ export class SocketServer {
     );
 
     this.clients.set(websocket, client);
+    this.heartbeats.set(websocket, true);
 
     return this.server.emit("connection", websocket);
   }

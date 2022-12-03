@@ -42,6 +42,9 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy:/data
     ports:
       - 80:80
       - 443:443
