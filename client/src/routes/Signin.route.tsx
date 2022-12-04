@@ -1,3 +1,8 @@
+import { useAuthentication } from "hooks";
+import { SigninForm } from "ui";
+
 export function SigninRoute() {
-  return <div>Sign in</div>;
+  const { signin } = useAuthentication();
+
+  return <SigninForm onSubmit={signin} />;
 }
