@@ -4,7 +4,7 @@
   "private": true,
   "proxy": "https://localhost:3001",
   "scripts": {
-    "start": "HTTPS=true SSL_CRT_FILE=../server/.ssh/localhost.pem SSL_KEY_FILE=../server/.ssh/localhost-key.pem react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "storybook": "start-storybook -p 6006 -s public",
@@ -44,6 +44,7 @@
     "formik": "^2.2.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.4.4",
     "react-scripts": "5.0.1",
     "typescript": "^4.4.2",
     "web-vitals": "^2.1.0",
@@ -68,6 +69,7 @@
     "@types/node": "^16.7.13",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "@types/react-router-dom": "^5.3.3",
     "babel-plugin-named-exports-order": "^0.0.2",
     "prop-types": "^15.8.1",
     "webpack": "^5.75.0"
