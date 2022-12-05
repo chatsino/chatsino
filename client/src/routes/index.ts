@@ -4,6 +4,7 @@ export * from "./Error.route";
 export * from "./Games.route";
 export * from "./Help.route";
 export * from "./Me.route";
+export * from "./navigation";
 export * from "./Root.route";
 export * from "./router";
 export * from "./Shop.route";

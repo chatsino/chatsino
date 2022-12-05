@@ -61,7 +61,7 @@ export function SignupForm({ onSubmit }: Props) {
         <Input.Password />
       </Form.Item>
 
-      <Form.Item label="Password" name="passwordAgain">
+      <Form.Item label="Password (again)" name="passwordAgain">
         <Input.Password />
       </Form.Item>
 
