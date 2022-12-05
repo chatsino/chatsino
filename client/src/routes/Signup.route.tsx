@@ -1,3 +1,8 @@
+import { useAuthentication } from "hooks";
+import { SignupForm } from "ui";
+
 export function SignupRoute() {
-  return <div>Sign up</div>;
+  const { signup } = useAuthentication();
+
+  return <SignupForm onSubmit={signup} />;
 }

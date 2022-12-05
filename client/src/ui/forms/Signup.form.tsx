@@ -1,33 +1,41 @@
 import { Button, Form, Input } from "antd";
 import { useFormFields } from "hooks";
-import { clientSigninSchema } from "schemas";
+import { clientSignupSchema } from "schemas";
 
 interface Props {
-  onSubmit(username: string, password: string): Promise<unknown>;
+  onSubmit(
+    username: string,
+    password: string,
+    passwordAgain: string
+  ): Promise<unknown>;
 }
 
-export type SigninFormValues = typeof SIGNIN_INITIAL_VALUES;
+export type SignupFormValues = typeof SIGNUP_INITIAL_VALUES;
 
-export const SIGNIN_INITIAL_VALUES = {
+export const SIGNUP_INITIAL_VALUES = {
   username: "",
   password: "",
+  passwordAgain: "",
 } as {
   username: string;
   password: string;
+  passwordAgain: string;
 };
 
-export function SigninForm({ onSubmit }: Props) {
+export function SignupForm({ onSubmit }: Props) {
   const [form] = Form.useForm();
-  const { clearErrors, handleError } = useFormFields<SigninFormValues>(
+  const { clearErrors, handleError } = useFormFields<SignupFormValues>(
     form,
     "username",
-    "password"
+    "password",
+    "passwordAgain"
   );
 
-  async function onFinish(values: typeof SIGNIN_INITIAL_VALUES) {
+  async function onFinish(values: typeof SIGNUP_INITIAL_VALUES) {
     try {
-      const { username, password } = await clientSigninSchema.validate(values);
-      return onSubmit(username, password);
+      const { username, password, passwordAgain } =
+        await clientSignupSchema.validate(values);
+      return onSubmit(username, password, passwordAgain);
     } catch (error) {
       return handleError(error);
     }
@@ -40,7 +48,7 @@ export function SigninForm({ onSubmit }: Props) {
       layout="vertical"
       labelCol={{ span: 8 }}
       wrapperCol={{ span: 16 }}
-      initialValues={SIGNIN_INITIAL_VALUES}
+      initialValues={SIGNUP_INITIAL_VALUES}
       onFieldsChange={clearErrors}
       onFinish={onFinish}
       autoComplete="off"
@@ -50,6 +58,10 @@ export function SigninForm({ onSubmit }: Props) {
       </Form.Item>
 
       <Form.Item label="Password" name="password">
+        <Input.Password />
+      </Form.Item>
+
+      <Form.Item label="Password" name="passwordAgain">
         <Input.Password />
       </Form.Item>
 
