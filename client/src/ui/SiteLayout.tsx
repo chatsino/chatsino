@@ -1,5 +1,5 @@
 import { MenuOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { Button, Layout } from "antd";
+import { Button, ConfigProvider, Layout, theme } from "antd";
 import { ReactNode, useState } from "react";
 import { NavigationDrawer } from "./drawers";
 
@@ -22,7 +22,11 @@ export function SiteLayout({
   }
 
   return (
-    <>
+    <ConfigProvider
+      theme={{
+        algorithm: [theme.darkAlgorithm, theme.compactAlgorithm],
+      }}
+    >
       <Layout>
         <Layout.Header style={{ paddingInline: 12, textAlign: "right" }}>
           <Button
@@ -36,6 +40,6 @@ export function SiteLayout({
       {showingMenu && (
         <NavigationDrawer navigation={navigation} onClose={closeMenu} />
       )}
-    </>
+    </ConfigProvider>
   );
 }
