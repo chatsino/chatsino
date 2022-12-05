@@ -83,7 +83,7 @@ export const router = createBrowserRouter([
         element: <SignupRoute />,
       },
       {
-        path: "/user/:userId",
+        path: "/u/:userId",
         loader: userLoader,
         element: <UserRoute />,
       },
