@@ -1,6 +1,6 @@
 import { LoaderFunctionArgs, useLoaderData } from "react-router-dom";
 
-export function userLoader({ params }: LoaderFunctionArgs) {
+export async function userLoader({ params }: LoaderFunctionArgs) {
   const { userId } = params as { userId: string };
   const users: Record<string, { name: string }> = {
     1: {

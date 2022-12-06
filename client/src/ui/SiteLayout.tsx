@@ -35,7 +35,7 @@ export function SiteLayout({
             onClick={toggleMenu}
           />
         </Layout.Header>
-        <Layout style={{ padding: 12 }}>{children}</Layout>
+        <Layout style={{ padding: 12, minHeight: "100vh" }}>{children}</Layout>
       </Layout>
       {showingMenu && (
         <NavigationDrawer navigation={navigation} onClose={closeMenu} />

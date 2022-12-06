@@ -9,5 +9,6 @@ export * from "./Root.route";
 export * from "./router";
 export * from "./Shop.route";
 export * from "./Signin.route";
+export * from "./Signout.route";
 export * from "./Signup.route";
 export * from "./User.route";

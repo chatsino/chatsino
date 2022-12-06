@@ -1,5 +1,10 @@
 import { createBrowserRouter } from "react-router-dom";
 import {
+  meRedirectLoader,
+  requireAdminLoader,
+  requireClientLoader,
+} from "loaders";
+import {
   BlackjackRoute,
   CrossingRoute,
   RacingRoute,
@@ -15,6 +20,7 @@ import { MeRoute } from "./Me.route";
 import { RootRoute } from "./Root.route";
 import { ShopRoute } from "./Shop.route";
 import { SigninRoute } from "./Signin.route";
+import { SignoutRoute } from "./Signout.route";
 import { SignupRoute } from "./Signup.route";
 import { UserRoute, userLoader } from "./User.route";
 
@@ -26,14 +32,17 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/admin",
+        loader: requireAdminLoader,
         element: <AdminRoute />,
       },
       {
         path: "/chat",
+        loader: requireClientLoader,
         element: <ChatRoute />,
       },
       {
         path: "/games",
+        loader: requireClientLoader,
         element: <GamesRoute />,
         children: [
           {
@@ -64,22 +73,27 @@ export const router = createBrowserRouter([
       },
       {
         path: "/me",
+        loader: requireClientLoader,
         element: <MeRoute />,
       },
       {
         path: "/shop",
+        loader: requireClientLoader,
         element: <ShopRoute />,
       },
       {
         path: "/signin",
+        loader: meRedirectLoader,
         element: <SigninRoute />,
       },
       {
-        path: "/signup",
-        element: <SignupRoute />,
+        path: "/signout",
+        loader: requireClientLoader,
+        element: <SignoutRoute />,
       },
       {
         path: "/signup",
+        loader: meRedirectLoader,
         element: <SignupRoute />,
       },
       {

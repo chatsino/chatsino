@@ -1,4 +1,4 @@
-import { Button, Form, Input } from "antd";
+import { Button, Divider, Form, Input } from "antd";
 import { useFormFields } from "hooks";
 import { clientSignupSchema } from "schemas";
 
@@ -57,22 +57,24 @@ export function SignupForm({ onSubmit }: Props) {
         <Input autoFocus={true} />
       </Form.Item>
 
+      <Divider />
+
       <Form.Item label="Password" name="password">
         <Input.Password />
       </Form.Item>
+
+      <Divider />
 
       <Form.Item label="Password (again)" name="passwordAgain">
         <Input.Password />
       </Form.Item>
 
-      <Form.Item
-        wrapperCol={{ offset: 4, span: 16 }}
-        style={{ marginTop: "3rem" }}
-      >
-        <Button type="primary" htmlType="submit" block={true}>
-          Submit
-        </Button>
-      </Form.Item>
+      <Divider />
+
+      <Button type="primary" htmlType="submit" block={true} size="large">
+        Submit
+      </Button>
+      <Form.Item style={{ marginTop: "3rem" }}></Form.Item>
     </Form>
   );
 }
