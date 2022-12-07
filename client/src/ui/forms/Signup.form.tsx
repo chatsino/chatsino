@@ -74,7 +74,6 @@ export function SignupForm({ onSubmit }: Props) {
       <Button type="primary" htmlType="submit" block={true} size="large">
         Submit
       </Button>
-      <Form.Item style={{ marginTop: "3rem" }}></Form.Item>
     </Form>
   );
 }

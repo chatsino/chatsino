@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { Button, ConfigProvider, Layout, Typography, theme, Space } from "antd";
 import { ReactNode, useState } from "react";
-import { NavigationDrawer } from "./drawers";
+import { NavigationDrawer, UserListDrawer } from "./drawers";
 
 export function SiteLayout({
   children,
@@ -15,15 +15,25 @@ export function SiteLayout({
   children: ReactNode;
   navigation: Array<{ to: string; children: ReactNode }>;
 }) {
-  const [showingMenu, setShowingMenu] = useState(false);
-  const MenuIcon = showingMenu ? MenuUnfoldOutlined : MenuOutlined;
+  const [showingNavigation, setShowingNavigation] = useState(false);
+  const [showingSearch, setShowingSearch] = useState(false);
+  const [showingUsers, setShowingUsers] = useState(false);
+  const MenuIcon = showingNavigation ? MenuUnfoldOutlined : MenuOutlined;
 
-  function toggleMenu() {
-    return setShowingMenu((prev) => !prev);
+  function toggleNavigation() {
+    return setShowingNavigation((prev) => !prev);
   }
 
-  function closeMenu() {
-    return setShowingMenu(false);
+  function closeNavigation() {
+    return setShowingNavigation(false);
+  }
+
+  function toggleUsers() {
+    return setShowingUsers((prev) => !prev);
+  }
+
+  function closeUsers() {
+    return setShowingUsers(false);
   }
 
   return (
@@ -46,7 +56,7 @@ export function SiteLayout({
               type="text"
               icon={<MenuIcon style={{ color: "#f5f5f5" }} />}
               style={{ marginRight: "1rem" }}
-              onClick={toggleMenu}
+              onClick={toggleNavigation}
             />
             <Typography.Title level={3} style={{ margin: 0 }}>
               # chatsino
@@ -60,14 +70,16 @@ export function SiteLayout({
             <Button
               type="text"
               icon={<UserOutlined style={{ color: "#f5f5f5" }} />}
+              onClick={toggleUsers}
             />
           </Space>
         </Layout.Header>
         <Layout style={{ padding: 12, minHeight: "100vh" }}>{children}</Layout>
       </Layout>
-      {showingMenu && (
-        <NavigationDrawer navigation={navigation} onClose={closeMenu} />
+      {showingNavigation && (
+        <NavigationDrawer navigation={navigation} onClose={closeNavigation} />
       )}
+      {showingUsers && <UserListDrawer onClose={closeUsers} />}
     </ConfigProvider>
   );
 }
