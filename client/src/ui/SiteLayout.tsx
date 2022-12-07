@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { Button, ConfigProvider, Layout, Typography, theme, Space } from "antd";
 import { ReactNode, useState } from "react";
-import { NavigationDrawer, UserListDrawer } from "./drawers";
+import { ChatroomDrawer, NavigationDrawer, UserListDrawer } from "./drawers";
 
 export function SiteLayout({
   children,
@@ -15,25 +15,33 @@ export function SiteLayout({
   children: ReactNode;
   navigation: Array<{ to: string; children: ReactNode }>;
 }) {
-  const [showingNavigation, setShowingNavigation] = useState(false);
-  const [showingSearch, setShowingSearch] = useState(false);
-  const [showingUsers, setShowingUsers] = useState(false);
-  const MenuIcon = showingNavigation ? MenuUnfoldOutlined : MenuOutlined;
+  const [showingNavigationDrawer, setShowingNavigationDrawer] = useState(false);
+  const [showingChatroomDrawer, setShowingChatroomDrawer] = useState(false);
+  const [showingUsersDrawer, setShowingUsersDrawer] = useState(false);
+  const MenuIcon = showingNavigationDrawer ? MenuUnfoldOutlined : MenuOutlined;
 
-  function toggleNavigation() {
-    return setShowingNavigation((prev) => !prev);
+  function toggleNavigationDrawer() {
+    return setShowingNavigationDrawer((prev) => !prev);
   }
 
-  function closeNavigation() {
-    return setShowingNavigation(false);
+  function closeNavigationDrawer() {
+    return setShowingNavigationDrawer(false);
   }
 
-  function toggleUsers() {
-    return setShowingUsers((prev) => !prev);
+  function toggleChatroomDrawer() {
+    return setShowingChatroomDrawer((prev) => !prev);
   }
 
-  function closeUsers() {
-    return setShowingUsers(false);
+  function closeChatroomDrawer() {
+    return setShowingChatroomDrawer(false);
+  }
+
+  function toggleUsersDrawer() {
+    return setShowingUsersDrawer((prev) => !prev);
+  }
+
+  function closeUsersDrawer() {
+    return setShowingUsersDrawer(false);
   }
 
   return (
@@ -56,11 +64,11 @@ export function SiteLayout({
               type="text"
               icon={<MenuIcon style={{ color: "#f5f5f5" }} />}
               style={{ marginRight: "1rem" }}
-              onClick={toggleNavigation}
+              onClick={toggleNavigationDrawer}
             />
-            <Typography.Title level={3} style={{ margin: 0 }}>
-              # chatsino
-            </Typography.Title>
+            <Button type="text" onClick={toggleChatroomDrawer}>
+              <Typography.Title level={3}># chatsino</Typography.Title>
+            </Button>
           </Space>
           <Space>
             <Button
@@ -70,16 +78,22 @@ export function SiteLayout({
             <Button
               type="text"
               icon={<UserOutlined style={{ color: "#f5f5f5" }} />}
-              onClick={toggleUsers}
+              onClick={toggleUsersDrawer}
             />
           </Space>
         </Layout.Header>
         <Layout style={{ padding: 12, minHeight: "100vh" }}>{children}</Layout>
       </Layout>
-      {showingNavigation && (
-        <NavigationDrawer navigation={navigation} onClose={closeNavigation} />
+      {showingNavigationDrawer && (
+        <NavigationDrawer
+          navigation={navigation}
+          onClose={closeNavigationDrawer}
+        />
       )}
-      {showingUsers && <UserListDrawer onClose={closeUsers} />}
+      {showingChatroomDrawer && (
+        <ChatroomDrawer onClose={closeChatroomDrawer} />
+      )}
+      {showingUsersDrawer && <UserListDrawer onClose={closeUsersDrawer} />}
     </ConfigProvider>
   );
 }

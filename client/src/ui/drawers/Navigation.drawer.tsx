@@ -13,7 +13,12 @@ export function NavigationDrawer({
   const { client } = useClient();
 
   return (
-    <Drawer open={true} placement="left" onClose={onClose}>
+    <Drawer
+      open={true}
+      placement="left"
+      onClose={onClose}
+      style={{ position: "relative", top: 55 }}
+    >
       <Menu mode="inline">
         <Menu.ItemGroup>
           {navigation.map(({ to, children }) => (
