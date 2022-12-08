@@ -5,10 +5,12 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { Button, ConfigProvider, Layout, Typography, theme, Space } from "antd";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { ChatroomDrawer, NavigationDrawer, UserListDrawer } from "./drawers";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
+  const location = useLocation();
   const [showingNavigationDrawer, setShowingNavigationDrawer] = useState(false);
   const [showingChatroomDrawer, setShowingChatroomDrawer] = useState(false);
   const [showingUsersDrawer, setShowingUsersDrawer] = useState(false);
@@ -37,6 +39,16 @@ export function SiteLayout({ children }: { children: ReactNode }) {
   function closeUsersDrawer() {
     return setShowingUsersDrawer(false);
   }
+
+  useEffect(() => {
+    for (const closeDrawer of [
+      closeNavigationDrawer,
+      closeChatroomDrawer,
+      closeUsersDrawer,
+    ]) {
+      closeDrawer();
+    }
+  }, [location]);
 
   return (
     <ConfigProvider
