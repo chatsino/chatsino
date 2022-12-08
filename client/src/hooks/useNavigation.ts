@@ -1,12 +1,13 @@
+import { SafeClient } from "schemas";
 import { useClient } from "./useClient";
 
 export function useNavigation() {
-  const { client } = useClient();
+  const { client } = useClient() as { client: SafeClient };
 
   if (client) {
     return [
       {
-        to: "/",
+        to: "/me",
         title: "Home",
       },
       {

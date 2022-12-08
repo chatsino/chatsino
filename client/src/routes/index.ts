@@ -1,3 +1,4 @@
+export * from "./@router";
 export * from "./Admin.route";
 export * from "./Chat.route";
 export * from "./Error.route";
@@ -5,8 +6,6 @@ export * from "./Games.route";
 export * from "./Help.route";
 export * from "./Me.route";
 export * from "./Root.route";
-export * from "./router";
-export * from "./Shop.route";
 export * from "./Signin.route";
 export * from "./Signout.route";
 export * from "./Signup.route";

@@ -1,16 +1,10 @@
-import { Divider, Drawer, Menu } from "antd";
-import { useClient } from "hooks";
-import { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Drawer, Menu } from "antd";
+import { useNavigation } from "hooks";
+import { useNavigate } from "react-router-dom";
 
-export function NavigationDrawer({
-  navigation,
-  onClose,
-}: {
-  navigation: Array<{ to: string; title: ReactNode }>;
-  onClose: () => void;
-}) {
-  const { client } = useClient();
+export function NavigationDrawer({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const navigation = useNavigation();
 
   return (
     <Drawer
@@ -19,15 +13,17 @@ export function NavigationDrawer({
       onClose={onClose}
       style={{ position: "relative", top: 55 }}
     >
-      <Menu mode="inline">
-        <Menu.ItemGroup>
-          {navigation.map(({ to, title }) => (
-            <Menu.Item key={to} onClick={() => setTimeout(onClose, 250)}>
-              <Link to={to}>{title}</Link>
-            </Menu.Item>
-          ))}
-        </Menu.ItemGroup>
-      </Menu>
+      <Menu
+        mode="inline"
+        items={navigation.map(({ to, title }) => ({
+          key: to,
+          label: title,
+          onClick: () => {
+            navigate(to);
+            setTimeout(onClose, 250);
+          },
+        }))}
+      />
     </Drawer>
   );
 }
