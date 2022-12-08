@@ -7,7 +7,7 @@ export function NavigationDrawer({
   navigation,
   onClose,
 }: {
-  navigation: Array<{ to: string; children: ReactNode }>;
+  navigation: Array<{ to: string; title: ReactNode }>;
   onClose: () => void;
 }) {
   const { client } = useClient();
@@ -21,34 +21,11 @@ export function NavigationDrawer({
     >
       <Menu mode="inline">
         <Menu.ItemGroup>
-          {navigation.map(({ to, children }) => (
+          {navigation.map(({ to, title }) => (
             <Menu.Item key={to} onClick={() => setTimeout(onClose, 250)}>
-              <Link to={to}>{children}</Link>
+              <Link to={to}>{title}</Link>
             </Menu.Item>
           ))}
-        </Menu.ItemGroup>
-        <Divider />
-        <Menu.ItemGroup>
-          {client ? (
-            <Menu.Item>
-              <Link to="/signout" onClick={onClose}>
-                Sign out
-              </Link>
-            </Menu.Item>
-          ) : (
-            <>
-              <Menu.Item>
-                <Link to="/signin" onClick={onClose}>
-                  Sign in
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <Link to="/signup" onClick={onClose}>
-                  Sign up
-                </Link>
-              </Menu.Item>
-            </>
-          )}
         </Menu.ItemGroup>
       </Menu>
     </Drawer>

@@ -1,13 +1,12 @@
 import { Empty } from "antd";
 import { SiteLayout } from "ui";
 import { useRouteError } from "react-router-dom";
-import { navigation } from "./navigation";
 
 export function ErrorRoute() {
   const error = useRouteError() as { statusText: string; message: string };
 
   return (
-    <SiteLayout navigation={navigation}>
+    <SiteLayout>
       <Empty
         description={
           <div>

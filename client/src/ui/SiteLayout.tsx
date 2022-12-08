@@ -5,20 +5,16 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { Button, ConfigProvider, Layout, Typography, theme, Space } from "antd";
+import { useNavigation } from "hooks";
 import { ReactNode, useState } from "react";
 import { ChatroomDrawer, NavigationDrawer, UserListDrawer } from "./drawers";
 
-export function SiteLayout({
-  children,
-  navigation,
-}: {
-  children: ReactNode;
-  navigation: Array<{ to: string; children: ReactNode }>;
-}) {
+export function SiteLayout({ children }: { children: ReactNode }) {
   const [showingNavigationDrawer, setShowingNavigationDrawer] = useState(false);
   const [showingChatroomDrawer, setShowingChatroomDrawer] = useState(false);
   const [showingUsersDrawer, setShowingUsersDrawer] = useState(false);
   const MenuIcon = showingNavigationDrawer ? MenuUnfoldOutlined : MenuOutlined;
+  const navigation = useNavigation();
 
   function toggleNavigationDrawer() {
     return setShowingNavigationDrawer((prev) => !prev);
