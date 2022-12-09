@@ -1,0 +1,14 @@
+html,
+body {
+  overflow: hidden;
+}
+
+.ant-list-vertical {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.ant-spin-nested-loading {
+  overflow: auto;
+}

@@ -88,7 +88,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             />
           </Space>
         </Layout.Header>
-        <Layout style={{ padding: 12, minHeight: "100vh" }}>{children}</Layout>
+        <Layout style={{ padding: "12px 1rem", minHeight: "100vh" }}>
+          {children}
+        </Layout>
       </Layout>
       {showingNavigationDrawer && (
         <NavigationDrawer onClose={closeNavigationDrawer} />
