@@ -38,8 +38,8 @@ export function SigninForm({ onSubmit }: Props) {
       form={form}
       name="basic"
       layout="vertical"
-      labelCol={{ span: 8 }}
-      wrapperCol={{ span: 16 }}
+      labelCol={{ span: 12 }}
+      wrapperCol={{ span: 24 }}
       initialValues={SIGNIN_INITIAL_VALUES}
       onFieldsChange={clearErrors}
       onFinish={onFinish}
@@ -48,15 +48,21 @@ export function SigninForm({ onSubmit }: Props) {
       <Form.Item label="Username" name="username">
         <Input autoFocus={true} />
       </Form.Item>
-
       <Divider />
-
       <Form.Item label="Password" name="password">
         <Input.Password />
       </Form.Item>
-
       <Divider />
-      <Button type="primary" htmlType="submit" block={true}>
+      <Button
+        type="primary"
+        htmlType="submit"
+        block={true}
+        size="large"
+        style={{
+          marginTop: "1rem",
+          marginBottom: "1rem",
+        }}
+      >
         Submit
       </Button>
     </Form>

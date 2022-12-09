@@ -1,23 +1,41 @@
-import { Button, Space, Typography } from "antd";
+import { Col, Row, Typography } from "antd";
 import { useAuthentication } from "hooks";
-import { SigninForm } from "ui";
 import { Link } from "react-router-dom";
+import { SigninForm } from "ui";
 
 export function SigninRoute() {
   const { signin } = useAuthentication();
 
   return (
-    <Space direction="vertical">
-      <Button.Group style={{ width: "100%" }}>
-        <Button type="primary" block={true}>
-          Sign in
-        </Button>
-        <Link to="/signup" style={{ width: "100%" }}>
-          <Button block={true}>Sign up</Button>
-        </Link>
-      </Button.Group>
-      <Typography.Title level={2}>Sign in</Typography.Title>
-      <SigninForm onSubmit={signin} />
-    </Space>
+    <Row>
+      <Col
+        xs={24}
+        sm={{
+          span: 16,
+          push: 4,
+        }}
+        lg={{
+          span: 12,
+          push: 6,
+        }}
+      >
+        <Typography.Title
+          level={1}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: "3rem",
+            marginBottom: "3rem",
+          }}
+        >
+          <span>Sign in</span>
+          <small style={{ fontSize: 18 }}>
+            ...or <Link to="/signup">sign up.</Link>
+          </small>
+        </Typography.Title>
+        <SigninForm onSubmit={signin} />
+      </Col>
+    </Row>
   );
 }

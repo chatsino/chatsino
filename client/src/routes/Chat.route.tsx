@@ -1,18 +1,29 @@
 import { SendOutlined, SmileOutlined } from "@ant-design/icons";
-import { Button, Divider, Input } from "antd";
+import { Button, Divider, Form, Input, Typography } from "antd";
 import { useState } from "react";
 import { EmojiDrawer } from "ui";
 
 export function ChatRoute() {
+  const [messages, setMessage] = useState([] as string[]);
+
   return (
     <div>
+      {messages.map((message) => (
+        <Typography.Text>{message}</Typography.Text>
+      ))}
       <Divider />
-      <ChatInput />
+      <ChatInput
+        onSend={(message) => setMessage((prev) => prev.concat(message))}
+      />
     </div>
   );
 }
 
-export function ChatInput() {
+export function ChatInput({
+  onSend,
+}: {
+  onSend: (message: string) => unknown;
+}) {
   const [showingEmojiDrawer, setShowingEmojiDrawer] = useState(false);
 
   function toggleEmojiDrawer() {
@@ -23,23 +34,34 @@ export function ChatInput() {
     setShowingEmojiDrawer(false);
   }
 
+  function handleFinish(values: { draft: string }) {
+    return onSend(values.draft);
+  }
+
   return (
     <>
-      <Input.Group compact={true}>
-        <Input
-          type="text"
-          autoFocus={true}
-          placeholder="Send a message..."
-          style={{ width: "75%" }}
-          size="large"
-        />
-        <Button
-          icon={<SmileOutlined />}
-          size="large"
-          onClick={toggleEmojiDrawer}
-        />
-        <Button icon={<SendOutlined />} size="large" />
-      </Input.Group>
+      <Form initialValues={{ draft: "" }} onFinish={handleFinish}>
+        <Input.Group compact={true}>
+          <Form.Item name="draft" noStyle={true}>
+            <Input
+              autoFocus={true}
+              style={{ width: "calc(100% - 80px)" }}
+              size="large"
+            />
+          </Form.Item>
+          <Button
+            icon={<SmileOutlined />}
+            size="large"
+            onClick={toggleEmojiDrawer}
+          />
+          <Button
+            type="primary"
+            htmlType="submit"
+            icon={<SendOutlined />}
+            size="large"
+          />
+        </Input.Group>
+      </Form>
       {showingEmojiDrawer && <EmojiDrawer onClose={closeEmojiDrawer} />}
     </>
   );
