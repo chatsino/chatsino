@@ -29,7 +29,7 @@ export function useChatAutoscroll(id: string, messages: unknown[]) {
         initiallyScrolledDown.current = true;
       }
     }
-  }, [id, messages]);
+  }, [id, messages.length]);
 
   // When more messages come in, scroll to the bottom of the container
   // only if the user hasn't manually scrolled up.
