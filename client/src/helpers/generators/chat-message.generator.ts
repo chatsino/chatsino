@@ -31,4 +31,25 @@ export class ChatMessageGenerator {
       ChatMessageGenerator.generateChatMessage()
     );
   }
+
+  public static generateRealisticChatMessageList(count: number) {
+    count = Math.max(count, 5);
+
+    const chatMessages = ChatMessageGenerator.generateChatMessageList(count);
+    const uniqueAuthors = chatMessages
+      .slice(5)
+      .map((message) => message.author);
+
+    let [previousAuthor] = uniqueAuthors;
+
+    for (const message of chatMessages) {
+      const isNewAuthor = CHANCE.bool({ likelihood: 40 });
+
+      message.author = isNewAuthor
+        ? CHANCE.pickone(uniqueAuthors)
+        : previousAuthor;
+    }
+
+    return chatMessages;
+  }
 }

@@ -24,3 +24,7 @@ body {
 .ant-spin-nested-loading {
   overflow: auto;
 }
+
+.ant-list-split .ant-list-item {
+  border-block-end: none;
+}
