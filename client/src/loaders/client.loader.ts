@@ -1,10 +1,10 @@
-import { makeRequest } from "helpers";
+import { makeHttpRequest } from "helpers";
 import { redirect } from "react-router-dom";
 import { SafeClient } from "schemas";
 
 export async function clientLoader() {
   try {
-    const { client } = await makeRequest<{
+    const { client } = await makeHttpRequest<{
       client: SafeClient;
     }>("get", "/auth/validate");
 

@@ -7,7 +7,7 @@ export const axios = axiosLib.create({
   timeout: config.API_TIMEOUT,
 });
 
-export async function makeRequest<T>(
+export async function makeHttpRequest<T>(
   method: "get" | "post",
   route: string,
   body?: Record<string, string>

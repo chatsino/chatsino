@@ -1,3 +1,4 @@
+export * from "./chat";
 export * from "./drawers";
 export * from "./forms";
 export * from "./Button";
