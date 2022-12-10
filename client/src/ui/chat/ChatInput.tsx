@@ -1,11 +1,15 @@
 import { SendOutlined, SmileOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Space } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EmojiDrawer } from "ui";
 
 export function ChatInput({
+  onDrawerOpen,
+  onDrawerClose,
   onSend,
 }: {
+  onDrawerOpen: () => unknown;
+  onDrawerClose: () => unknown;
   onSend: (message: string) => unknown;
 }) {
   const [form] = Form.useForm();
@@ -24,6 +28,14 @@ export function ChatInput({
     return onSend(values.draft);
   }
 
+  useEffect(() => {
+    if (showingEmojiDrawer) {
+      onDrawerOpen();
+    } else {
+      onDrawerClose();
+    }
+  }, [showingEmojiDrawer, onDrawerOpen, onDrawerClose]);
+
   return (
     <>
       <Form form={form} initialValues={{ draft: "" }} onFinish={handleFinish}>
@@ -32,6 +44,7 @@ export function ChatInput({
             <Input.TextArea
               autoFocus={true}
               style={{ width: "calc(100% - 35px)", height: 70 }}
+              onBlur={closeEmojiDrawer}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {
                   event.preventDefault();

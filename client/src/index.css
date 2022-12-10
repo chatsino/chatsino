@@ -5,19 +5,14 @@ body {
 }
 
 html {
-  height: -moz-available;
-  height: -webkit-fill-available;
-  height: fill-available;
+  height: stretch;
 }
 
 body {
   min-height: 100vh;
   min-height: calc(var(--vh, 1vh) * 90);
   overflow: hidden;
-  /* mobile viewport bug fix */
-  min-height: -moz-available;
-  min-height: -webkit-fill-available;
-  min-height: fill-available;
+  min-height: stretch;
 }
 
 .ant-list-vertical {

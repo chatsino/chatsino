@@ -2,7 +2,11 @@ import { EllipsisOutlined } from "@ant-design/icons";
 import { Avatar, Button, Dropdown, List, Typography } from "antd";
 import { ChatMessageGenerator } from "helpers";
 import { useChatAutoscroll } from "hooks";
+import { useState } from "react";
 import { ChatInput } from "./ChatInput";
+
+export const THIRTY_PERCENT = "calc(var(--vh, 1vh) * 30";
+export const EIGHTY_FIVE_PERCENT = "calc(var(--vh, 1vh) * 85";
 
 export function ChatMessageList({
   id,
@@ -13,6 +17,8 @@ export function ChatMessageList({
   messages: ChatMessage[];
   onSendMessage: (message: ChatMessage) => unknown;
 }) {
+  const [raised, setRaised] = useState(false);
+
   useChatAutoscroll(id, messages);
 
   return (
@@ -20,6 +26,11 @@ export function ChatMessageList({
       id={id}
       dataSource={messages}
       itemLayout="vertical"
+      header={
+        <div>
+          <Typography.Title level={5}>#room</Typography.Title>
+        </div>
+      }
       renderItem={(item) => (
         <List.Item
           key={item.id}
@@ -68,11 +79,13 @@ export function ChatMessageList({
         </List.Item>
       )}
       style={{
-        height: "calc(var(--vh, 1vh) * 85",
+        height: raised ? THIRTY_PERCENT : EIGHTY_FIVE_PERCENT,
         overflow: "auto",
       }}
       footer={
         <ChatInput
+          onDrawerOpen={() => setRaised(true)}
+          onDrawerClose={() => setRaised(false)}
           onSend={(message) =>
             onSendMessage(
               ChatMessageGenerator.generateChatMessage({
