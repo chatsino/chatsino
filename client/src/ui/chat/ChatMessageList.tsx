@@ -5,17 +5,19 @@ import { useChatAutoscroll } from "hooks";
 import { ChatInput } from "./ChatInput";
 
 export function ChatMessageList({
+  id,
   messages,
   onSendMessage,
 }: {
+  id: string;
   messages: ChatMessage[];
   onSendMessage: (message: ChatMessage) => unknown;
 }) {
-  useChatAutoscroll(messages);
+  useChatAutoscroll(id, messages);
 
   return (
     <List
-      id="chat"
+      id={id}
       dataSource={messages}
       itemLayout="vertical"
       renderItem={(item) => (
@@ -66,7 +68,7 @@ export function ChatMessageList({
         </List.Item>
       )}
       style={{
-        height: "85vh",
+        height: "calc(var(--vh, 1vh) * 85",
         overflow: "auto",
       }}
       footer={

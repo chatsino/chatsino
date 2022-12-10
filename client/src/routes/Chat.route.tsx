@@ -12,6 +12,7 @@ export function ChatRoute() {
 
   return (
     <ChatMessageList
+      id="chat"
       messages={messages}
       onSendMessage={(message) => setMessages((prev) => prev.concat(message))}
     />

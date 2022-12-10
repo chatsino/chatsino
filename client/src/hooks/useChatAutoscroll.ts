@@ -1,13 +1,13 @@
 import { useEffect, useRef } from "react";
 
-export const DISTANCE_AT_WHICH_AUTOSCROLL_IS_DISABLED = 200;
+export const DISTANCE_AT_WHICH_AUTOSCROLL_IS_DISABLED = 250;
 
-export function getChatContainer() {
-  return document.querySelector("#chat > .ant-spin-nested-loading");
+export function getChatContainer(id: string) {
+  return document.querySelector(`#${id} > .ant-spin-nested-loading`);
 }
 
-export function scrollToBottom() {
-  const chatContainer = getChatContainer();
+export function scrollToBottom(id: string) {
+  const chatContainer = getChatContainer(id);
 
   if (chatContainer) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -17,25 +17,25 @@ export function scrollToBottom() {
   return false;
 }
 
-export function useChatAutoscroll(messages: unknown[]) {
+export function useChatAutoscroll(id: string, messages: unknown[]) {
   const initiallyScrolledDown = useRef(false);
 
   // When messages first load, scroll to the bottom of the container.
   useEffect(() => {
     if (!initiallyScrolledDown.current && messages.length > 0) {
-      const scrolledToBottom = scrollToBottom();
+      const scrolledToBottom = scrollToBottom(id);
 
       if (scrolledToBottom) {
         initiallyScrolledDown.current = true;
       }
     }
-  }, [messages]);
+  }, [id, messages]);
 
   // When more messages come in, scroll to the bottom of the container
   // only if the user hasn't manually scrolled up.
   useEffect(() => {
     if (initiallyScrolledDown.current) {
-      const chatContainer = getChatContainer();
+      const chatContainer = getChatContainer(id);
 
       if (chatContainer) {
         const scrolledDistance =
@@ -45,9 +45,9 @@ export function useChatAutoscroll(messages: unknown[]) {
           DISTANCE_AT_WHICH_AUTOSCROLL_IS_DISABLED;
 
         if (isNearBottom) {
-          scrollToBottom();
+          scrollToBottom(id);
         }
       }
     }
-  }, [messages.length]);
+  }, [id, messages.length]);
 }

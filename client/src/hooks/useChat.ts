@@ -23,7 +23,7 @@ export const DEFAULT_CHATROOM_ID = "Lobby";
 
 export function useChat(chatroomId = DEFAULT_CHATROOM_ID) {
   const { makeRequest, subscribe, unsubscribe } = useSocket();
-  const [chatroom, setChatroom] = useState(null);
+  const [chatroom] = useState(null);
   const [chatroomMessages, setChatroomMessages] = useState<ChatMessage[]>();
   const [error, setError] = useState("");
 

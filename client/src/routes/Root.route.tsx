@@ -7,6 +7,7 @@ import {
   SocketProvider,
   useAuthentication,
   useClient,
+  useUniversalVhUnit,
 } from "hooks";
 
 export function RootRoute() {
@@ -26,6 +27,8 @@ function Inner() {
   const { client, setClient } = useClient();
   const data = useLoaderData() as { client: SafeClient };
   const initiallyValidated = useRef(false);
+
+  useUniversalVhUnit();
 
   useEffect(() => {
     if (data?.client && !client) {

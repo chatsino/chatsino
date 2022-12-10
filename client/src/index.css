@@ -1,6 +1,23 @@
 html,
 body {
   overflow: hidden;
+  overscroll-behavior-y: none;
+}
+
+html {
+  height: -moz-available;
+  height: -webkit-fill-available;
+  height: fill-available;
+}
+
+body {
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 90);
+  overflow: hidden;
+  /* mobile viewport bug fix */
+  min-height: -moz-available;
+  min-height: -webkit-fill-available;
+  min-height: fill-available;
 }
 
 .ant-list-vertical {
