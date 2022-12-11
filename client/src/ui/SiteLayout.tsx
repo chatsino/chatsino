@@ -1,19 +1,12 @@
-import {
-  MenuOutlined,
-  MenuUnfoldOutlined,
-  SearchOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
+import { MenuOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { Button, ConfigProvider, Layout, Typography, theme, Space } from "antd";
 import { ReactNode, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { ChatroomDrawer, NavigationDrawer, UserListDrawer } from "./drawers";
+import { NavigationDrawer } from "./drawers";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [showingNavigationDrawer, setShowingNavigationDrawer] = useState(false);
-  const [showingChatroomDrawer, setShowingChatroomDrawer] = useState(false);
-  const [showingUsersDrawer, setShowingUsersDrawer] = useState(false);
   const MenuIcon = showingNavigationDrawer ? MenuUnfoldOutlined : MenuOutlined;
 
   function toggleNavigationDrawer() {
@@ -24,30 +17,8 @@ export function SiteLayout({ children }: { children: ReactNode }) {
     return setShowingNavigationDrawer(false);
   }
 
-  function toggleChatroomDrawer() {
-    return setShowingChatroomDrawer((prev) => !prev);
-  }
-
-  function closeChatroomDrawer() {
-    return setShowingChatroomDrawer(false);
-  }
-
-  function toggleUsersDrawer() {
-    return setShowingUsersDrawer((prev) => !prev);
-  }
-
-  function closeUsersDrawer() {
-    return setShowingUsersDrawer(false);
-  }
-
   useEffect(() => {
-    for (const closeDrawer of [
-      closeNavigationDrawer,
-      closeChatroomDrawer,
-      closeUsersDrawer,
-    ]) {
-      closeDrawer();
-    }
+    closeNavigationDrawer();
   }, [location]);
 
   return (
@@ -72,20 +43,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               style={{ marginRight: "1rem" }}
               onClick={toggleNavigationDrawer}
             />
-            <Button type="text" onClick={toggleChatroomDrawer}>
-              <Typography.Title level={3}># chatsino</Typography.Title>
-            </Button>
-          </Space>
-          <Space>
-            <Button
-              type="text"
-              icon={<SearchOutlined style={{ color: "#f5f5f5" }} />}
-            />
-            <Button
-              type="text"
-              icon={<UserOutlined style={{ color: "#f5f5f5" }} />}
-              onClick={toggleUsersDrawer}
-            />
+            <Typography.Title level={3}>chatsino</Typography.Title>
           </Space>
         </Layout.Header>
         <Layout style={{ padding: "12px 1rem", minHeight: "100vh" }}>
@@ -95,10 +53,6 @@ export function SiteLayout({ children }: { children: ReactNode }) {
       {showingNavigationDrawer && (
         <NavigationDrawer onClose={closeNavigationDrawer} />
       )}
-      {showingChatroomDrawer && (
-        <ChatroomDrawer onClose={closeChatroomDrawer} />
-      )}
-      {showingUsersDrawer && <UserListDrawer onClose={closeUsersDrawer} />}
     </ConfigProvider>
   );
 }

@@ -22,8 +22,6 @@ export function useAuthentication() {
         username,
         password,
       });
-
-      window.location.reload();
     } catch (error) {
       console.error({ error }, "Unable to sign in.");
       throw error;

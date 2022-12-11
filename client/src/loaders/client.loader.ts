@@ -1,5 +1,10 @@
 import { makeHttpRequest } from "helpers";
-import { redirect } from "react-router-dom";
+import {
+  LoaderFunction,
+  LoaderFunctionArgs,
+  redirect,
+  useNavigate,
+} from "react-router-dom";
 import { SafeClient } from "schemas";
 
 export async function clientLoader() {
@@ -28,23 +33,27 @@ export async function meRedirectLoader() {
   }
 }
 
-export async function requireClientLoader() {
+export async function requireClientLoader(loader: LoaderFunctionArgs) {
+  const { pathname } = new URL(loader.request.url);
+  const redirectRoute =
+    pathname === "/signout" ? "/signin" : `/signin?redirect=${pathname}`;
+
   try {
     const loaded = await clientLoader();
 
     if (!loaded?.client) {
-      throw redirect("/signin");
+      throw redirect(redirectRoute);
     }
 
     return { client: loaded.client };
   } catch (error) {
-    throw redirect("/signin");
+    throw redirect(redirectRoute);
   }
 }
 
-export async function requireAdminLoader() {
+export async function requireAdminLoader(loader: LoaderFunctionArgs) {
   try {
-    const { client } = await requireClientLoader();
+    const { client } = await requireClientLoader(loader);
 
     if (!client.permissionLevel.includes("admin")) {
       throw redirect("/me");

@@ -6,7 +6,7 @@ export function UserListDrawer({ onClose }: { onClose: () => void }) {
       open={true}
       placement="right"
       onClose={onClose}
-      style={{ position: "relative", top: 55 }}
+      getContainer={false}
     >
       (user list)
     </Drawer>

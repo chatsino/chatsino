@@ -1,10 +1,19 @@
 import { Col, Row, Typography } from "antd";
 import { useAuthentication } from "hooks";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SigninForm } from "ui";
 
 export function SigninRoute() {
   const { signin } = useAuthentication();
+  const { search } = useLocation();
+  const navigate = useNavigate();
+  const redirectRoute = new URLSearchParams(search).get("redirect") ?? "/me";
+
+  async function handleSignin(username: string, password: string) {
+    await signin(username, password);
+    navigate(redirectRoute);
+    window.location.reload(); // TODO: Remove this.
+  }
 
   return (
     <Row>
@@ -34,7 +43,7 @@ export function SigninRoute() {
             ...or <Link to="/signup">sign up.</Link>
           </small>
         </Typography.Title>
-        <SigninForm onSubmit={signin} />
+        <SigninForm onSubmit={handleSignin} />
       </Col>
     </Row>
   );
