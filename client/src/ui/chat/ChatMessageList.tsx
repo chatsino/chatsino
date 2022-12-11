@@ -92,8 +92,11 @@ export function ChatMessageList({
                 </Typography.Title>
               </Button>
               {!search.isSearching && (
-                <Typography.Text type="secondary">
-                  showing {chatroom.messages.length} messages
+                <Typography.Text
+                  type="secondary"
+                  style={{ textTransform: "uppercase", letterSpacing: 2 }}
+                >
+                  <small>Showing {chatroom.messages.length} messages</small>
                 </Typography.Text>
               )}
               <Space>

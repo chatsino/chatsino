@@ -58,3 +58,8 @@ export const clientSignupSchema = clientSigninSchema.shape({
     })
     .required("Please re-enter your chosen password."),
 });
+
+export const purchaseChipsSchema = yup.object({
+  amount: yup.number().min(5).required(),
+  paymentMethod: yup.string().oneOf(["charity"]).required(),
+});

@@ -1,7 +1,5 @@
-import { SiteLayout } from "ui";
-import { Outlet, useLoaderData } from "react-router-dom";
-import { SafeClient } from "schemas";
-import { useEffect, useRef } from "react";
+import { Col, Divider, Row } from "antd";
+import { ChatroomGenerator } from "helpers";
 import {
   ClientProvider,
   SocketProvider,
@@ -9,6 +7,16 @@ import {
   useClient,
   useUniversalVhUnit,
 } from "hooks";
+import { useEffect, useRef } from "react";
+import { Outlet, useLoaderData } from "react-router-dom";
+import { SafeClient } from "schemas";
+import {
+  ChatroomList,
+  ChatUserList,
+  JoinPrivateRoomForm,
+  PurchaseChipsForm,
+  SiteLayout,
+} from "ui";
 
 export function RootRoute() {
   return (
@@ -27,6 +35,8 @@ function Inner() {
   const { client, setClient } = useClient();
   const data = useLoaderData() as { client: SafeClient };
   const initiallyValidated = useRef(false);
+  const someChatrooms = useChatrooms();
+  const chatroom = someChatrooms[0];
 
   useUniversalVhUnit();
 
@@ -54,5 +64,25 @@ function Inner() {
     }
   }, [validate, setClient]);
 
-  return <Outlet />;
+  return (
+    <Row gutter={20}>
+      <Col xs={0} lg={4}>
+        <ChatUserList users={chatroom.users} />
+      </Col>
+      <Col xs={24} lg={16}>
+        <Outlet />
+      </Col>
+      <Col xs={0} lg={4}>
+        <ChatroomList chatrooms={someChatrooms} />
+        <Divider />
+        <JoinPrivateRoomForm onSubmit={() => Promise.resolve()} />
+        <Divider />
+        <PurchaseChipsForm onSubmit={() => Promise.resolve()} />
+      </Col>
+    </Row>
+  );
+}
+
+function useChatrooms() {
+  return ChatroomGenerator.generateChatroomList(30);
 }

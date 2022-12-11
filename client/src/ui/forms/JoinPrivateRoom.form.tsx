@@ -1,5 +1,5 @@
 import { LockFilled } from "@ant-design/icons";
-import { Button, Card, Divider, Form, Input } from "antd";
+import { Button, Card, Form, Input } from "antd";
 import { useFormFields } from "hooks";
 import { joinPrivateRoomSchema } from "schemas";
 
@@ -35,7 +35,21 @@ export function JoinPrivateRoomForm({ onSubmit }: Props) {
   }
 
   return (
-    <Card title="Join private room" extra={<LockFilled />}>
+    <Card
+      title="Join private room"
+      extra={<LockFilled />}
+      actions={[
+        <Button
+          key="join"
+          type="primary"
+          size="middle"
+          block={true}
+          onClick={form.submit}
+        >
+          Join
+        </Button>,
+      ]}
+    >
       <Form
         form={form}
         name="basic"
@@ -46,26 +60,14 @@ export function JoinPrivateRoomForm({ onSubmit }: Props) {
         onFieldsChange={clearErrors}
         onFinish={onFinish}
         autoComplete="off"
-        size="small"
+        size="middle"
       >
         <Form.Item label="Room" name="room">
-          <Input autoFocus={true} />
+          <Input />
         </Form.Item>
         <Form.Item label="Password" name="password">
           <Input.Password />
         </Form.Item>
-        <Button
-          type="primary"
-          htmlType="submit"
-          block={true}
-          size="large"
-          style={{
-            marginTop: "1rem",
-            marginBottom: "1rem",
-          }}
-        >
-          join
-        </Button>
       </Form>
     </Card>
   );

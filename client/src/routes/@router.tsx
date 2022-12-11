@@ -1,9 +1,12 @@
-import { createBrowserRouter } from "react-router-dom";
 import {
   chatRedirectLoader,
   requireAdminLoader,
   requireClientLoader,
 } from "loaders";
+import { createBrowserRouter } from "react-router-dom";
+import { AdminRoute } from "./Admin.route";
+import { ChatRoute } from "./Chat.route";
+import { ErrorRoute } from "./Error.route";
 import {
   BlackjackRoute,
   CrossingRoute,
@@ -11,18 +14,14 @@ import {
   RouletteRoute,
   SlotsRoute,
 } from "./games";
-import { AdminRoute } from "./Admin.route";
-import { ChatRoute } from "./Chat.route";
-import { ErrorRoute } from "./Error.route";
 import { GamesRoute } from "./Games.route";
 import { HelpRoute } from "./Help.route";
 import { MeRoute } from "./Me.route";
 import { RootRoute } from "./Root.route";
-import { ShopRoute } from "./Shop.route";
 import { SigninRoute } from "./Signin.route";
 import { SignoutRoute } from "./Signout.route";
 import { SignupRoute } from "./Signup.route";
-import { UserRoute, userLoader } from "./User.route";
+import { userLoader, UserRoute } from "./User.route";
 
 export const router = createBrowserRouter([
   {
@@ -75,11 +74,6 @@ export const router = createBrowserRouter([
         path: "/me",
         loader: requireClientLoader,
         element: <MeRoute />,
-      },
-      {
-        path: "/shop",
-        loader: requireClientLoader,
-        element: <ShopRoute />,
       },
       {
         path: "/signin",

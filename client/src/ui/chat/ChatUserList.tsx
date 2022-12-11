@@ -47,7 +47,7 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
         </List.Item>
       )}
       style={{
-        height: toUniversalVh(40),
+        height: toUniversalVh(35),
         overflow: "auto",
       }}
     />

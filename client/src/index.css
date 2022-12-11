@@ -42,3 +42,14 @@ body {
   text-transform: uppercase !important;
   letter-spacing: 2px !important;
 }
+
+.ant-card .ant-card-actions > li {
+  margin: 0;
+}
+
+.ant-card .ant-card-actions .ant-btn {
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
