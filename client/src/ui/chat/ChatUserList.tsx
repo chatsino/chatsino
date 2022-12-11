@@ -1,6 +1,7 @@
 import { SearchOutlined, UserOutlined } from "@ant-design/icons";
-import { Avatar, Divider, Input, List, Typography } from "antd";
+import { Avatar, Input, List, Typography } from "antd";
 import { toUniversalVh } from "helpers";
+import { Link } from "react-router-dom";
 
 export function ChatUserList({ users }: { users: ChatUserData[] }) {
   const sortedUsers = users.sort((a, b) =>
@@ -37,14 +38,15 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
           onChange={(event) => {}}
         />
       }
-      renderItem={(item, index) => (
-        <List.Item style={{ cursor: "pointer" }}>
-          <List.Item.Meta
-            avatar={<Avatar src={item.avatar} />}
-            title={item.username}
-          />
-          {index !== users.length - 1 && <Divider style={{ margin: 0 }} />}
-        </List.Item>
+      renderItem={(item) => (
+        <Link to={`/u/${item.id}`}>
+          <List.Item style={{ cursor: "pointer" }}>
+            <List.Item.Meta
+              avatar={<Avatar src={item.avatar} />}
+              title={item.username}
+            />
+          </List.Item>
+        </Link>
       )}
       style={{
         height: toUniversalVh(35),

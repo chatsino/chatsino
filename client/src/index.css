@@ -53,3 +53,20 @@ body {
   border-bottom-right-radius: 8px;
   border-bottom-left-radius: 8px;
 }
+
+.ant-list-footer {
+  padding-inline: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-list-footer .ant-input-affix-wrapper {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+textarea.ant-input {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}

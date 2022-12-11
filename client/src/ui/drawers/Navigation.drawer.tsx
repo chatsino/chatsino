@@ -1,11 +1,9 @@
-import { LogoutOutlined } from "@ant-design/icons";
-import { Button, Drawer, Menu, Space, Typography } from "antd";
-import { useClient, useNavigation } from "hooks";
-import { Link } from "react-router-dom";
+import { Drawer, Menu, Typography } from "antd";
+import { useNavigation } from "hooks";
 import { useNavigate } from "react-router-dom";
+import { CurrentClientStrip } from "../CurrentClientStrip";
 
 export function NavigationDrawer({ onClose }: { onClose: () => void }) {
-  const { client } = useClient();
   const navigate = useNavigate();
   const navigation = useNavigation();
 
@@ -22,24 +20,7 @@ export function NavigationDrawer({ onClose }: { onClose: () => void }) {
       footerStyle={{
         textAlign: "right",
       }}
-      extra={
-        <Typography.Text>
-          {client ? (
-            <Space>
-              <span>hello,</span> <Link to="/me">@{client.username}</Link>
-              <Link to="/signout">
-                <Button type="text" icon={<LogoutOutlined />} />
-              </Link>
-            </Space>
-          ) : (
-            <Space>
-              <Link to="/signin">sign in</Link>
-              <span>or</span>
-              <Link to="/signup">sign up</Link>
-            </Space>
-          )}
-        </Typography.Text>
-      }
+      extra={<CurrentClientStrip />}
       footer={<Typography.Text>chatsino</Typography.Text>}
     >
       <Menu

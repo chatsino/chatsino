@@ -21,6 +21,7 @@ import { RootRoute } from "./Root.route";
 import { SigninRoute } from "./Signin.route";
 import { SignoutRoute } from "./Signout.route";
 import { SignupRoute } from "./Signup.route";
+import { StatsRoute } from "./Stats.route";
 import { userLoader, UserRoute } from "./User.route";
 
 export const router = createBrowserRouter([
@@ -38,6 +39,12 @@ export const router = createBrowserRouter([
         path: "/chat",
         loader: requireClientLoader,
         element: <ChatRoute />,
+        children: [
+          {
+            path: ":chatroomId",
+            element: <ChatRoute />,
+          },
+        ],
       },
       {
         path: "/games",
@@ -91,7 +98,11 @@ export const router = createBrowserRouter([
         element: <SignupRoute />,
       },
       {
-        path: "/u/:userId",
+        path: "/stats",
+        element: <StatsRoute />,
+      },
+      {
+        path: "/user/:userId",
         loader: userLoader,
         element: <UserRoute />,
       },

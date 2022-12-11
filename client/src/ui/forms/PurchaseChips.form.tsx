@@ -1,6 +1,6 @@
-import { LockFilled } from "@ant-design/icons";
 import { Button, Card, Form, Input, Select } from "antd";
 import { useFormFields } from "hooks";
+import { BiCoinStack } from "react-icons/bi";
 import { purchaseChipsSchema } from "schemas";
 
 interface Props {
@@ -39,7 +39,7 @@ export function PurchaseChipsForm({ onSubmit }: Props) {
   return (
     <Card
       title="Purchase chips"
-      extra={<LockFilled />}
+      extra={<BiCoinStack />}
       actions={[
         <Button
           key="purchase"

@@ -1,3 +1,4 @@
+export * from "./ChatGameList";
 export * from "./ChatInput";
 export * from "./ChatMessageGroup";
 export * from "./ChatMessageList";

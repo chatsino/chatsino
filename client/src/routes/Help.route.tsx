@@ -1,3 +1,10 @@
+import { QuestionCircleOutlined } from "@ant-design/icons";
+import { PageHeader } from "ui";
+
 export function HelpRoute() {
-  return <div>Help</div>;
+  return (
+    <>
+      <PageHeader title="Help" icon={<QuestionCircleOutlined />} />
+    </>
+  );
 }

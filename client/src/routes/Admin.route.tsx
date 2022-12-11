@@ -1,3 +1,10 @@
+import { SettingOutlined } from "@ant-design/icons";
+import { PageHeader } from "ui";
+
 export function AdminRoute() {
-  return <div>Admin</div>;
+  return (
+    <>
+      <PageHeader title="Admin" icon={<SettingOutlined />} />
+    </>
+  );
 }

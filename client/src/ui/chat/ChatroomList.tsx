@@ -1,11 +1,8 @@
-import {
-  CodeOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import { Button, Divider, Input, List, Tooltip, Typography } from "antd";
+import { PlusOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Input, List, Tooltip, Typography } from "antd";
 import { toUniversalVh } from "helpers";
+import { BsDoorOpen } from "react-icons/bs";
+import { Link } from "react-router-dom";
 
 export const CHATROOM_DESCRIPTION_TRUNCATION_LIMIT = 40;
 
@@ -26,7 +23,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
           }}
         >
           <span>
-            <CodeOutlined style={{ marginRight: "0.5rem" }} /> Rooms
+            <BsDoorOpen /> <span style={{ marginLeft: "0.5rem" }}>Rooms</span>
           </span>
           <span>
             <small style={{ marginRight: "0.5rem" }}>
@@ -53,7 +50,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
           onChange={(event) => {}}
         />
       }
-      renderItem={(item, index) => {
+      renderItem={(item) => {
         const truncatedDescription =
           item.description.length >= CHATROOM_DESCRIPTION_TRUNCATION_LIMIT
             ? item.description.slice(0, CHATROOM_DESCRIPTION_TRUNCATION_LIMIT) +
@@ -61,24 +58,23 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
             : item.description;
 
         return (
-          <List.Item
-            style={{ cursor: "pointer" }}
-            extra={
-              <Typography.Text>
-                {item.users.length} <UserOutlined />
-              </Typography.Text>
-            }
-          >
-            <Tooltip title={item.description}>
-              <List.Item.Meta
-                title={item.title}
-                description={truncatedDescription}
-              />
-            </Tooltip>
-            {index !== chatrooms.length - 1 && (
-              <Divider style={{ margin: 0 }} />
-            )}
-          </List.Item>
+          <Link to={`/chat/${item.id}`}>
+            <List.Item
+              style={{ cursor: "pointer" }}
+              extra={
+                <Typography.Text>
+                  {item.users.length} <UserOutlined />
+                </Typography.Text>
+              }
+            >
+              <Tooltip title={item.description}>
+                <List.Item.Meta
+                  title={item.title}
+                  description={truncatedDescription}
+                />
+              </Tooltip>
+            </List.Item>
+          </Link>
         );
       }}
       style={{
