@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import {
-  meRedirectLoader,
+  chatRedirectLoader,
   requireAdminLoader,
   requireClientLoader,
 } from "loaders";
@@ -83,7 +83,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/signin",
-        loader: meRedirectLoader,
+        loader: chatRedirectLoader,
         element: <SigninRoute />,
       },
       {
@@ -93,7 +93,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/signup",
-        loader: meRedirectLoader,
+        loader: chatRedirectLoader,
         element: <SignupRoute />,
       },
       {

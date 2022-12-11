@@ -14,17 +14,17 @@ export async function clientLoader() {
   }
 }
 
-export async function meRedirectLoader() {
+export async function chatRedirectLoader() {
   try {
     const loaded = await clientLoader();
 
     if (loaded?.client) {
-      throw redirect("/me");
+      throw redirect("/chat");
     }
 
     return { validated: true };
   } catch (error) {
-    throw redirect("/me");
+    throw redirect("/chat");
   }
 }
 
@@ -51,11 +51,11 @@ export async function requireAdminLoader(loader: LoaderFunctionArgs) {
     const { client } = await requireClientLoader(loader);
 
     if (!client.permissionLevel.includes("admin")) {
-      throw redirect("/me");
+      throw redirect("/chat");
     }
 
     return { client };
   } catch (error) {
-    throw redirect("/me");
+    throw redirect("/chat");
   }
 }

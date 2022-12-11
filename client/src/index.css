@@ -37,3 +37,8 @@ body {
 *::-webkit-scrollbar { 
   display: none;  /* Safari and Chrome */
 }
+
+.ant-btn {
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+}

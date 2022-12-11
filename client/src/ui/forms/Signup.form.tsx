@@ -75,7 +75,7 @@ export function SignupForm({ onSubmit }: Props) {
           marginBottom: "1rem",
         }}
       >
-        Submit
+        Sign up
       </Button>
     </Form>
   );

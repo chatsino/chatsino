@@ -1,13 +1,17 @@
-import { UserOutlined } from "@ant-design/icons";
-import { Avatar, Divider, List, Typography } from "antd";
+import { SearchOutlined, UserOutlined } from "@ant-design/icons";
+import { Avatar, Divider, Input, List, Typography } from "antd";
 import { toUniversalVh } from "helpers";
 
 export function ChatUserList({ users }: { users: ChatUserData[] }) {
+  const sortedUsers = users.sort((a, b) =>
+    a.username.localeCompare(b.username)
+  );
+
   return (
     <List
       itemLayout="vertical"
       bordered={true}
-      dataSource={users}
+      dataSource={sortedUsers}
       header={
         <Typography.Title
           level={4}
@@ -24,6 +28,15 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
           <small>{users.length} online</small>
         </Typography.Title>
       }
+      footer={
+        <Input
+          type="text"
+          prefix={<SearchOutlined />}
+          placeholder={`Search users`}
+          value=""
+          onChange={(event) => {}}
+        />
+      }
       renderItem={(item, index) => (
         <List.Item style={{ cursor: "pointer" }}>
           <List.Item.Meta
@@ -34,7 +47,7 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
         </List.Item>
       )}
       style={{
-        height: toUniversalVh(80),
+        height: toUniversalVh(40),
         overflow: "auto",
       }}
     />

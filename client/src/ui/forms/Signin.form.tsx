@@ -63,7 +63,7 @@ export function SigninForm({ onSubmit }: Props) {
           marginBottom: "1rem",
         }}
       >
-        Submit
+        Sign in
       </Button>
     </Form>
   );

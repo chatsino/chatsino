@@ -1,4 +1,4 @@
-import { Col, Row } from "antd";
+import { Col, Divider, Row } from "antd";
 import { useState } from "react";
 import {
   ChatroomGenerator,
@@ -6,6 +6,7 @@ import {
   UserGenerator,
 } from "helpers";
 import { ChatMessageList, ChatroomList, ChatUserList } from "ui";
+import { JoinPrivateRoomForm } from "ui/forms/JoinPrivateRoom.form";
 
 export function ChatRoute() {
   const someChatrooms = useChatrooms();
@@ -16,6 +17,8 @@ export function ChatRoute() {
     <Row gutter={12}>
       <Col xs={0} xl={5}>
         <ChatroomList chatrooms={someChatrooms} />
+        <Divider />
+        <JoinPrivateRoomForm onSubmit={() => Promise.resolve()} />
       </Col>
       <Col xs={24} lg={18} xl={15}>
         <ChatMessageList

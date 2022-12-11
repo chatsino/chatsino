@@ -1,5 +1,5 @@
-import { CodeOutlined, UserOutlined } from "@ant-design/icons";
-import { Divider, List, Tooltip, Typography } from "antd";
+import { CodeOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
+import { Divider, Input, List, Tooltip, Typography } from "antd";
 import { toUniversalVh } from "helpers";
 
 export const CHATROOM_DESCRIPTION_TRUNCATION_LIMIT = 40;
@@ -25,6 +25,15 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
           </span>
           <small>{chatrooms.length} total</small>
         </Typography.Title>
+      }
+      footer={
+        <Input
+          type="text"
+          prefix={<SearchOutlined />}
+          placeholder={`Search rooms`}
+          value=""
+          onChange={(event) => {}}
+        />
       }
       renderItem={(item, index) => {
         const truncatedDescription =
@@ -55,7 +64,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
         );
       }}
       style={{
-        height: toUniversalVh(80),
+        height: toUniversalVh(40),
         overflow: "auto",
       }}
     />
