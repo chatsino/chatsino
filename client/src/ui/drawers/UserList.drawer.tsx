@@ -1,6 +1,13 @@
 import { Drawer } from "antd";
+import { ChatUserList } from "../chat";
 
-export function UserListDrawer({ onClose }: { onClose: () => void }) {
+export function UserListDrawer({
+  onClose,
+  users,
+}: {
+  onClose: () => void;
+  users: ChatUserData[];
+}) {
   return (
     <Drawer
       open={true}
@@ -8,7 +15,7 @@ export function UserListDrawer({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       getContainer={false}
     >
-      (user list)
+      <ChatUserList users={users} />
     </Drawer>
   );
 }

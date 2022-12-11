@@ -11,12 +11,14 @@ import { groupMessages } from "./group-messages";
 
 export function ChatMessageList({
   id,
+  users,
   messages,
   onSendMessage,
 }: {
   id: string;
-  messages: ChatMessage[];
-  onSendMessage: (message: ChatMessage) => unknown;
+  users: ChatUserData[];
+  messages: ChatMessageData[];
+  onSendMessage: (message: ChatMessageData) => unknown;
 }) {
   const [raised, setRaised] = useState(false);
   const { sm } = Grid.useBreakpoint();
@@ -65,7 +67,7 @@ export function ChatMessageList({
                 >
                   #
                 </Typography.Text>
-                <span style={{ position: "relative", top: -2 }}>room</span>
+                <span>room</span>
               </Typography.Title>
             </Button>
             <Space>
@@ -73,11 +75,13 @@ export function ChatMessageList({
                 type="text"
                 icon={<SearchOutlined style={{ color: "#f5f5f5" }} />}
               />
-              <Button
-                type="text"
-                icon={<UserOutlined style={{ color: "#f5f5f5" }} />}
-                onClick={toggleUserListDrawer}
-              />
+              {onMobile && (
+                <Button
+                  type="text"
+                  icon={<UserOutlined style={{ color: "#f5f5f5" }} />}
+                  onClick={toggleUserListDrawer}
+                />
+              )}
             </Space>
           </div>
         }
@@ -113,7 +117,7 @@ export function ChatMessageList({
         <ChatroomDrawer onClose={toggleChatroomDrawer} />
       )}
       {showingUserListDrawer && (
-        <UserListDrawer onClose={toggleUserListDrawer} />
+        <UserListDrawer users={users} onClose={toggleUserListDrawer} />
       )}
     </>
   );

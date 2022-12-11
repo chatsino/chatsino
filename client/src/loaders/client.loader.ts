@@ -1,10 +1,5 @@
 import { makeHttpRequest } from "helpers";
-import {
-  LoaderFunction,
-  LoaderFunctionArgs,
-  redirect,
-  useNavigate,
-} from "react-router-dom";
+import { LoaderFunctionArgs, redirect } from "react-router-dom";
 import { SafeClient } from "schemas";
 
 export async function clientLoader() {

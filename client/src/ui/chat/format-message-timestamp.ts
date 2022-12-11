@@ -1,4 +1,4 @@
-export function formatMessageTimestamp(message: ChatMessage) {
+export function formatMessageTimestamp(message: ChatMessageData) {
   const messageCreatedDate = new Date(message.createdAt);
   const formattedMessageCreatedDate = new Intl.DateTimeFormat("en-us").format(
     messageCreatedDate

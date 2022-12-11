@@ -43,7 +43,9 @@ export function SiteLayout({ children }: { children: ReactNode }) {
               style={{ marginRight: "1rem" }}
               onClick={toggleNavigationDrawer}
             />
-            <Typography.Title level={3}>chatsino</Typography.Title>
+            <Typography.Title level={3} style={{ margin: 0 }}>
+              chatsino
+            </Typography.Title>
           </Space>
         </Layout.Header>
         <Layout style={{ padding: "12px 1rem", minHeight: "100vh" }}>

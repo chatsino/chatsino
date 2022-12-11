@@ -1,7 +1,7 @@
-export function groupMessages(messages: ChatMessage[]) {
+export function groupMessages(messages: ChatMessageData[]) {
   const messageGroups = [] as Array<{
-    author: ChatMessage["author"];
-    messages: ChatMessage[];
+    author: ChatMessageData["author"];
+    messages: ChatMessageData[];
   }>;
 
   for (const message of messages) {

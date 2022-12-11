@@ -1,8 +1,8 @@
 import Chance from "chance";
-import sampleAvatar from "assets/avatars/sample.jpeg";
+import { UserGenerator } from "./user.generator";
 
-interface ChatMessageOverride extends Partial<Omit<ChatMessage, "author">> {
-  author?: Partial<ChatMessage["author"]>;
+interface ChatMessageOverride extends Partial<Omit<ChatMessageData, "author">> {
+  author?: Partial<ChatMessageData["author"]>;
 }
 
 const CHANCE = new Chance();
@@ -14,9 +14,7 @@ export class ChatMessageGenerator {
     return {
       id: CHANCE.integer({ min: 0, max: 1000000 }),
       author: {
-        id: CHANCE.integer({ min: 0, max: 1000000 }),
-        avatar: sampleAvatar,
-        username: CHANCE.capitalize(CHANCE.word({ length: 12 })),
+        ...UserGenerator.generateChatUser(),
         ...authorOverride,
       },
       content: CHANCE.paragraph(),
@@ -32,22 +30,24 @@ export class ChatMessageGenerator {
     );
   }
 
-  public static generateRealisticChatMessageList(count: number) {
+  public static generateRealisticChatMessageList(
+    users: ChatUserData[],
+    count: number
+  ) {
     count = Math.max(count, 5);
 
     const chatMessages = ChatMessageGenerator.generateChatMessageList(count);
-    const uniqueAuthors = chatMessages
-      .slice(5)
-      .map((message) => message.author);
 
-    let [previousAuthor] = uniqueAuthors;
+    let [previousAuthor] = users;
 
     for (const message of chatMessages) {
       const isNewAuthor = CHANCE.bool({ likelihood: 40 });
 
-      message.author = isNewAuthor
-        ? CHANCE.pickone(uniqueAuthors)
-        : previousAuthor;
+      message.author = isNewAuthor ? CHANCE.pickone(users) : previousAuthor;
+
+      if (previousAuthor !== message.author) {
+        previousAuthor = message.author;
+      }
     }
 
     return chatMessages;
