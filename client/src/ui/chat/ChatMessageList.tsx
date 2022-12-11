@@ -49,6 +49,9 @@ export function ChatMessageList({
     () => groupMessages(renderedMessages),
     [renderedMessages]
   );
+  const uniqueAuthorCount = Array.from(
+    new Set(groupedMessages.map((group) => group.author))
+  ).length;
 
   function toggleChatroomDrawer() {
     return setShowingChatroomDrawer((prev) => !prev);
@@ -96,7 +99,10 @@ export function ChatMessageList({
                   type="secondary"
                   style={{ textTransform: "uppercase", letterSpacing: 2 }}
                 >
-                  <small>Showing {chatroom.messages.length} messages</small>
+                  <small>
+                    Showing {chatroom.messages.length} messages from{" "}
+                    {uniqueAuthorCount} users
+                  </small>
                 </Typography.Text>
               )}
               <Space>
