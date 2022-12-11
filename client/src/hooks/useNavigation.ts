@@ -8,7 +8,7 @@ export function useNavigation() {
     return [
       {
         to: "/me",
-        title: "Home",
+        title: `@${client.username}`,
       },
       {
         to: "/chat",

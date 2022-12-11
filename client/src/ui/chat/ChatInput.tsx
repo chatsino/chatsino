@@ -8,8 +8,8 @@ export function ChatInput({
   onDrawerClose,
   onSend,
 }: {
-  onDrawerOpen: () => unknown;
-  onDrawerClose: () => unknown;
+  onDrawerOpen?: () => unknown;
+  onDrawerClose?: () => unknown;
   onSend: (message: string) => unknown;
 }) {
   const [form] = Form.useForm();
@@ -30,9 +30,9 @@ export function ChatInput({
 
   useEffect(() => {
     if (showingEmojiDrawer) {
-      onDrawerOpen();
+      onDrawerOpen?.();
     } else {
-      onDrawerClose();
+      onDrawerClose?.();
     }
   }, [showingEmojiDrawer, onDrawerOpen, onDrawerClose]);
 

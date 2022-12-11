@@ -9,27 +9,26 @@ import { ChatMessageList, ChatroomList, ChatUserList } from "ui";
 
 export function ChatRoute() {
   const someChatrooms = useChatrooms();
-  const someUsers = useChatUsers();
-  const someMessages = useChatMessages(someUsers);
-  const [messages, setMessages] = useState(someMessages);
+  const chatroom = someChatrooms[0];
+  const [messages, setMessages] = useState(chatroom.messages);
 
   return (
     <Row gutter={12}>
-      <Col xs={0} xl={4}>
+      <Col xs={0} xl={5}>
         <ChatroomList chatrooms={someChatrooms} />
       </Col>
-      <Col xs={24} lg={18} xl={16}>
+      <Col xs={24} lg={18} xl={15}>
         <ChatMessageList
           id="chat"
-          users={someUsers}
-          messages={messages}
+          chatroom={someChatrooms[0]}
+          chatrooms={someChatrooms}
           onSendMessage={(message) =>
             setMessages((prev) => prev.concat(message))
           }
         />
       </Col>
       <Col xs={0} lg={6} xl={4}>
-        <ChatUserList users={someUsers} />
+        <ChatUserList users={chatroom.users} />
       </Col>
     </Row>
   );

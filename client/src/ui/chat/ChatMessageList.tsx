@@ -1,7 +1,7 @@
-import { SearchOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Grid, List, Space, Typography } from "antd";
+import { CloseOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Empty, Grid, Input, List, Space, Typography } from "antd";
 import { ChatMessageGenerator, toUniversalVh } from "helpers";
-import { useChatAutoscroll } from "hooks";
+import { useChatAutoscroll, useChatSearch } from "hooks";
 import { useMemo, useRef, useState } from "react";
 import key from "weak-key";
 import { ChatroomDrawer, UserListDrawer } from "../drawers";
@@ -11,22 +11,28 @@ import { groupMessages } from "./group-messages";
 
 export function ChatMessageList({
   id,
-  users,
-  messages,
+  chatroom,
   onSendMessage,
 }: {
   id: string;
-  users: ChatUserData[];
-  messages: ChatMessageData[];
+  chatroom: ChatroomData;
+  chatrooms: ChatroomData[];
   onSendMessage: (message: ChatMessageData) => unknown;
 }) {
-  const [raised, setRaised] = useState(false);
   const { sm } = Grid.useBreakpoint();
   const onMobile = !sm;
-  const groupedMessages = useMemo(() => groupMessages(messages), [messages]);
+
   const [showingChatroomDrawer, setShowingChatroomDrawer] = useState(false);
   const [showingUserListDrawer, setShowingUsersDrawer] = useState(false);
   const listBodyRef = useRef<null | HTMLDivElement>(null);
+  const search = useChatSearch(chatroom);
+  const renderedMessages = search.isSearching
+    ? search.results
+    : chatroom.messages;
+  const groupedMessages = useMemo(
+    () => groupMessages(renderedMessages),
+    [renderedMessages]
+  );
 
   function toggleChatroomDrawer() {
     return setShowingChatroomDrawer((prev) => !prev);
@@ -36,7 +42,7 @@ export function ChatMessageList({
     return setShowingUsersDrawer((prev) => !prev);
   }
 
-  useChatAutoscroll(id, messages);
+  useChatAutoscroll(id, chatroom.messages);
 
   return (
     <>
@@ -46,9 +52,7 @@ export function ChatMessageList({
         itemLayout="vertical"
         style={{
           transition: "height 0.2s ease-in-out",
-          height: raised
-            ? toUniversalVh(onMobile ? 30 : 50)
-            : toUniversalVh(85),
+          height: toUniversalVh(85),
           overflow: "auto",
         }}
         header={
@@ -67,14 +71,44 @@ export function ChatMessageList({
                 >
                   #
                 </Typography.Text>
-                <span>room</span>
+                <span>{chatroom.title}</span>
               </Typography.Title>
             </Button>
+            {search.isSearching && (
+              <Typography.Text type="secondary">
+                <em style={{ marginRight: "1rem" }}>
+                  Searching for messages in #{chatroom.title} containing "
+                  {search.query}"
+                </em>
+                {search.noResults ? (
+                  <>(No results found.)</>
+                ) : (
+                  <>
+                    ({search.results.length}{" "}
+                    {search.results.length === 1 ? "result" : "results"} found.)
+                  </>
+                )}
+              </Typography.Text>
+            )}
             <Space>
-              <Button
-                type="text"
-                icon={<SearchOutlined style={{ color: "#f5f5f5" }} />}
-              />
+              <Input.Group compact={true}>
+                <Input
+                  type="text"
+                  prefix={<SearchOutlined />}
+                  placeholder={`Search #${chatroom.title}`}
+                  value={search.query}
+                  onChange={(event) => search.setQuery(event.target.value)}
+                  style={{
+                    width: search.isSearching ? "calc(100% - 35px)" : "100%",
+                  }}
+                />
+                {search.isSearching && (
+                  <Button
+                    icon={<CloseOutlined />}
+                    onClick={search.clearQuery}
+                  />
+                )}
+              </Input.Group>
               {onMobile && (
                 <Button
                   type="text"
@@ -87,8 +121,6 @@ export function ChatMessageList({
         }
         footer={
           <ChatInput
-            onDrawerOpen={() => setRaised(true)}
-            onDrawerClose={() => setRaised(false)}
             onSend={(message) =>
               onSendMessage(
                 ChatMessageGenerator.generateChatMessage({
@@ -112,12 +144,15 @@ export function ChatMessageList({
             ))}
           </div>
         </div>
+        {search.isSearching && search.results.length === 0 && (
+          <Empty style={{ margin: "5rem" }} />
+        )}
       </List>
       {showingChatroomDrawer && (
         <ChatroomDrawer onClose={toggleChatroomDrawer} />
       )}
       {showingUserListDrawer && (
-        <UserListDrawer users={users} onClose={toggleUserListDrawer} />
+        <UserListDrawer users={chatroom.users} onClose={toggleUserListDrawer} />
       )}
     </>
   );
