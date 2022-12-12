@@ -12,6 +12,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
       itemLayout="vertical"
       bordered={true}
       dataSource={chatrooms}
+      size="small"
       header={
         <Typography.Title
           level={4}
@@ -50,33 +51,22 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
           onChange={(event) => {}}
         />
       }
-      renderItem={(item) => {
-        const truncatedDescription =
-          item.description.length >= CHATROOM_DESCRIPTION_TRUNCATION_LIMIT
-            ? item.description.slice(0, CHATROOM_DESCRIPTION_TRUNCATION_LIMIT) +
-              "..."
-            : item.description;
-
-        return (
-          <Link to={`/chat/${item.id}`}>
-            <List.Item
-              style={{ cursor: "pointer" }}
-              extra={
-                <Typography.Text>
-                  {item.users.length} <UserOutlined />
-                </Typography.Text>
-              }
-            >
-              <Tooltip title={item.description}>
-                <List.Item.Meta
-                  title={item.title}
-                  description={truncatedDescription}
-                />
-              </Tooltip>
-            </List.Item>
-          </Link>
-        );
-      }}
+      renderItem={(item) => (
+        <Link to={`/chat/${item.id}`}>
+          <List.Item
+            style={{ cursor: "pointer" }}
+            extra={
+              <Typography.Text>
+                {item.users.length} <UserOutlined />
+              </Typography.Text>
+            }
+          >
+            <Tooltip title={item.description}>
+              <List.Item.Meta title={item.title} />
+            </Tooltip>
+          </List.Item>
+        </Link>
+      )}
       style={{
         height: toUniversalVh(35),
         overflow: "auto",

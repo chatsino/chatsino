@@ -13,6 +13,7 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
       itemLayout="vertical"
       bordered={true}
       dataSource={sortedUsers}
+      size="small"
       header={
         <Typography.Title
           level={4}

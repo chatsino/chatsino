@@ -1,9 +1,4 @@
-import {
-  BarChartOutlined,
-  QuestionCircleOutlined,
-  SettingOutlined,
-} from "@ant-design/icons";
-import { Button, Col, Divider, Row, Space } from "antd";
+import { Col, Divider, Row } from "antd";
 import { ChatroomGenerator } from "helpers";
 import {
   ClientProvider,
@@ -20,7 +15,7 @@ import {
   GiCat,
   GiVendingMachine,
 } from "react-icons/gi";
-import { Link, Outlet, useLoaderData, useMatches } from "react-router-dom";
+import { Outlet, useLoaderData } from "react-router-dom";
 import { SafeClient } from "schemas";
 import {
   ChatGameList,
@@ -50,7 +45,6 @@ function Inner() {
   const initiallyValidated = useRef(false);
   const someChatrooms = useChatrooms();
   const chatroom = someChatrooms[0];
-  const routeMatches = useMatches();
   const games = [
     {
       title: "Blackjack",
@@ -89,23 +83,6 @@ function Inner() {
       playerCount: 8,
     },
   ];
-  const buttonLinks = [
-    {
-      title: "Help",
-      icon: <QuestionCircleOutlined />,
-      route: "/help",
-    },
-    {
-      title: "Stats",
-      icon: <BarChartOutlined />,
-      route: "/stats",
-    },
-    {
-      title: "Admin",
-      icon: <SettingOutlined />,
-      route: "/admin",
-    },
-  ];
 
   useUniversalVhUnit();
 
@@ -139,30 +116,6 @@ function Inner() {
         <ChatUserList users={chatroom.users} />
         <Divider />
         <ChatGameList games={games} />
-        <Divider />
-        <Space direction="vertical" style={{ width: "100%" }}>
-          {buttonLinks.map((buttonLink) => (
-            <Link key={buttonLink.route} to={buttonLink.route}>
-              <Button
-                size="large"
-                disabled={Boolean(
-                  routeMatches.find(
-                    (match) => match.pathname === buttonLink.route
-                  )
-                )}
-                block={true}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                {buttonLink.title}
-                {buttonLink.icon}
-              </Button>
-            </Link>
-          ))}
-        </Space>
       </Col>
       <Col xs={24} lg={16}>
         <Outlet />

@@ -1,14 +1,58 @@
-import { MenuOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
-import { Button, Layout, Space, Typography } from "antd";
+import {
+  BarChartOutlined,
+  MenuOutlined,
+  MenuUnfoldOutlined,
+  QuestionCircleOutlined,
+  SettingOutlined,
+} from "@ant-design/icons";
+import { Button, Divider, Layout, Menu, Space, Typography } from "antd";
 import { useEffect, useState } from "react";
+import { Link, useMatches } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { CurrentClientStrip } from "./CurrentClientStrip";
 import { NavigationDrawer } from "./drawers";
+
+export const BUTTON_LINKS = [
+  {
+    key: "/help",
+    label: (
+      <Link to="/help">
+        <Space>
+          Help <QuestionCircleOutlined />
+        </Space>
+      </Link>
+    ),
+  },
+  {
+    key: "/stats",
+    label: (
+      <Link to="/stats">
+        <Space>
+          Stats <BarChartOutlined />
+        </Space>
+      </Link>
+    ),
+  },
+  {
+    key: "/admin",
+    label: (
+      <Link to="/admin">
+        <Space>
+          Admin <SettingOutlined />
+        </Space>
+      </Link>
+    ),
+  },
+];
 
 export function SiteHeader() {
   const [showingNavigationDrawer, setShowingNavigationDrawer] = useState(false);
   const MenuIcon = showingNavigationDrawer ? MenuUnfoldOutlined : MenuOutlined;
   const location = useLocation();
+  const matches = useMatches();
+  const routeMatch = BUTTON_LINKS.find((link) =>
+    matches.find((match) => match.pathname === link.key)
+  );
 
   function closeNavigationDrawer() {
     return setShowingNavigationDrawer(false);
@@ -32,7 +76,7 @@ export function SiteHeader() {
           justifyContent: "space-between",
         }}
       >
-        <Space>
+        <Space size="large">
           <Button
             type="text"
             icon={<MenuIcon style={{ color: "#f5f5f5" }} />}
@@ -42,6 +86,13 @@ export function SiteHeader() {
           <Typography.Title level={3} style={{ margin: 0 }}>
             chatsino
           </Typography.Title>
+          <Divider type="vertical" />
+          <Menu
+            mode="horizontal"
+            theme="dark"
+            activeKey={routeMatch?.key}
+            items={BUTTON_LINKS}
+          />
         </Space>
         <CurrentClientStrip />
       </Layout.Header>
