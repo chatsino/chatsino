@@ -28,8 +28,10 @@ export type ClientIdentifier = number | string;
 
 export const CLIENT_MODEL_LOGGER = createLogger("Client Model");
 
+// #region SQL
 export const CLIENT_TABLE_NAME = "clients";
 
+/* istanbul ignore next */
 export async function createClientTable() {
   const exists = await postgres.schema.hasTable(CLIENT_TABLE_NAME);
 
@@ -54,6 +56,7 @@ export async function createClientTable() {
   }
 }
 
+/* istanbul ignore next */
 export async function dropClientTable() {
   const exists = await postgres.schema.hasTable(CLIENT_TABLE_NAME);
 
@@ -68,6 +71,7 @@ export async function dropClientTable() {
     );
   }
 }
+// #endregion
 
 export async function createClient(
   username: string,
@@ -79,18 +83,14 @@ export async function createClient(
 
     const { salt, hash } = await generatePasswordSaltHash(password);
 
-    await postgres<FullClient>(CLIENT_TABLE_NAME).insert({
-      username,
-      hash,
-      salt,
-      permissionLevel,
-    });
-
-    const client = await getClientByIdentifier(username);
-
-    if (!client) {
-      throw new Error("Client was not found after creation.");
-    }
+    const [client] = await postgres<FullClient>(CLIENT_TABLE_NAME)
+      .insert({
+        username,
+        hash,
+        salt,
+        permissionLevel,
+      })
+      .returning("*");
 
     return client;
   } catch (error) {
@@ -110,16 +110,21 @@ export async function updateClient(
   clientIdentifier: ClientIdentifier,
   update: Partial<FullClient>
 ) {
-  const client = await getClientByIdentifier(clientIdentifier);
+  try {
+    const client = await getClientByIdentifier(clientIdentifier);
 
-  if (client) {
-    await postgres<FullClient>(CLIENT_TABLE_NAME)
-      .where("id", client.id)
-      .update(update);
+    if (client) {
+      const [updatedClient] = await postgres<FullClient>(CLIENT_TABLE_NAME)
+        .where("id", client.id)
+        .update(update)
+        .returning("*");
 
-    return true;
-  } else {
-    return false;
+      return updatedClient;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    return null;
   }
 }
 

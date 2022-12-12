@@ -22,8 +22,10 @@ export interface Blackjack {
 
 export const BLACKJACK_MODEL_LOGGER = createLogger("Blackjack Model");
 
+// #region SQL
 export const BLACKJACK_TABLE_NAME = "blackjack";
 
+/* istanbul ignore next */
 export async function createBlackjackTable() {
   const exists = await postgres.schema.hasTable(BLACKJACK_TABLE_NAME);
 
@@ -54,6 +56,7 @@ export async function createBlackjackTable() {
   }
 }
 
+/* istanbul ignore next */
 export async function dropBlackjackTable() {
   const exists = await postgres.schema.hasTable(BLACKJACK_TABLE_NAME);
 
@@ -71,6 +74,7 @@ export async function dropBlackjackTable() {
     );
   }
 }
+// #endregion
 
 export async function startBlackjackGame(clientId: number, wager: number) {
   const { data: activeGame } = await getClientBlackjackGame(clientId);

@@ -17,8 +17,10 @@ export interface Chatroom {
 
 export const CHATROOM_MODEL_LOGGER = createLogger("Chatroom Model");
 
+// #region SQL
 export const CHATROOM_TABLE_NAME = "chatrooms";
 
+/* istanbul ignore next */
 export async function createChatroomTable() {
   const exists = await postgres.schema.hasTable(CHATROOM_TABLE_NAME);
 
@@ -53,6 +55,7 @@ export async function createChatroomTable() {
   }
 }
 
+/* istanbul ignore next */
 export async function dropChatroomTable() {
   const exists = await postgres.schema.hasTable(CHATROOM_TABLE_NAME);
 
@@ -68,5 +71,53 @@ export async function dropChatroomTable() {
       { table: CHATROOM_TABLE_NAME },
       "Table does not exist."
     );
+  }
+}
+// #endregion
+
+export async function createChatroom(
+  clientId: number,
+  avatar: string,
+  title: string,
+  description: string,
+  password?: string
+) {
+  try {
+    const [chatroom] = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
+      .insert({
+        avatar,
+        title,
+        description,
+        password,
+        createdBy: clientId,
+        updatedBy: clientId,
+      })
+      .returning("*");
+
+    /* istanbul ignore if */
+    if (!chatroom) {
+      throw new Error();
+    }
+
+    return chatroom;
+  } catch (error) {
+    /* istanbul ignore next */
+    return null;
+  }
+}
+
+export async function getChatroom(chatroomId: number) {
+  try {
+    const chatroom = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
+      .where("id", chatroomId)
+      .first();
+
+    if (!chatroom) {
+      throw new Error();
+    }
+
+    return chatroom;
+  } catch (error) {
+    return null;
   }
 }

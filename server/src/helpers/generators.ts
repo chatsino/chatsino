@@ -10,6 +10,7 @@ export class TestGenerator {
     return {
       id: CHANCE.integer(),
       username: CHANCE.name(),
+      avatar: CHANCE.url(),
       permissionLevel: "admin:unlimited",
       hash: CHANCE.hash(),
       salt: CHANCE.hash(),
