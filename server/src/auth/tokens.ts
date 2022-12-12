@@ -1,10 +1,13 @@
 import * as config from "config";
 import { Response } from "express";
+import { createLogger } from "logger";
 import { getClientByIdentifier, Client } from "persistence";
 import { ensureCacheConnected, JWT_REDIS } from "persistence";
 import { clientSchema } from "schemas";
 
 export const TOKEN_KEY = "token";
+
+export const TOKEN_LOGGER = createLogger("Tokens");
 
 export async function createToken(
   label: string,
@@ -65,7 +68,8 @@ export async function validateToken(tokenString: string) {
 
     await verifyToken(tokenString);
 
-    const client = await clientSchema.validate(await decodeToken(tokenString));
+    const decodedToken = await decodeToken(tokenString);
+    const client = await clientSchema.validate(decodedToken);
     const actualClient = await getClientByIdentifier(client.id);
 
     if (
@@ -78,6 +82,8 @@ export async function validateToken(tokenString: string) {
 
     return actualClient;
   } catch (error) {
+    TOKEN_LOGGER.error({ error }, "Error decoding a token.");
+
     return null;
   }
 }

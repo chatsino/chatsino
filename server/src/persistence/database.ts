@@ -11,6 +11,8 @@ export const postgres = knex({
 export function initializeDatabase() {
   return Promise.all([
     models.createClientTable(),
+    models.createChatroomTable(),
+    models.createChatMessageTable(),
     models.createBlackjackTable(),
   ]);
 }
