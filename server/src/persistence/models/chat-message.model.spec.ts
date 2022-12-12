@@ -2,8 +2,8 @@ import Chance from "chance";
 import { initializeCache } from "../cache";
 import { initializeDatabase } from "../database";
 import {
-  sendChatMessage,
-  editChatMessage,
+  createChatMessage,
+  updateChatMessage,
   deleteChatMessage,
   reactToChatMessage,
   getChatMessage,
@@ -38,7 +38,7 @@ describe("Chat Message Model", () => {
   describe("sendChatMessage()", () => {
     it("should add a chat message to the table", async () => {
       const content = "This is a message.";
-      const message = await sendChatMessage(client.id, chatroom.id, content);
+      const message = await createChatMessage(client.id, chatroom.id, content);
       const expected = {
         id: expect.any(Number),
         clientId: client.id,
@@ -55,12 +55,12 @@ describe("Chat Message Model", () => {
   describe("editChatMessage()", () => {
     it("should change the content of an existing message", async () => {
       const updatedContent = "Updated message.";
-      const message = (await sendChatMessage(
+      const message = (await createChatMessage(
         client.id,
         chatroom.id,
         "Original message."
       )) as ChatMessage;
-      const updatedMessage = (await editChatMessage(
+      const updatedMessage = (await updateChatMessage(
         message.id,
         updatedContent
       )) as ChatMessage;
@@ -68,14 +68,14 @@ describe("Chat Message Model", () => {
       expect(updatedMessage.content).toEqual(updatedContent);
     });
     it("should gracefully handle failures", async () => {
-      const message = await editChatMessage(666666, "Updated message.");
+      const message = await updateChatMessage(666666, "Updated message.");
 
       expect(message).toBeNull();
     });
   });
   describe("deleteChatMessage()", () => {
     it("should remove a chat message", async () => {
-      const message = (await sendChatMessage(
+      const message = (await createChatMessage(
         client.id,
         chatroom.id,
         "Delete me."
@@ -94,7 +94,7 @@ describe("Chat Message Model", () => {
   });
   describe("reactToChatMessage()", () => {
     it("should add a reaction to a chat message", async () => {
-      const message = (await sendChatMessage(
+      const message = (await createChatMessage(
         client.id,
         chatroom.id,
         "React to me."
@@ -113,7 +113,7 @@ describe("Chat Message Model", () => {
         CHANCE.word({ length: 8 }),
         CHANCE.word({ length: 8 })
       )) as Client;
-      const message = (await sendChatMessage(
+      const message = (await createChatMessage(
         client.id,
         chatroom.id,
         "React to me."
@@ -144,7 +144,7 @@ describe("Chat Message Model", () => {
       expect(reactedMessage.reactions[reaction]).toEqual([otherClient.id]);
     });
     it("should remove a reaction from a chat message when a client already made that reaction and was the only reaction", async () => {
-      const message = (await sendChatMessage(
+      const message = (await createChatMessage(
         client.id,
         chatroom.id,
         "React to me."
@@ -179,7 +179,7 @@ describe("Chat Message Model", () => {
   });
   describe("getChatMessage()", () => {
     it("should retrieve a chat message", async () => {
-      const message = (await sendChatMessage(
+      const message = (await createChatMessage(
         client.id,
         chatroom.id,
         "Retrieve me."

@@ -70,7 +70,7 @@ export async function dropChatMessageTable() {
 }
 // #endregion
 
-export async function sendChatMessage(
+export async function createChatMessage(
   clientId: number,
   chatroomId: number,
   content: string
@@ -96,7 +96,7 @@ export async function sendChatMessage(
   }
 }
 
-export async function editChatMessage(messageId: number, content: string) {
+export async function updateChatMessage(messageId: number, content: string) {
   try {
     const [message] = await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
       .where("id", messageId)

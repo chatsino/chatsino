@@ -13,6 +13,7 @@ export function initializeDatabase() {
     models.createClientTable(),
     models.createChatroomTable(),
     models.createChatMessageTable(),
+    models.createTransactionTable(),
     models.createBlackjackTable(),
   ]);
 }

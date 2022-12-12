@@ -8,6 +8,8 @@ import {
   dropChatroomTable,
   createChatMessageTable,
   dropChatMessageTable,
+  createTransactionTable,
+  dropTransactionTable,
 } from "persistence";
 import { initializeCache } from "persistence";
 
@@ -19,9 +21,11 @@ export async function seed() {
   await dropBlackjackTable();
   await dropChatMessageTable();
   await dropChatroomTable();
+  await dropTransactionTable();
   await dropClientTable();
 
   await createClientTable();
+  await createTransactionTable();
   await createChatroomTable();
   await createChatMessageTable();
   await createBlackjackTable();
