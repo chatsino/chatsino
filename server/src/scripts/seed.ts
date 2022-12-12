@@ -4,6 +4,10 @@ import {
   dropClientTable,
   createBlackjackTable,
   dropBlackjackTable,
+  createChatroomTable,
+  dropChatroomTable,
+  createChatMessageTable,
+  dropChatMessageTable,
 } from "persistence";
 import { initializeCache } from "persistence";
 
@@ -13,9 +17,13 @@ export async function seed() {
   await initializeCache();
 
   await dropBlackjackTable();
+  await dropChatMessageTable();
+  await dropChatroomTable();
   await dropClientTable();
 
   await createClientTable();
+  await createChatroomTable();
+  await createChatMessageTable();
   await createBlackjackTable();
 
   await createClient("admin", DEFAULT_PASSWORD, "admin:unlimited");

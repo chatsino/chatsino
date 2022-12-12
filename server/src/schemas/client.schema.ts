@@ -18,6 +18,7 @@ export const clientPermissionLevelSchema = yup
 export const clientSchema = yup.object({
   id: yup.number().required(),
   username: yup.string().required(),
+  avatar: yup.string().required(),
   permissionLevel: clientPermissionLevelSchema.required(),
   chips: yup.number().min(0).required(),
   createdAt: yup.string().required(),

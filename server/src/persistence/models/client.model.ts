@@ -13,6 +13,7 @@ export type ClientPermissionLevel =
 export interface FullClient {
   id: number;
   username: string;
+  avatar: string;
   permissionLevel: ClientPermissionLevel;
   chips: number;
   hash: string;
@@ -27,17 +28,20 @@ export type ClientIdentifier = number | string;
 
 export const CLIENT_MODEL_LOGGER = createLogger("Client Model");
 
+export const CLIENT_TABLE_NAME = "clients";
+
 export async function createClientTable() {
-  const exists = await postgres.schema.hasTable("clients");
+  const exists = await postgres.schema.hasTable(CLIENT_TABLE_NAME);
 
   if (exists) {
-    CLIENT_MODEL_LOGGER.info("Clients table exists.");
+    CLIENT_MODEL_LOGGER.info({ table: CLIENT_TABLE_NAME }, "Table exists.");
   } else {
-    CLIENT_MODEL_LOGGER.info("Creating clients table.");
+    CLIENT_MODEL_LOGGER.info({ table: CLIENT_TABLE_NAME }, "Creating table.");
 
-    return postgres.schema.createTable("clients", (table) => {
+    return postgres.schema.createTable(CLIENT_TABLE_NAME, (table) => {
       table.increments("id", { primaryKey: true });
       table.string("username").unique().notNullable();
+      table.string("avatar").defaultTo("");
       table
         .enu("permissionLevel", PERMISSION_RANKING)
         .defaultTo("user")
@@ -51,14 +55,17 @@ export async function createClientTable() {
 }
 
 export async function dropClientTable() {
-  const exists = await postgres.schema.hasTable("clients");
+  const exists = await postgres.schema.hasTable(CLIENT_TABLE_NAME);
 
   if (exists) {
-    CLIENT_MODEL_LOGGER.info("Dropping clients table.");
+    CLIENT_MODEL_LOGGER.info({ table: CLIENT_TABLE_NAME }, "Dropping table.");
 
-    return postgres.schema.dropTable("clients");
+    return postgres.schema.dropTable(CLIENT_TABLE_NAME);
   } else {
-    CLIENT_MODEL_LOGGER.info("Clients table does not exist.");
+    CLIENT_MODEL_LOGGER.info(
+      { table: CLIENT_TABLE_NAME },
+      "Table does not exist."
+    );
   }
 }
 
@@ -72,7 +79,7 @@ export async function createClient(
 
     const { salt, hash } = await generatePasswordSaltHash(password);
 
-    await postgres<FullClient>("clients").insert({
+    await postgres<FullClient>(CLIENT_TABLE_NAME).insert({
       username,
       hash,
       salt,
@@ -106,7 +113,9 @@ export async function updateClient(
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    await postgres<FullClient>("clients").where("id", client.id).update(update);
+    await postgres<FullClient>(CLIENT_TABLE_NAME)
+      .where("id", client.id)
+      .update(update);
 
     return true;
   } else {
@@ -118,7 +127,9 @@ export async function deleteClient(clientIdentifier: ClientIdentifier) {
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    await postgres<FullClient>("clients").where("id", client.id).delete();
+    await postgres<FullClient>(CLIENT_TABLE_NAME)
+      .where("id", client.id)
+      .delete();
 
     return true;
   } else {
@@ -133,7 +144,7 @@ export async function verifyClientPassword(
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    const unsafeClient = await postgres<FullClient>("clients")
+    const unsafeClient = await postgres<FullClient>(CLIENT_TABLE_NAME)
       .where("id", client.id)
       .first();
 
@@ -181,7 +192,7 @@ export async function getClientById(clientId: number, breakCache = false) {
   if (cached && !breakCache) {
     return cached as Client;
   } else {
-    const client = await postgres<FullClient>("clients")
+    const client = await postgres<FullClient>(CLIENT_TABLE_NAME)
       .where("id", clientId)
       .first();
 
@@ -204,7 +215,7 @@ export async function getClientByUsername(
   if (cached && !breakCache) {
     return cached as Client;
   } else {
-    const client = await postgres<FullClient>("clients")
+    const client = await postgres<FullClient>(CLIENT_TABLE_NAME)
       .where("username", username)
       .first();
 
@@ -249,7 +260,7 @@ export async function chargeClient(
       return false;
     }
 
-    await postgres<FullClient>("clients")
+    await postgres<FullClient>(CLIENT_TABLE_NAME)
       .where("id", client.id)
       .decrement("chips", amount);
 
@@ -269,7 +280,7 @@ export async function payClient(
   const client = await getClientByIdentifier(clientIdentifier);
 
   if (client) {
-    await postgres<FullClient>("clients")
+    await postgres<FullClient>(CLIENT_TABLE_NAME)
       .where("id", client.id)
       .increment("chips", amount);
 

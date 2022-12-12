@@ -16,21 +16,35 @@ export interface Blackjack {
   state: BlackjackState;
   wager: number;
   winnings: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export const BLACKJACK_MODEL_LOGGER = createLogger("Blackjack Model");
 
+export const BLACKJACK_TABLE_NAME = "blackjack";
+
 export async function createBlackjackTable() {
-  const exists = await postgres.schema.hasTable("blackjack");
+  const exists = await postgres.schema.hasTable(BLACKJACK_TABLE_NAME);
 
   if (exists) {
-    BLACKJACK_MODEL_LOGGER.info("Blackjack table exists.");
+    BLACKJACK_MODEL_LOGGER.info(
+      { table: BLACKJACK_TABLE_NAME },
+      "Table exists."
+    );
   } else {
-    BLACKJACK_MODEL_LOGGER.info("Creating blackjack table.");
+    BLACKJACK_MODEL_LOGGER.info(
+      { table: BLACKJACK_TABLE_NAME },
+      "Creating table."
+    );
 
-    return postgres.schema.createTable("blackjack", (table) => {
+    return postgres.schema.createTable(BLACKJACK_TABLE_NAME, (table) => {
       table.increments("id", { primaryKey: true });
-      table.integer("clientId").references("clients.id").notNullable();
+      table
+        .integer("clientId")
+        .references("clients.id")
+        .notNullable()
+        .onDelete("CASCADE");
       table.boolean("active").defaultTo(true).notNullable();
       table.jsonb("state");
       table.integer("wager").defaultTo(0).notNullable();
@@ -41,14 +55,20 @@ export async function createBlackjackTable() {
 }
 
 export async function dropBlackjackTable() {
-  const exists = await postgres.schema.hasTable("blackjack");
+  const exists = await postgres.schema.hasTable(BLACKJACK_TABLE_NAME);
 
   if (exists) {
-    BLACKJACK_MODEL_LOGGER.info("Dropping blackjack table.");
+    BLACKJACK_MODEL_LOGGER.info(
+      { table: BLACKJACK_TABLE_NAME },
+      "Dropping table."
+    );
 
-    return postgres.schema.dropTable("blackjack");
+    return postgres.schema.dropTable(BLACKJACK_TABLE_NAME);
   } else {
-    BLACKJACK_MODEL_LOGGER.info("Blackjack table does not exist.");
+    BLACKJACK_MODEL_LOGGER.info(
+      { table: BLACKJACK_TABLE_NAME },
+      "Table does not exist."
+    );
   }
 }
 
@@ -69,7 +89,7 @@ export async function startBlackjackGame(clientId: number, wager: number) {
     const game = new BlackjackGame();
     game.deal();
 
-    await postgres<Blackjack>("blackjack").insert({
+    await postgres<Blackjack>(BLACKJACK_TABLE_NAME).insert({
       clientId,
       wager,
       state: game.serialize(),
@@ -154,7 +174,7 @@ export async function takeBlackjackAction(
 
 export async function getClientBlackjackGame(clientId: number) {
   const data =
-    (await postgres<Blackjack>("blackjack")
+    (await postgres<Blackjack>(BLACKJACK_TABLE_NAME)
       .where("clientId", clientId)
       .where("active", true)
       .first()) ?? null;
@@ -169,7 +189,7 @@ export function updateClientBlackjackGame(
   clientId: number,
   gameData: Partial<Blackjack>
 ) {
-  return postgres<Blackjack>("blackjack")
+  return postgres<Blackjack>(BLACKJACK_TABLE_NAME)
     .where("clientId", clientId)
     .where("active", true)
     .update(gameData);
