@@ -136,9 +136,9 @@ export async function deleteClient(clientIdentifier: ClientIdentifier) {
       .where("id", client.id)
       .delete();
 
-    return true;
+    return client;
   } else {
-    return false;
+    return null;
   }
 }
 

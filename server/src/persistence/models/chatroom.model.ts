@@ -15,6 +15,11 @@ export interface Chatroom {
   updatedAt: string;
 }
 
+export type ChatroomUpdate = Pick<
+  Chatroom,
+  "avatar" | "title" | "description" | "password" | "blacklist" | "whitelist"
+>;
+
 export const CHATROOM_MODEL_LOGGER = createLogger("Chatroom Model");
 
 // #region SQL
@@ -102,6 +107,43 @@ export async function createChatroom(
     return chatroom;
   } catch (error) {
     /* istanbul ignore next */
+    return null;
+  }
+}
+
+export async function updateChatroom(
+  chatroomId: number,
+  update: ChatroomUpdate
+) {
+  try {
+    const [updatedChatroom] = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
+      .where("id", chatroomId)
+      .update(update)
+      .returning("*");
+
+    if (!updatedChatroom) {
+      throw new Error();
+    }
+
+    return updatedChatroom;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function deleteChatroom(chatroomId: number) {
+  try {
+    const [chatroom] = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
+      .where("id", chatroomId)
+      .delete()
+      .returning("*");
+
+    if (!chatroom) {
+      throw new Error();
+    }
+
+    return chatroom;
+  } catch (error) {
     return null;
   }
 }
