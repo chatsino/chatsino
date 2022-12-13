@@ -9,6 +9,8 @@ import {
   getChatroom,
   getAllChatrooms,
   Chatroom,
+  blacklistFromChatroom,
+  whitelistToChatroom,
 } from "./chatroom.model";
 import { Client, createClient } from "./client.model";
 
@@ -31,7 +33,7 @@ describe("Chatroom Model", () => {
     await deleteAllChatrooms();
   });
 
-  describe("createChatroom()", () => {
+  describe(createChatroom.name, () => {
     it("should add a chatroom to the table", async () => {
       const chatroomData = {
         avatar: CHANCE.url(),
@@ -56,7 +58,7 @@ describe("Chatroom Model", () => {
     });
   });
 
-  describe("updateChatroom()", () => {
+  describe(updateChatroom.name, () => {
     it("should modify an existing chatroom", async () => {
       const chatroomData = {
         avatar: CHANCE.url(),
@@ -87,7 +89,7 @@ describe("Chatroom Model", () => {
     });
   });
 
-  describe("deleteChatroom()", () => {
+  describe(deleteChatroom.name, () => {
     it("should remove a chatroom from the table", async () => {
       const chatroomData = {
         avatar: CHANCE.url(),
@@ -110,7 +112,7 @@ describe("Chatroom Model", () => {
     });
   });
 
-  describe("deleteAllChatrooms()", () => {
+  describe(deleteAllChatrooms.name, () => {
     it("should remove all chatrooms from the table", async () => {
       const chatroomData = {
         avatar: CHANCE.url(),
@@ -138,7 +140,7 @@ describe("Chatroom Model", () => {
     });
   });
 
-  describe("getChatroom()", () => {
+  describe(getChatroom.name, () => {
     it("should resolve with the specified chatroom", async () => {
       const chatroomData = {
         avatar: CHANCE.url(),
@@ -161,7 +163,7 @@ describe("Chatroom Model", () => {
     });
   });
 
-  describe("getAllChatrooms()", () => {
+  describe(getAllChatrooms.name, () => {
     it("should retrieve a collection of all chatrooms", async () => {
       const chatroomData = {
         avatar: CHANCE.url(),
@@ -178,6 +180,78 @@ describe("Chatroom Model", () => {
       const chatrooms = await getAllChatrooms();
 
       expect(chatrooms).toEqual([chatroomA, chatroomB]);
+    });
+  });
+
+  describe(blacklistFromChatroom.name, () => {
+    it("should toggle blacklist status for a given client in a given chatroom", async () => {
+      const chatroomData = {
+        avatar: CHANCE.url(),
+        title: CHANCE.word({ length: 8 }),
+        description: CHANCE.word({ length: 12 }),
+      };
+      const chatroom = (await createChatroom(
+        client.id,
+        chatroomData
+      )) as Chatroom;
+
+      expect(chatroom.blacklist).toBeNull();
+
+      const toggledOnce = (await blacklistFromChatroom(
+        chatroom.id,
+        client.id
+      )) as Chatroom;
+
+      expect(toggledOnce.blacklist?.[client.id]).toBe(true);
+
+      const toggledTwice = (await blacklistFromChatroom(
+        chatroom.id,
+        client.id
+      )) as Chatroom;
+
+      expect(toggledTwice.blacklist?.[client.id]).toBeUndefined();
+    });
+
+    it("should gracefully handle a non-existent chatroom", async () => {
+      const blacklisted = await blacklistFromChatroom(666666, client.id);
+
+      expect(blacklisted).toBeNull();
+    });
+  });
+
+  describe(whitelistToChatroom.name, () => {
+    it("should toggle whitelist status for a given client in a given chatroom", async () => {
+      const chatroomData = {
+        avatar: CHANCE.url(),
+        title: CHANCE.word({ length: 8 }),
+        description: CHANCE.word({ length: 12 }),
+      };
+      const chatroom = (await createChatroom(
+        client.id,
+        chatroomData
+      )) as Chatroom;
+
+      expect(chatroom.whitelist).toBeNull();
+
+      const toggledOnce = (await whitelistToChatroom(
+        chatroom.id,
+        client.id
+      )) as Chatroom;
+
+      expect(toggledOnce.whitelist?.[client.id]).toBe(true);
+
+      const toggledTwice = (await whitelistToChatroom(
+        chatroom.id,
+        client.id
+      )) as Chatroom;
+
+      expect(toggledTwice.whitelist?.[client.id]).toBeUndefined();
+    });
+
+    it("should gracefully handle a non-existent chatroom", async () => {
+      const whitelisted = await whitelistToChatroom(666666, client.id);
+
+      expect(whitelisted).toBeNull();
     });
   });
 });

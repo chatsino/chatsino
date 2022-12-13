@@ -191,3 +191,63 @@ export async function getAllChatrooms() {
     return null;
   }
 }
+
+export async function blacklistFromChatroom(
+  chatroomId: number,
+  clientId: number
+) {
+  try {
+    const chatroom = await getChatroom(chatroomId);
+
+    if (!chatroom) {
+      throw new Error();
+    }
+
+    const blacklist = chatroom.blacklist ?? {};
+    const previouslyBlacklisted = blacklist[clientId];
+
+    if (previouslyBlacklisted) {
+      delete blacklist[clientId];
+    } else {
+      blacklist[clientId] = true;
+    }
+
+    const updatedChatroom = await updateChatroom(chatroomId, {
+      blacklist,
+    });
+
+    return updatedChatroom;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function whitelistToChatroom(
+  chatroomId: number,
+  clientId: number
+) {
+  try {
+    const chatroom = await getChatroom(chatroomId);
+
+    if (!chatroom) {
+      throw new Error();
+    }
+
+    const whitelist = chatroom.whitelist ?? {};
+    const previouslyWhitelisted = whitelist[clientId];
+
+    if (previouslyWhitelisted) {
+      delete whitelist[clientId];
+    } else {
+      whitelist[clientId] = true;
+    }
+
+    const updatedChatroom = await updateChatroom(chatroomId, {
+      whitelist,
+    });
+
+    return updatedChatroom;
+  } catch (error) {
+    return null;
+  }
+}
