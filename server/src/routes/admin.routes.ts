@@ -21,7 +21,7 @@ export function createAdminRouter() {
 export async function chargeClientRoute(req: Request, res: Response) {
   try {
     const { clientId, amount } = await adminPaymentSchema.validate(req.body);
-    const charged = await chargeClient(clientId, amount);
+    const charged = await chargeClient(clientId, amount, "Admin charge");
 
     if (!charged) {
       throw new Error();
@@ -36,7 +36,7 @@ export async function chargeClientRoute(req: Request, res: Response) {
 export async function payClientRoute(req: Request, res: Response) {
   try {
     const { clientId, amount } = await adminPaymentSchema.validate(req.body);
-    const paid = await payClient(clientId, amount);
+    const paid = await payClient(clientId, amount, "Admin payment");
 
     if (!paid) {
       throw new Error();

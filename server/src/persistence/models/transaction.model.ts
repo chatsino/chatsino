@@ -4,7 +4,7 @@ import { postgres } from "persistence";
 export interface Transaction {
   id: number;
   from: null | number;
-  to: number;
+  to: null | number;
   amount: number;
   memo: null | string;
   createdAt: Date;
@@ -67,11 +67,18 @@ export async function dropTransactionTable() {
 // #endregion
 
 // #region CRUD
-export async function createTransaction(
-  from: null | number,
-  to: number,
+export async function createTransaction<
+  T extends null | number,
+  K extends null | number
+>(
+  from: T,
+  to: K,
   amount: number,
-  memo: null | string = null
+  memo: T extends null
+    ? K extends null
+      ? string
+      : string | undefined
+    : string | undefined
 ) {
   try {
     const [transaction] = await postgres<Transaction>(TRANSACTION_TABLE_NAME)

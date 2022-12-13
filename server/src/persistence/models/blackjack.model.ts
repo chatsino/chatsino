@@ -155,7 +155,7 @@ export async function startBlackjackGame(clientId: number, wager: number) {
     throw new GameInProgressError();
   }
 
-  const charged = await chargeClient(clientId, wager);
+  const charged = await chargeClient(clientId, wager, "Blackjack");
 
   if (!charged) {
     throw new CannotAffordWagerError();
@@ -209,7 +209,11 @@ export async function takeBlackjackAction(
         throw new CannotTakeActionError();
       }
 
-      const charged = await chargeClient(clientId, data.wager);
+      const charged = await chargeClient(
+        clientId,
+        data.wager,
+        "Blackjack, double down"
+      );
 
       if (!charged) {
         throw new CannotTakeActionError();
@@ -224,7 +228,11 @@ export async function takeBlackjackAction(
       }
 
       const price = Math.floor(data.wager / 2);
-      const charged = await chargeClient(clientId, price);
+      const charged = await chargeClient(
+        clientId,
+        price,
+        "Blackjack, buy insurance"
+      );
 
       if (!charged) {
         throw new CannotTakeActionError();
@@ -299,7 +307,7 @@ export async function payoutBlackjackGame(gameData: Blackjack) {
   handler();
 
   if (payout > 0) {
-    await payClient(gameData.clientId, payout);
+    await payClient(gameData.clientId, payout, "Blackjack, payout");
   }
 
   gameData.active = false;

@@ -3,6 +3,7 @@ import { generatePasswordHash, generatePasswordSaltHash } from "helpers";
 import { createLogger } from "logger";
 import { postgres, getCachedValue, setCachedValue } from "persistence";
 import { PERMISSION_RANKING, clientSigninSchema } from "schemas";
+import { createTransaction } from "./transaction.model";
 
 export type ClientPermissionLevel =
   | "visitor"
@@ -256,7 +257,8 @@ export async function canClientAfford(
 
 export async function chargeClient(
   clientIdentifier: ClientIdentifier,
-  amount: number
+  amount: number,
+  memo = ""
 ) {
   const client = await getClientByIdentifier(clientIdentifier);
 
@@ -269,6 +271,8 @@ export async function chargeClient(
       .where("id", client.id)
       .decrement("chips", amount);
 
+    await createTransaction(client.id, null, amount, memo);
+
     // Break cache.
     getClientByIdentifier(clientIdentifier, true);
 
@@ -280,7 +284,8 @@ export async function chargeClient(
 
 export async function payClient(
   clientIdentifier: ClientIdentifier,
-  amount: number
+  amount: number,
+  memo = ""
 ) {
   const client = await getClientByIdentifier(clientIdentifier);
 
@@ -288,6 +293,8 @@ export async function payClient(
     await postgres<FullClient>(CLIENT_TABLE_NAME)
       .where("id", client.id)
       .increment("chips", amount);
+
+    await createTransaction(null, client.id, amount, memo);
 
     // Break cache.
     getClientByIdentifier(clientIdentifier, true);
