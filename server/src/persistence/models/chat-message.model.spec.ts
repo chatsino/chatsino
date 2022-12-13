@@ -3,10 +3,13 @@ import { initializeCache } from "../cache";
 import { initializeDatabase } from "../database";
 import {
   createChatMessage,
+  readChatMessage,
+  readChatMessageList,
   updateChatMessage,
   deleteChatMessage,
+  deleteAllChatMessages,
+  editChatMessage,
   reactToChatMessage,
-  getChatMessage,
   ChatMessage,
 } from "./chat-message.model";
 import { Chatroom, createChatroom } from "./chatroom.model";
@@ -16,7 +19,8 @@ const CHANCE = new Chance();
 
 describe("Chat Message Model", () => {
   let client: Client;
-  let chatroom: Chatroom;
+  let chatroomA: Chatroom;
+  let chatroomB: Chatroom;
 
   beforeAll(async () => {
     await initializeDatabase();
@@ -29,80 +33,216 @@ describe("Chat Message Model", () => {
       CHANCE.word({ length: 8 })
     )) as Client;
 
-    chatroom = (await createChatroom(client.id, {
+    chatroomA = (await createChatroom(client.id, {
       avatar: CHANCE.url(),
       title: CHANCE.word({ length: 8 }),
       description: CHANCE.word({ length: 12 }),
     })) as Chatroom;
+
+    chatroomB = (await createChatroom(client.id, {
+      avatar: CHANCE.url(),
+      title: CHANCE.word({ length: 8 }),
+      description: CHANCE.word({ length: 12 }),
+    })) as Chatroom;
+
+    await deleteAllChatMessages();
   });
 
-  describe("sendChatMessage()", () => {
-    it("should add a chat message to the table", async () => {
-      const content = "This is a message.";
-      const message = await createChatMessage(client.id, chatroom.id, content);
-      const expected = {
-        id: expect.any(Number),
-        clientId: client.id,
-        chatroomId: chatroom.id,
-        content,
-        reactions: {},
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
-      };
+  describe("CRUD", () => {
+    describe(createChatMessage.name, () => {
+      it("should add a chat message to the table", async () => {
+        const content = "This is a message.";
+        const message = await createChatMessage(
+          client.id,
+          chatroomA.id,
+          content
+        );
+        const expected = {
+          id: expect.any(Number),
+          clientId: client.id,
+          chatroomId: chatroomA.id,
+          content,
+          reactions: {},
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+        };
 
-      expect(message).toEqual(expected);
+        expect(message).toEqual(expected);
+      });
+    });
+
+    describe(readChatMessage.name, () => {
+      it("should retrieve a chat message", async () => {
+        const message = (await createChatMessage(
+          client.id,
+          chatroomA.id,
+          "Retrieve me."
+        )) as ChatMessage;
+        const retrievedMessage = await readChatMessage(message.id);
+
+        expect(retrievedMessage).toEqual(message);
+      });
+
+      it("should resolve to null when a specified chat message does not exist", async () => {
+        const retrievedMessage = await readChatMessage(666666);
+
+        expect(retrievedMessage).toBeNull();
+      });
+    });
+
+    describe(readChatMessageList.name, () => {
+      it("should retrieve a collection of all chat messages", async () => {
+        const messageA = await createChatMessage(
+          client.id,
+          chatroomA.id,
+          "Foo"
+        );
+        const messageB = await createChatMessage(
+          client.id,
+          chatroomB.id,
+          "Bar"
+        );
+        const messages = await readChatMessageList();
+
+        expect(messages).toEqual([messageA, messageB]);
+      });
+
+      it("should retrieve a collection of all chat messages belonging to a given chatroom", async () => {
+        const messageA = await createChatMessage(
+          client.id,
+          chatroomA.id,
+          "Foo"
+        );
+        const messageB = await createChatMessage(
+          client.id,
+          chatroomB.id,
+          "Bar"
+        );
+        const messages = await readChatMessageList(chatroomA.id);
+
+        expect(messages).toEqual([messageA]);
+      });
+    });
+
+    describe(updateChatMessage.name, () => {
+      it("should modify an existing chat message", async () => {
+        const updatedContent = "Updated message.";
+        const message = (await createChatMessage(
+          client.id,
+          chatroomA.id,
+          "Original message."
+        )) as ChatMessage;
+        const updatedMessage = (await updateChatMessage(message.id, {
+          content: updatedContent,
+        })) as ChatMessage;
+
+        expect(updatedMessage.content).toEqual(updatedContent);
+      });
+
+      it("should gracefully handle failures", async () => {
+        const message = await updateChatMessage(666666, {
+          content: "Updated message.",
+          reactions: {},
+        });
+
+        expect(message).toBeNull();
+      });
+    });
+
+    describe(deleteChatMessage.name, () => {
+      it("should remove a chat message", async () => {
+        const message = (await createChatMessage(
+          client.id,
+          chatroomA.id,
+          "Delete me."
+        )) as ChatMessage;
+        const deletedMessage = await deleteChatMessage(message.id);
+        const retrievedMessage = await readChatMessage(message.id);
+
+        expect(deletedMessage).toEqual(message);
+        expect(retrievedMessage).toBeNull();
+      });
+
+      it("should gracefully handle failures", async () => {
+        const message = await deleteChatMessage(666666);
+
+        expect(message).toBeNull();
+      });
+    });
+
+    describe(deleteAllChatMessages.name, () => {
+      it("should remove a collection of all chat messages", async () => {
+        const messageA = await createChatMessage(
+          client.id,
+          chatroomA.id,
+          "Foo"
+        );
+        const messageB = await createChatMessage(
+          client.id,
+          chatroomB.id,
+          "Bar"
+        );
+        const messages = await readChatMessageList();
+
+        expect(messages).toEqual([messageA, messageB]);
+
+        const deletedMessages = await deleteAllChatMessages();
+
+        expect(deletedMessages).toEqual([messageA, messageB]);
+
+        const remainingMessages = await readChatMessageList();
+
+        expect(remainingMessages).toEqual([]);
+      });
+
+      it("should remove a collection of all chat messages belonging to a given chatroom", async () => {
+        const messageA = await createChatMessage(
+          client.id,
+          chatroomA.id,
+          "Foo"
+        );
+        const messageB = await createChatMessage(
+          client.id,
+          chatroomB.id,
+          "Bar"
+        );
+        const messages = await readChatMessageList();
+
+        expect(messages).toEqual([messageA, messageB]);
+
+        const deletedMessages = await deleteAllChatMessages(chatroomB.id);
+
+        expect(deletedMessages).toEqual([messageB]);
+
+        const remainingMessages = await readChatMessageList();
+
+        expect(remainingMessages).toEqual([messageA]);
+      });
     });
   });
 
-  describe("editChatMessage()", () => {
+  describe(editChatMessage.name, () => {
     it("should change the content of an existing message", async () => {
       const updatedContent = "Updated message.";
       const message = (await createChatMessage(
         client.id,
-        chatroom.id,
+        chatroomA.id,
         "Original message."
       )) as ChatMessage;
-      const updatedMessage = (await updateChatMessage(
+      const updatedMessage = (await editChatMessage(
         message.id,
         updatedContent
       )) as ChatMessage;
 
       expect(updatedMessage.content).toEqual(updatedContent);
     });
-
-    it("should gracefully handle failures", async () => {
-      const message = await updateChatMessage(666666, "Updated message.");
-
-      expect(message).toBeNull();
-    });
   });
 
-  describe("deleteChatMessage()", () => {
-    it("should remove a chat message", async () => {
-      const message = (await createChatMessage(
-        client.id,
-        chatroom.id,
-        "Delete me."
-      )) as ChatMessage;
-      const deletedMessage = await deleteChatMessage(message.id);
-      const retrievedMessage = await getChatMessage(message.id);
-
-      expect(deletedMessage).toEqual(message);
-      expect(retrievedMessage).toBeNull();
-    });
-
-    it("should gracefully handle failures", async () => {
-      const message = await deleteChatMessage(666666);
-
-      expect(message).toBeNull();
-    });
-  });
-
-  describe("reactToChatMessage()", () => {
+  describe(reactToChatMessage.name, () => {
     it("should add a reaction to a chat message", async () => {
       const message = (await createChatMessage(
         client.id,
-        chatroom.id,
+        chatroomA.id,
         "React to me."
       )) as ChatMessage;
       const reaction = ":smile:";
@@ -122,7 +262,7 @@ describe("Chat Message Model", () => {
       )) as Client;
       const message = (await createChatMessage(
         client.id,
-        chatroom.id,
+        chatroomA.id,
         "React to me."
       )) as ChatMessage;
       const reaction = ":smile:";
@@ -154,7 +294,7 @@ describe("Chat Message Model", () => {
     it("should remove a reaction from a chat message when a client already made that reaction and was the only reaction", async () => {
       const message = (await createChatMessage(
         client.id,
-        chatroom.id,
+        chatroomA.id,
         "React to me."
       )) as ChatMessage;
       const reaction = ":smile:";
@@ -185,25 +325,6 @@ describe("Chat Message Model", () => {
       const message = await reactToChatMessage(666666, 666666, ":smile:");
 
       expect(message).toBeNull();
-    });
-  });
-
-  describe("getChatMessage()", () => {
-    it("should retrieve a chat message", async () => {
-      const message = (await createChatMessage(
-        client.id,
-        chatroom.id,
-        "Retrieve me."
-      )) as ChatMessage;
-      const retrievedMessage = await getChatMessage(message.id);
-
-      expect(retrievedMessage).toEqual(message);
-    });
-
-    it("should resolve to null when a specified chat message does not exist", async () => {
-      const retrievedMessage = await getChatMessage(666666);
-
-      expect(retrievedMessage).toBeNull();
     });
   });
 });

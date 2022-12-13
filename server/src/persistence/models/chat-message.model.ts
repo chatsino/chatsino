@@ -11,9 +11,13 @@ export interface ChatMessage {
   updatedAt: Date;
 }
 
+export type ChatMessageUpdate = Partial<
+  Pick<ChatMessage, "content" | "reactions">
+>;
+
 export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
 
-// #region SQL
+// #region Tables
 export const CHAT_MESSAGE_TABLE_NAME = "chat_messages";
 
 /* istanbul ignore next */
@@ -70,6 +74,7 @@ export async function dropChatMessageTable() {
 }
 // #endregion
 
+// #region CRUD
 export async function createChatMessage(
   clientId: number,
   chatroomId: number,
@@ -96,13 +101,47 @@ export async function createChatMessage(
   }
 }
 
-export async function updateChatMessage(messageId: number, content: string) {
+export async function readChatMessage(messageId: number) {
+  try {
+    const message = await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
+      .where("id", messageId)
+      .first();
+
+    if (!message) {
+      throw new Error();
+    }
+
+    return message;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function readChatMessageList(chatroomId?: number) {
+  try {
+    const messages =
+      chatroomId == null
+        ? await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME).select()
+        : await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME).where(
+            "chatroomId",
+            chatroomId
+          );
+
+    return messages;
+  } catch (error) {
+    /* istanbul ignore next */
+    return null;
+  }
+}
+
+export async function updateChatMessage(
+  messageId: number,
+  update: ChatMessageUpdate
+) {
   try {
     const [message] = await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
       .where("id", messageId)
-      .update({
-        content,
-      })
+      .update(update)
       .returning("*");
 
     if (!message) {
@@ -132,13 +171,37 @@ export async function deleteChatMessage(messageId: number) {
   }
 }
 
+export async function deleteAllChatMessages(chatroomId?: number) {
+  try {
+    const messages =
+      chatroomId == null
+        ? await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
+            .delete()
+            .returning("*")
+        : await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
+            .where("chatroomId", chatroomId)
+            .delete()
+            .returning("*");
+
+    return messages;
+  } catch (error) {
+    /* istanbul ignore next */
+    return null;
+  }
+}
+// #endregion
+
+export async function editChatMessage(messageId: number, content: string) {
+  return updateChatMessage(messageId, { content });
+}
+
 export async function reactToChatMessage(
   messageId: number,
   clientId: number,
   reaction: string
 ) {
   try {
-    const message = await getChatMessage(messageId);
+    const message = await readChatMessage(messageId);
 
     if (!message) {
       throw new Error();
@@ -161,32 +224,7 @@ export async function reactToChatMessage(
       delete nextReactions[reaction];
     }
 
-    const [updatedMessage] = await postgres<ChatMessage>(
-      CHAT_MESSAGE_TABLE_NAME
-    )
-      .where("id", messageId)
-      .update({
-        reactions: nextReactions,
-      })
-      .returning("*");
-
-    return updatedMessage;
-  } catch (error) {
-    return null;
-  }
-}
-
-export async function getChatMessage(messageId: number) {
-  try {
-    const message = await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
-      .where("id", messageId)
-      .first();
-
-    if (!message) {
-      throw new Error();
-    }
-
-    return message;
+    return updateChatMessage(messageId, { reactions: nextReactions });
   } catch (error) {
     return null;
   }
