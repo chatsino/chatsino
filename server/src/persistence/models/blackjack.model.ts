@@ -20,9 +20,15 @@ export interface Blackjack {
   updatedAt: string;
 }
 
+export type BlackjackCreate = Pick<Blackjack, "wager" | "state" | "winnings">;
+
+export type BlackjackUpdate = Partial<
+  BlackjackCreate & Pick<Blackjack, "active">
+>;
+
 export const BLACKJACK_MODEL_LOGGER = createLogger("Blackjack Model");
 
-// #region SQL
+// #region Tables
 export const BLACKJACK_TABLE_NAME = "blackjack";
 
 /* istanbul ignore next */
@@ -76,6 +82,72 @@ export async function dropBlackjackTable() {
 }
 // #endregion
 
+// #region CRUD
+export async function createBlackjackGame(
+  clientId: number,
+  { wager, state, winnings }: BlackjackCreate
+) {
+  try {
+    const [game] = await postgres<Blackjack>(BLACKJACK_TABLE_NAME)
+      .insert({
+        clientId,
+        wager,
+        state,
+        winnings,
+      })
+      .returning("*");
+
+    /* istanbul ignore if */
+    if (!game) {
+      throw new Error();
+    }
+
+    return game;
+  } catch (error) {
+    /* istanbul ignore next */
+    return null;
+  }
+}
+
+export async function readBlackjackGame(gameId: number) {
+  try {
+    const game = await postgres<Blackjack>(BLACKJACK_TABLE_NAME)
+      .where("id", gameId)
+      .first();
+
+    if (!game) {
+      throw new Error();
+    }
+
+    return game;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function readActiveBlackjackGame(clientId: number) {
+  try {
+    const [blackjack] = await postgres<Blackjack>(BLACKJACK_TABLE_NAME)
+      .where("clientId", clientId)
+      .where("active", true);
+
+    return blackjack ?? null;
+  } catch (error) {
+    return null;
+  }
+}
+
+export function updateBlackjackGame(
+  clientId: number,
+  gameData: Partial<Blackjack>
+) {
+  return postgres<Blackjack>(BLACKJACK_TABLE_NAME)
+    .where("clientId", clientId)
+    .where("active", true)
+    .update(gameData);
+}
+// #endregion
+
 export async function startBlackjackGame(clientId: number, wager: number) {
   const { data: activeGame } = await getClientBlackjackGame(clientId);
 
@@ -91,16 +163,16 @@ export async function startBlackjackGame(clientId: number, wager: number) {
 
   try {
     const game = new BlackjackGame();
+
     game.deal();
 
-    await postgres<Blackjack>(BLACKJACK_TABLE_NAME).insert({
-      clientId,
+    const blackjack = await createBlackjackGame(clientId, {
       wager,
       state: game.serialize(),
       winnings: 0,
     });
 
-    return getClientBlackjackGame(clientId);
+    return blackjack;
   } catch (error) {
     BLACKJACK_MODEL_LOGGER.error(
       { error },
@@ -171,32 +243,18 @@ export async function takeBlackjackAction(
 
   data.state = game.serialize();
 
-  await updateClientBlackjackGame(clientId, data);
+  await updateBlackjackGame(clientId, data);
 
   return data;
 }
 
 export async function getClientBlackjackGame(clientId: number) {
-  const data =
-    (await postgres<Blackjack>(BLACKJACK_TABLE_NAME)
-      .where("clientId", clientId)
-      .where("active", true)
-      .first()) ?? null;
+  const data = await readActiveBlackjackGame(clientId);
 
   return {
     data,
     game: data ? new BlackjackGame().deserialize(data.state) : null,
   };
-}
-
-export function updateClientBlackjackGame(
-  clientId: number,
-  gameData: Partial<Blackjack>
-) {
-  return postgres<Blackjack>(BLACKJACK_TABLE_NAME)
-    .where("clientId", clientId)
-    .where("active", true)
-    .update(gameData);
 }
 
 export async function payoutBlackjackGame(gameData: Blackjack) {
@@ -205,6 +263,7 @@ export async function payoutBlackjackGame(gameData: Blackjack) {
   }
 
   const game = new BlackjackGame();
+
   game.deserialize(gameData.state);
 
   let payout = 0;
@@ -245,7 +304,7 @@ export async function payoutBlackjackGame(gameData: Blackjack) {
 
   gameData.active = false;
 
-  await updateClientBlackjackGame(gameData.clientId, gameData);
+  await updateBlackjackGame(gameData.clientId, gameData);
 
   return gameData;
 }

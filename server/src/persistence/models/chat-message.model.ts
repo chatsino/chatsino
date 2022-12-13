@@ -6,13 +6,14 @@ export interface ChatMessage {
   clientId: number;
   chatroomId: number;
   content: string;
+  pinned: boolean;
   reactions: Record<string, number[]>;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type ChatMessageUpdate = Partial<
-  Pick<ChatMessage, "content" | "reactions">
+  Pick<ChatMessage, "content" | "reactions" | "pinned">
 >;
 
 export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
@@ -49,6 +50,7 @@ export async function createChatMessageTable() {
         .onDelete("CASCADE");
       table.string("content").notNullable().defaultTo("");
       table.jsonb("reactions").notNullable().defaultTo({});
+      table.boolean("pinned").notNullable().defaultTo(false);
       table.timestamps(true, true, true);
     });
   }
@@ -81,6 +83,11 @@ export async function createChatMessage(
   content: string
 ) {
   try {
+    CHAT_MESSAGE_MODEL_LOGGER.info(
+      { clientId, chatroomId, content },
+      "Creating a chat message."
+    );
+
     const [message] = await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
       .insert({
         clientId,
@@ -97,15 +104,18 @@ export async function createChatMessage(
     return message;
   } catch (error) {
     /* istanbul ignore next */
+    CHAT_MESSAGE_MODEL_LOGGER.error({ error }, "Error creaing a chat message.");
+
+    /* istanbul ignore next */
     return null;
   }
 }
 
 export async function readChatMessage(messageId: number) {
   try {
-    const message = await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
-      .where("id", messageId)
-      .first();
+    const [message] = await postgres<ChatMessage>(
+      CHAT_MESSAGE_TABLE_NAME
+    ).where("id", messageId);
 
     if (!message) {
       throw new Error();
@@ -228,4 +238,10 @@ export async function reactToChatMessage(
   } catch (error) {
     return null;
   }
+}
+
+export function pinChatMessage(messageId: number) {
+  return updateChatMessage(messageId, {
+    pinned: postgres.raw("NOT ??", ["pinned"]) as unknown as boolean,
+  });
 }

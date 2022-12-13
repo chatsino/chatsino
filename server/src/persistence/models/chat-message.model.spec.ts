@@ -2,15 +2,16 @@ import Chance from "chance";
 import { initializeCache } from "../cache";
 import { initializeDatabase } from "../database";
 import {
+  ChatMessage,
   createChatMessage,
+  deleteAllChatMessages,
+  deleteChatMessage,
+  editChatMessage,
+  pinChatMessage,
+  reactToChatMessage,
   readChatMessage,
   readChatMessageList,
   updateChatMessage,
-  deleteChatMessage,
-  deleteAllChatMessages,
-  editChatMessage,
-  reactToChatMessage,
-  ChatMessage,
 } from "./chat-message.model";
 import { Chatroom, createChatroom } from "./chatroom.model";
 import { Client, createClient } from "./client.model";
@@ -63,6 +64,7 @@ describe("Chat Message Model", () => {
           chatroomId: chatroomA.id,
           content,
           reactions: {},
+          pinned: false,
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
         };
@@ -325,6 +327,26 @@ describe("Chat Message Model", () => {
       const message = await reactToChatMessage(666666, 666666, ":smile:");
 
       expect(message).toBeNull();
+    });
+  });
+
+  describe(pinChatMessage.name, () => {
+    it("should toggle pinned status back and forth", async () => {
+      const message = (await createChatMessage(
+        client.id,
+        chatroomA.id,
+        "This is a message."
+      )) as ChatMessage;
+
+      expect(message.pinned).toBe(false);
+
+      const toggledOnce = (await pinChatMessage(message.id)) as ChatMessage;
+
+      expect(toggledOnce.pinned).toBe(true);
+
+      const toggledTwice = (await pinChatMessage(message.id)) as ChatMessage;
+
+      expect(toggledTwice.pinned).toBe(false);
     });
   });
 });
