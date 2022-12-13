@@ -11,13 +11,20 @@ export interface Chatroom {
   whitelist?: Record<number, true>;
   createdBy: number;
   updatedBy: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export type ChatroomUpdate = Pick<
+export type ChatroomCreate = Pick<
   Chatroom,
-  "avatar" | "title" | "description" | "password" | "blacklist" | "whitelist"
+  "avatar" | "title" | "description" | "password"
+>;
+
+export type ChatroomUpdate = Partial<
+  Pick<
+    Chatroom,
+    "avatar" | "title" | "description" | "password" | "blacklist" | "whitelist"
+  >
 >;
 
 export const CHATROOM_MODEL_LOGGER = createLogger("Chatroom Model");
@@ -82,10 +89,7 @@ export async function dropChatroomTable() {
 
 export async function createChatroom(
   clientId: number,
-  avatar: string,
-  title: string,
-  description: string,
-  password?: string
+  { avatar, title, description, password }: ChatroomCreate
 ) {
   try {
     const [chatroom] = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
@@ -148,6 +152,19 @@ export async function deleteChatroom(chatroomId: number) {
   }
 }
 
+export async function deleteAllChatrooms() {
+  try {
+    const chatrooms = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
+      .delete()
+      .returning("*");
+
+    return chatrooms;
+  } catch (error) {
+    /* istanbul ignore next */
+    return null;
+  }
+}
+
 export async function getChatroom(chatroomId: number) {
   try {
     const chatroom = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
@@ -160,6 +177,17 @@ export async function getChatroom(chatroomId: number) {
 
     return chatroom;
   } catch (error) {
+    return null;
+  }
+}
+
+export async function getAllChatrooms() {
+  try {
+    const chatrooms = await postgres<Chatroom>(CHATROOM_TABLE_NAME).select();
+
+    return chatrooms;
+  } catch (error) {
+    /* istanbul ignore next */
     return null;
   }
 }
