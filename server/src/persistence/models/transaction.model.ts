@@ -11,9 +11,13 @@ export interface Transaction {
   updatedAt: Date;
 }
 
+export type TransactionListRead = Partial<
+  Pick<Transaction, "from" | "to" | "memo">
+>;
+
 export const TRANSACTION_MODEL_LOGGER = createLogger("Transaction Model");
 
-// #region SQL
+// #region Table
 export const TRANSACTION_TABLE_NAME = "transactions";
 
 /* istanbul ignore next */
@@ -62,6 +66,7 @@ export async function dropTransactionTable() {
 }
 // #endregion
 
+// #region CRUD
 export async function createTransaction(
   from: null | number,
   to: number,
@@ -90,6 +95,54 @@ export async function createTransaction(
   }
 }
 
+export async function readTransaction(transactionId: number) {
+  try {
+    const transaction = await postgres<Transaction>(TRANSACTION_TABLE_NAME)
+      .where("id", transactionId)
+      .first();
+
+    if (!transaction) {
+      throw new Error();
+    }
+
+    return transaction;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function readTransactionList(options: TransactionListRead = {}) {
+  try {
+    let transactions: Transaction[] = [];
+
+    if (options.from) {
+      transactions = await postgres<Transaction>(TRANSACTION_TABLE_NAME).where(
+        "from",
+        options.from
+      );
+    } else if (options.to) {
+      transactions = await postgres<Transaction>(TRANSACTION_TABLE_NAME).where(
+        "to",
+        options.to
+      );
+    } else if (options.memo) {
+      transactions = await postgres<Transaction>(TRANSACTION_TABLE_NAME).where(
+        "memo",
+        options.memo
+      );
+    } else {
+      transactions = await postgres<Transaction>(
+        TRANSACTION_TABLE_NAME
+      ).select();
+    }
+
+    return transactions;
+  } catch (error) {
+    /* istanbul ignore next */
+    return null;
+  }
+}
+
 export async function deleteAllTransactions() {
   try {
     const transactions = await postgres<Transaction>(TRANSACTION_TABLE_NAME)
@@ -102,55 +155,4 @@ export async function deleteAllTransactions() {
     return null;
   }
 }
-
-export async function getAllTransactions() {
-  try {
-    const transactions = await postgres<Transaction>(
-      TRANSACTION_TABLE_NAME
-    ).select();
-
-    return transactions;
-  } catch (error) {
-    /* istanbul ignore next */
-    return null;
-  }
-}
-
-export async function getAllTransactionsWithMemo(memo: string) {
-  try {
-    const transactions = await postgres<Transaction>(
-      TRANSACTION_TABLE_NAME
-    ).where("memo", memo);
-
-    return transactions;
-  } catch (error) {
-    /* istanbul ignore next */
-    return null;
-  }
-}
-
-export async function getTransactionsSentByClient(clientId: number) {
-  try {
-    const transactions = await postgres<Transaction>(
-      TRANSACTION_TABLE_NAME
-    ).where("from", clientId);
-
-    return transactions;
-  } catch (error) {
-    /* istanbul ignore next */
-    return null;
-  }
-}
-
-export async function getTransactionsSentToClient(clientId: number) {
-  try {
-    const transactions = await postgres<Transaction>(
-      TRANSACTION_TABLE_NAME
-    ).where("to", clientId);
-
-    return transactions;
-  } catch (error) {
-    /* istanbul ignore next */
-    return null;
-  }
-}
+// #endregion
