@@ -1,20 +1,10 @@
 import { WebSocket } from "ws";
-import { openSocket, waitForSocketState } from "../utils";
+import { openSocket, subscribeTo, waitForSocketState } from "../utils";
 
 describe("Socket Server", () => {
   let socket: WebSocket;
   let responseString = "";
   const sampleSubscription = "/foo/bar/baz";
-
-  const subscribeTo = (subscription: string) =>
-    socket.send(
-      JSON.stringify({
-        kind: "client-subscribed",
-        args: {
-          subscription,
-        },
-      })
-    );
 
   beforeEach(async () => {
     socket = await openSocket();
@@ -32,7 +22,7 @@ describe("Socket Server", () => {
   });
 
   it("should be able to subscribe", async () => {
-    subscribeTo(sampleSubscription);
+    subscribeTo(socket, sampleSubscription);
 
     socket.onmessage = (event) => {
       expect(event).toBeDefined();
@@ -45,6 +35,7 @@ describe("Socket Server", () => {
     const response = JSON.parse(responseString) as {
       kind: string;
       data: { message: string };
+      error: string;
     };
 
     expect(response.kind).toBe("client-subscribed");
@@ -54,7 +45,7 @@ describe("Socket Server", () => {
   });
 
   it("should be able to unsubscribe", async () => {
-    subscribeTo(sampleSubscription);
+    subscribeTo(socket, sampleSubscription);
 
     let done = false;
 

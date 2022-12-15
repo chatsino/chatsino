@@ -239,6 +239,7 @@ export async function takeBlackjackAction(
       }
 
       game.buyInsurance();
+
       break;
     }
   }
@@ -275,6 +276,7 @@ export async function payoutBlackjackGame(gameData: Blackjack) {
   game.deserialize(gameData.state);
 
   let payout = 0;
+
   const handlers: Record<FinishedBlackjackStatus, () => void> = {
     lost: () => {
       if (game.insuranceApplies && game.playerBoughtInsurance) {

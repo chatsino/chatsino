@@ -8,12 +8,16 @@ export interface ChatMessage {
   content: string;
   pinned: boolean;
   reactions: Record<string, number[]>;
+  poll: null | {
+    question: string;
+    answers: Array<{ text: string; respondents: Array<number> }>;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type ChatMessageUpdate = Partial<
-  Pick<ChatMessage, "content" | "reactions" | "pinned">
+  Pick<ChatMessage, "content" | "reactions" | "pinned" | "poll">
 >;
 
 export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
@@ -50,6 +54,7 @@ export async function createChatMessageTable() {
         .onDelete("CASCADE");
       table.string("content").notNullable().defaultTo("");
       table.jsonb("reactions").notNullable().defaultTo({});
+      table.jsonb("poll").nullable().defaultTo({});
       table.boolean("pinned").notNullable().defaultTo(false);
       table.timestamps(true, true, true);
     });
@@ -80,11 +85,12 @@ export async function dropChatMessageTable() {
 export async function createChatMessage(
   clientId: number,
   chatroomId: number,
-  content: string
+  content: string,
+  poll: null | ChatMessage["poll"] = null
 ) {
   try {
     CHAT_MESSAGE_MODEL_LOGGER.info(
-      { clientId, chatroomId, content },
+      { clientId, chatroomId, content, poll },
       "Creating a chat message."
     );
 
@@ -93,6 +99,7 @@ export async function createChatMessage(
         clientId,
         chatroomId,
         content,
+        poll,
       })
       .returning("*");
 
@@ -244,4 +251,38 @@ export function pinChatMessage(messageId: number) {
   return updateChatMessage(messageId, {
     pinned: postgres.raw("NOT ??", ["pinned"]) as unknown as boolean,
   });
+}
+
+export async function clientVotedInPoll(
+  clientId: number,
+  messageId: number,
+  response: string
+) {
+  try {
+    const message = await readChatMessage(messageId);
+
+    if (!message?.poll) {
+      return false;
+    }
+
+    const { answers } = message.poll;
+    const answerEntry = answers.find((answer) => answer.text === response);
+    const previouslyAnswered = answers.some((answer) =>
+      answer.respondents.includes(clientId)
+    );
+
+    if (!answerEntry || previouslyAnswered) {
+      return false;
+    }
+
+    answerEntry.respondents.push(clientId);
+
+    await updateChatMessage(messageId, {
+      poll: message.poll,
+    });
+
+    return true;
+  } catch (error) {
+    return false;
+  }
 }

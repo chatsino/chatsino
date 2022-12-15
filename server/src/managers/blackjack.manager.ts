@@ -67,7 +67,7 @@ export async function handleStartBlackjackGame(message: string) {
     return SocketServer.success(
       from.id,
       kind,
-      (await startBlackjackGame(from.id, wager)).data
+      (await startBlackjackGame(from.id, wager)) ?? null
     );
   } catch (error) {
     return handleBlackjackErrors(

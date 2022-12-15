@@ -53,10 +53,18 @@ describe("Chat Message Model", () => {
     describe(createChatMessage.name, () => {
       it("should add a chat message to the table", async () => {
         const content = "This is a message.";
+        const poll = {
+          question: "Is this a question?",
+          answers: [
+            { text: "Yes", respondents: [] },
+            { text: "No", respondents: [] },
+          ],
+        };
         const message = await createChatMessage(
           client.id,
           chatroomA.id,
-          content
+          content,
+          poll
         );
         const expected = {
           id: expect.any(Number),
@@ -64,6 +72,7 @@ describe("Chat Message Model", () => {
           chatroomId: chatroomA.id,
           content,
           reactions: {},
+          poll,
           pinned: false,
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),

@@ -1,6 +1,5 @@
 import { WebSocket } from "ws";
 import { getTicket, signup } from "./auth";
-import { cert } from "./make-request";
 
 export function waitForSocketState(
   socket: WebSocket,
@@ -21,13 +20,29 @@ export async function openSocket() {
   await signup();
 
   const socket = new WebSocket(
-    `wss://localhost/api?ticket=${await getTicket()}`,
-    {
-      cert,
-    }
+    `wss://localhost/api?ticket=${await getTicket()}`
   );
 
   await waitForSocketState(socket, socket.OPEN);
 
   return socket;
+}
+
+export function sendSocketMessage(
+  socket: WebSocket,
+  kind: string,
+  args: Record<string, unknown> = {}
+) {
+  return socket.send(
+    JSON.stringify({
+      kind,
+      args,
+    })
+  );
+}
+
+export function subscribeTo(socket: WebSocket, subscription: string) {
+  return sendSocketMessage(socket, "client-subscribed", {
+    subscription,
+  });
 }

@@ -251,3 +251,51 @@ export async function whitelistToChatroom(
     return null;
   }
 }
+
+export async function canClientMessageChatroom(
+  clientId: number,
+  chatroomId: number,
+  password?: string
+) {
+  try {
+    const chatroom = await getChatroom(chatroomId);
+
+    if (!chatroom) {
+      return {
+        can: false,
+        reason: "That chatroom does not exist.",
+      };
+    }
+
+    if (chatroom.whitelist && !chatroom.whitelist[clientId]) {
+      return {
+        can: false,
+        reason: "Not on the whitelist.",
+      };
+    }
+
+    if (chatroom.blacklist && chatroom.blacklist[clientId]) {
+      return {
+        can: false,
+        reason: "On the blacklist.",
+      };
+    }
+
+    if (chatroom.password && password !== chatroom.password) {
+      return {
+        can: false,
+        reason: "Wrong password.",
+      };
+    }
+
+    return {
+      can: true,
+      reason: "",
+    };
+  } catch (error) {
+    return {
+      can: false,
+      reason: "An error occurred.",
+    };
+  }
+}

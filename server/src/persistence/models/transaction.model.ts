@@ -70,16 +70,7 @@ export async function dropTransactionTable() {
 export async function createTransaction<
   T extends null | number,
   K extends null | number
->(
-  from: T,
-  to: K,
-  amount: number,
-  memo: T extends null
-    ? K extends null
-      ? string
-      : string | undefined
-    : string | undefined
-) {
+>(from: T, to: K, amount: number, memo?: string) {
   try {
     const [transaction] = await postgres<Transaction>(TRANSACTION_TABLE_NAME)
       .insert({

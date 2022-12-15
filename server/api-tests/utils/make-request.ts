@@ -10,16 +10,11 @@ interface ServerResponse<T> {
   data: T;
 }
 
-export const cert = readFileSync(
-  path.join(__dirname, "..", ".ssh", "certificate.pem")
-);
-
 export const axios = axiosLib.create({
   baseURL: "https://localhost",
   timeout: 5000,
   httpsAgent: new Agent({
     rejectUnauthorized: false,
-    cert,
   }),
 });
 

@@ -10,6 +10,7 @@ import {
   dropChatMessageTable,
   createTransactionTable,
   dropTransactionTable,
+  createChatroom,
 } from "persistence";
 import { initializeCache } from "persistence";
 
@@ -30,8 +31,19 @@ export async function seed() {
   await createChatMessageTable();
   await createBlackjackTable();
 
-  await createClient("admin", DEFAULT_PASSWORD, "admin:unlimited");
-  await createClient("admin2", DEFAULT_PASSWORD, "admin:limited");
+  // Users
+  const admin = await createClient(
+    "admin",
+    DEFAULT_PASSWORD,
+    "admin:unlimited"
+  );
+
+  // Chatrooms
+  await createChatroom(admin.id, {
+    avatar: "https://placehold.it/32x32",
+    title: "Lobby",
+    description: "Just an entrance hallway type of place.",
+  });
 
   process.exit(0);
 }
