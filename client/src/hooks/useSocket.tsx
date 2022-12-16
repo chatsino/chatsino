@@ -10,6 +10,7 @@ import {
 import * as config from "config";
 import { useAuthentication } from "./useAuthentication";
 import { useClient } from "./useClient";
+import { Chance } from "chance";
 
 type Response = {
   data?: unknown;
@@ -26,6 +27,10 @@ export interface SocketContextType {
   initialized: boolean;
   initialize: () => void;
   makeRequest: (kind: string, args?: Record<string, unknown>) => void;
+  oneTimeRequest: (
+    kind: string,
+    args?: Record<string, unknown>
+  ) => Promise<Response>;
   subscribe: (
     name: string,
     kind: string,
@@ -34,11 +39,14 @@ export interface SocketContextType {
   unsubscribe: (name: string, kind?: string) => unknown;
 }
 
+const CHANCE = new Chance();
+
 const SocketContext = createContext<SocketContextType>({
   socket: null,
   initialized: false,
   initialize() {},
   makeRequest() {},
+  oneTimeRequest: Promise.resolve,
   subscribe() {},
   unsubscribe() {},
 });
@@ -147,16 +155,39 @@ export function SocketProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const oneTimeRequest = useCallback(
+    async (kind: string, args: Record<string, unknown> = {}) => {
+      const subscriberName = CHANCE.name();
+      const response = (await new Promise((resolve) => {
+        makeRequest(kind, args);
+        subscribe(subscriberName, kind, resolve);
+      })) as unknown as Response;
+
+      unsubscribe(subscriberName, kind);
+
+      return response;
+    },
+    [makeRequest, subscribe, unsubscribe]
+  );
+
   const value = useMemo(
     () => ({
       socket: socket.current,
       initialized,
       initialize,
       makeRequest,
+      oneTimeRequest,
       subscribe,
       unsubscribe,
     }),
-    [initialized, initialize, makeRequest, subscribe, unsubscribe]
+    [
+      initialized,
+      initialize,
+      makeRequest,
+      oneTimeRequest,
+      subscribe,
+      unsubscribe,
+    ]
   );
 
   return (

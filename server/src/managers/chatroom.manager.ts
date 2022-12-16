@@ -7,9 +7,11 @@ import {
   getAllChatrooms,
   getClientById,
   readChatMessage,
+  readChatMessageList,
   SUBSCRIBER,
 } from "persistence";
 import {
+  listChatroomMessagesSchema,
   sendChatMessageSchema,
   SourcedSocketMessage,
   voteInPollSchema,
@@ -107,7 +109,31 @@ export async function handleListChatrooms(messageString: string) {
   }
 }
 
-export function handleListChatroomMessages() {}
+export async function handleListChatroomMessages(messageString: string) {
+  const { kind, args, from } = JSON.parse(
+    messageString
+  ) as SourcedSocketMessage;
+
+  try {
+    const { chatroomId } = await listChatroomMessagesSchema.validate(args);
+    const messages = await readChatMessageList(chatroomId);
+
+    if (!messages) {
+      throw new Error();
+    }
+
+    return SocketServer.success(from.id, kind, {
+      messages,
+    });
+  } catch (error) {
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      "Failed to list chatroom messages."
+    );
+  }
+}
 
 export async function handleVoteInPoll(messageString: string) {
   const { kind, args, from } = JSON.parse(
@@ -138,6 +164,7 @@ export async function handleVoteInPoll(messageString: string) {
 
     return SocketServer.success(from.id, kind, {
       success: successfullyVoted,
+      chatroomId: message.chatroomId,
     });
   } catch (error) {
     return handleChatroomErrors(

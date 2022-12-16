@@ -1,16 +1,10 @@
-import { useChatrooms, useSocket } from "hooks";
-import { useEffect } from "react";
+import { useChatrooms } from "hooks";
 import { ChatMessageList } from "ui";
 
 export function ChatRoute() {
-  const { chatrooms, listChatrooms } = useChatrooms();
-  const { initialized } = useSocket();
-
-  useEffect(() => {
-    if (initialized) {
-      listChatrooms();
-    }
-  }, [initialized, listChatrooms]);
+  const {
+    data: { chatrooms },
+  } = useChatrooms();
 
   return chatrooms.length === 0 ? (
     <>Loading...</>

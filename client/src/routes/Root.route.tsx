@@ -1,6 +1,7 @@
 import { Col, Divider, Row } from "antd";
 import {
   ClientProvider,
+  ChatroomProvider,
   SocketProvider,
   useAuthentication,
   useClient,
@@ -31,9 +32,11 @@ export function RootRoute() {
   return (
     <ClientProvider>
       <SocketProvider>
-        <SiteLayout>
-          <Inner />
-        </SiteLayout>
+        <ChatroomProvider>
+          <SiteLayout>
+            <Inner />
+          </SiteLayout>
+        </ChatroomProvider>
       </SocketProvider>
     </ClientProvider>
   );
@@ -42,11 +45,10 @@ export function RootRoute() {
 function Inner() {
   const { validate } = useAuthentication();
   const { client, setClient } = useClient();
-  const { initialize, initialized } = useSocket();
-  const { chatrooms, listChatrooms } = useChatrooms();
-  const users = chatrooms
-    .map((chatroom) => chatroom.users)
-    .reduce((prev, next) => prev.concat(next), [] as Array<ChatUserData>);
+  const { initialize } = useSocket();
+  const {
+    data: { chatrooms, users },
+  } = useChatrooms();
   const data = useLoaderData() as { client: SafeClient };
   const initiallyValidated = useRef(false);
   const games = [
@@ -89,12 +91,6 @@ function Inner() {
   ];
 
   useUniversalVhUnit();
-
-  useEffect(() => {
-    if (initialized) {
-      listChatrooms();
-    }
-  }, [initialized, listChatrooms]);
 
   useEffect(() => {
     if (data?.client && !client) {

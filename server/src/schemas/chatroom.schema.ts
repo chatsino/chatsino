@@ -26,7 +26,7 @@ export const sendChatMessageSchema = yup
 
 export const listChatroomMessagesSchema = yup
   .object({
-    chatroomId: yup.string().required(),
+    chatroomId: yup.number().required(),
   })
   .required();
 
