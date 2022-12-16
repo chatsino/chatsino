@@ -1,5 +1,5 @@
 import { createLogger } from "logger";
-import { postgres } from "persistence";
+import { getClientById, postgres } from "persistence";
 
 export interface Chatroom {
   id: number;
@@ -165,7 +165,7 @@ export async function deleteAllChatrooms() {
   }
 }
 
-export async function getChatroom(chatroomId: number) {
+export async function readChatroom(chatroomId: number) {
   try {
     const chatroom = await postgres<Chatroom>(CHATROOM_TABLE_NAME)
       .where("id", chatroomId)
@@ -179,23 +179,33 @@ export async function getChatroom(chatroomId: number) {
     delete chatroom.blacklist;
     delete chatroom.whitelist;
 
-    return chatroom;
+    return {
+      ...chatroom,
+      createdBy: await getClientById(chatroom.createdBy),
+      updatedBy: await getClientById(chatroom.updatedBy),
+    };
   } catch (error) {
     return null;
   }
 }
 
-export async function getAllChatrooms() {
+export async function readChatroomList() {
   try {
     const chatrooms = await postgres<Chatroom>(CHATROOM_TABLE_NAME).select();
 
-    return chatrooms.map((chatroom) => {
-      delete chatroom.password;
-      delete chatroom.blacklist;
-      delete chatroom.whitelist;
+    return Promise.all(
+      chatrooms.map(async (chatroom) => {
+        delete chatroom.password;
+        delete chatroom.blacklist;
+        delete chatroom.whitelist;
 
-      return chatroom;
-    });
+        return {
+          ...chatroom,
+          createdBy: await getClientById(chatroom.createdBy),
+          updatedBy: await getClientById(chatroom.updatedBy),
+        };
+      })
+    );
   } catch (error) {
     /* istanbul ignore next */
     return null;
@@ -207,7 +217,7 @@ export async function blacklistFromChatroom(
   clientId: number
 ) {
   try {
-    const chatroom = await getChatroom(chatroomId);
+    const chatroom = await readChatroom(chatroomId);
 
     if (!chatroom) {
       throw new Error();
@@ -237,7 +247,7 @@ export async function whitelistToChatroom(
   clientId: number
 ) {
   try {
-    const chatroom = await getChatroom(chatroomId);
+    const chatroom = await readChatroom(chatroomId);
 
     if (!chatroom) {
       throw new Error();
@@ -268,7 +278,7 @@ export async function canClientMessageChatroom(
   password?: string
 ) {
   try {
-    const chatroom = await getChatroom(chatroomId);
+    const chatroom = await readChatroom(chatroomId);
 
     if (!chatroom) {
       return {

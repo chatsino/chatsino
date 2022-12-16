@@ -284,12 +284,16 @@ export async function clientVotedInPoll(
 
     answerEntry.respondents.push(clientId);
 
-    await updateChatMessage(messageId, {
+    const votedMessage = await updateChatMessage(messageId, {
       poll: message.poll,
     });
 
-    return true;
+    if (!votedMessage) {
+      throw new Error();
+    }
+
+    return votedMessage;
   } catch (error) {
-    return false;
+    return null;
   }
 }

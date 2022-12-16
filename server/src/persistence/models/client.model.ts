@@ -309,7 +309,17 @@ export async function changeClientPermissionLevel(
   clientIdentifier: ClientIdentifier,
   permissionLevel: ClientPermissionLevel
 ) {
-  return updateClient(clientIdentifier, { permissionLevel });
+  try {
+    const client = await updateClient(clientIdentifier, { permissionLevel });
+
+    if (!client) {
+      throw new Error();
+    }
+
+    return safetifyClient(client);
+  } catch (error) {
+    return null;
+  }
 }
 
 export class IncorrectPasswordError extends Error {}

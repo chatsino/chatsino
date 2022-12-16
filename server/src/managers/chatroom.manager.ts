@@ -4,7 +4,7 @@ import {
   Chatroom,
   clientVotedInPoll,
   createChatMessage,
-  getAllChatrooms,
+  readChatroomList,
   getClientById,
   readChatMessage,
   readChatMessageList,
@@ -83,7 +83,7 @@ export async function handleListChatrooms(messageString: string) {
   const { kind, from } = JSON.parse(messageString) as SourcedSocketMessage;
 
   try {
-    const chatrooms = (await getAllChatrooms()) as Chatroom[];
+    const chatrooms = (await readChatroomList()) as unknown as Chatroom[];
     const chatroomsWithData = await Promise.all(
       chatrooms?.map(async (chatroom) => {
         return {

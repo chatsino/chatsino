@@ -36,3 +36,15 @@ export const voteInPollSchema = yup
     response: yup.string().required(),
   })
   .required();
+
+export const editChatMessageSchema = yup
+  .object({
+    message: yup.string().min(1).required(),
+  })
+  .required();
+
+export const reactToChatMessageSchema = yup
+  .object({
+    reaction: yup.string().min(1).required(),
+  })
+  .required();

@@ -8,6 +8,7 @@ import {
   ClientWithUsernameExistsError,
   createClient,
   IncorrectPasswordError,
+  safetifyClient,
   verifyClientPassword,
 } from "persistence";
 import { clientSigninSchema, clientSignupSchema } from "schemas";
@@ -35,7 +36,7 @@ export async function validateRoute(req: AuthenticatedRequest, res: Response) {
 export async function signupRoute(req: Request, res: Response) {
   try {
     const { username, password } = await clientSignupSchema.validate(req.body);
-    const client = await createClient(username, password);
+    const client = safetifyClient(await createClient(username, password));
 
     const token = await assignToken(res, client);
 

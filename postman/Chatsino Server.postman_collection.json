@@ -1,0 +1,471 @@
+{
+	"info": {
+		"_postman_id": "6606c041-d7e6-46b8-95f1-c1bebdca1c8d",
+		"name": "Chatsino Server",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24965779"
+	},
+	"item": [
+		{
+			"name": "Auth Routes",
+			"item": [
+				{
+					"name": "Signup Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"User C\",\r\n    \"password\": \"password\",\r\n    \"passwordAgain\": \"password\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Signin Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Signout Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"password\": \"{{password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"signout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Route",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/validate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"validate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Ticket Route",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/ticket",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"ticket"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin Routes",
+			"item": [
+				{
+					"name": "Charge Client Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"clientId\": \"{{client_id}}\",\r\n    \"amount\": 10\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/charge-client",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"charge-client"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Pay Client Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"clientId\": \"{{client_id}}\",\r\n    \"amount\": 100\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/pay-client",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"pay-client"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Client Permission Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"clientId\": \"{{client_id}}\",\r\n    \"permissionLevel\": \"admin:unlimited\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/change-permission",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"change-permission"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Chat Routes",
+			"item": [
+				{
+					"name": "Chatroom List Route",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Chatroom Route",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Chat Message Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"chatroomId\": {{chatroom_id}},\r\n    \"message\": \"I sent a message.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}/messages",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "... with poll",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"chatroomId\": {{chatroom_id}},\r\n    \"message\": \"I sent a poll.\",\r\n    \"poll\": {\r\n        \"question\": \"Do you like potatoes?\",\r\n        \"answers\": [\r\n            {\r\n                \"text\": \"Yes\",\r\n                \"respondents\": []\r\n            },\r\n            {\r\n                \"text\": \"No\",\r\n                \"respondents\": []\r\n            }\r\n        ]\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}/messages",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "React to Chat Message Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"reaction\": \":smile:\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}/messages/{{message_id}}/reactions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}",
+								"messages",
+								"{{message_id}}",
+								"reactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Pin Chat Message Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"reaction\": \":smile:\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}/messages/{{message_id}}/pin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}",
+								"messages",
+								"{{message_id}}",
+								"pin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote In Poll Route",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"response\": \"Yes\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}/messages/{{message_id}}/vote",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}",
+								"messages",
+								"{{message_id}}",
+								"vote"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Edit Chat Message Route",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"message\": \"I edited a message.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}/messages/{{message_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}",
+								"messages",
+								"{{message_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Chat Message Route",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"message\": \"I edited a message.\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/chat/chatrooms/{{chatroom_id}}/messages/{{message_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"chat",
+								"chatrooms",
+								"{{chatroom_id}}",
+								"messages",
+								"{{message_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

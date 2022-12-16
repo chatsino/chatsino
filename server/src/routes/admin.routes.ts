@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse } from "helpers";
+import { authenticatedRouteMiddleware } from "middleware";
 import {
   changeClientPermissionLevel,
   chargeClient,
@@ -13,7 +14,11 @@ export function createAdminRouter() {
 
   adminRouter.post("/charge-client", chargeClientRoute);
   adminRouter.post("/pay-client", payClientRoute);
-  adminRouter.post("/change-permission", changeClientPermissionRoute);
+  adminRouter.post(
+    "/change-permission",
+    authenticatedRouteMiddleware("admin:unlimited"),
+    changeClientPermissionRoute
+  );
 
   return adminRouter;
 }
@@ -52,18 +57,21 @@ export async function changeClientPermissionRoute(req: Request, res: Response) {
   try {
     const { clientId, permissionLevel } =
       await adminChangePermissionSchema.validate(req.body);
-    const paid = await changeClientPermissionLevel(
+    const client = await changeClientPermissionLevel(
       clientId,
       permissionLevel as ClientPermissionLevel
     );
 
-    if (!paid) {
+    if (!client) {
       throw new Error();
     }
 
     return successResponse(
       res,
-      "Successfully changed client's permission level."
+      "Successfully changed client's permission level.",
+      {
+        client,
+      }
     );
   } catch (error) {
     return errorResponse(res, "Unable to change client's permission level.");
