@@ -9,7 +9,7 @@ import {
   Space,
   Typography,
 } from "antd";
-import { ChatMessageGenerator, toUniversalVh } from "helpers";
+import { toUniversalVh } from "helpers";
 import { useChatAutoscroll, useChatSearch } from "hooks";
 import cloneDeep from "lodash.clonedeep";
 import { useMemo, useRef, useState } from "react";
@@ -22,12 +22,14 @@ import { groupMessages } from "./group-messages";
 export function ChatMessageList({
   id,
   chatroom,
+  messages,
   onSendMessage,
 }: {
   id: string;
   chatroom: ChatroomData;
+  messages: ChatMessageData[];
   chatrooms: ChatroomData[];
-  onSendMessage: (message: ChatMessageData) => unknown;
+  onSendMessage: (message: string) => unknown;
 }) {
   const { sm } = Grid.useBreakpoint();
   const onMobile = !sm;
@@ -36,15 +38,13 @@ export function ChatMessageList({
   const listBodyRef = useRef<null | HTMLDivElement>(null);
   const search = useChatSearch(chatroom);
   const renderedMessages = useMemo(() => {
-    const messagesToSort = search.isSearching
-      ? search.results
-      : chatroom.messages;
+    const messagesToSort = search.isSearching ? search.results : messages;
 
     return cloneDeep(messagesToSort).sort(
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-  }, [search.isSearching, search.results, chatroom.messages]);
+  }, [search.isSearching, search.results, messages]);
   const groupedMessages = useMemo(
     () => groupMessages(renderedMessages),
     [renderedMessages]
@@ -154,21 +154,7 @@ export function ChatMessageList({
             )}
           </>
         }
-        footer={
-          <ChatInput
-            onSend={(message) =>
-              onSendMessage(
-                ChatMessageGenerator.generateChatMessage({
-                  author: {
-                    id: 1,
-                    username: "Bob Johnson",
-                  },
-                  content: message,
-                })
-              )
-            }
-          />
-        }
+        footer={<ChatInput onSend={onSendMessage} />}
       >
         <div style={{ position: "relative" }}>
           <div ref={listBodyRef}>

@@ -73,7 +73,7 @@ export const ChatroomContext = createContext<{
 });
 
 export function ChatroomProvider({ children }: { children?: ReactNode }) {
-  const { oneTimeRequest } = useSocket();
+  const { oneTimeRequest, initialized } = useSocket();
   const [chatrooms, setChatrooms] = useState([] as Array<Chatroom>);
   const [chatroomMessages, setChatroomMessages] = useState(
     {} as Record<number, ChatMessageData[]>
@@ -81,6 +81,8 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
   const initiallyFetched = useRef(false);
 
   const fetchChatrooms = useCallback(async () => {
+    console.log(123);
+
     const response = await oneTimeRequest(ChatroomSocketRequests.ListChatrooms);
 
     if (response.error) {
@@ -182,7 +184,7 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
   );
 
   useEffect(() => {
-    if (!initiallyFetched.current) {
+    if (initialized && !initiallyFetched.current) {
       initiallyFetched.current = true;
       fetchChatrooms();
     }

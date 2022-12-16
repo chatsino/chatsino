@@ -1,5 +1,6 @@
 import { createLogger } from "logger";
 import { postgres } from "persistence";
+import { getClientById } from "./client.model";
 
 export interface ChatMessage {
   id: number;
@@ -143,8 +144,14 @@ export async function readChatMessageList(chatroomId?: number) {
             "chatroomId",
             chatroomId
           );
+    const messagesWithAuthors = await Promise.all(
+      messages.map(async (message) => ({
+        ...message,
+        author: await getClientById(message.clientId),
+      }))
+    );
 
-    return messages;
+    return messagesWithAuthors;
   } catch (error) {
     /* istanbul ignore next */
     return null;
