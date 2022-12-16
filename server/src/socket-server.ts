@@ -119,6 +119,8 @@ export class SocketServer {
 
     const client = await validateTicket(request);
 
+    SOCKETS_LOGGER.info({ client }, "\n\n\n\n UPGRADE");
+
     if (!client) {
       SOCKETS_LOGGER.info("The request to upgrade was denied.");
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");

@@ -28,7 +28,6 @@ export function ChatMessageList({
   id: string;
   chatroom: ChatroomData;
   messages: ChatMessageData[];
-  chatrooms: ChatroomData[];
   onSendMessage: (message: string) => unknown;
 }) {
   const { sm } = Grid.useBreakpoint();
@@ -36,7 +35,7 @@ export function ChatMessageList({
   const [showingChatroomDrawer, setShowingChatroomDrawer] = useState(false);
   const [showingUserListDrawer, setShowingUsersDrawer] = useState(false);
   const listBodyRef = useRef<null | HTMLDivElement>(null);
-  const search = useChatSearch(chatroom);
+  const search = useChatSearch(messages);
   const renderedMessages = useMemo(() => {
     const messagesToSort = search.isSearching ? search.results : messages;
 
@@ -61,7 +60,7 @@ export function ChatMessageList({
     return setShowingUsersDrawer((prev) => !prev);
   }
 
-  useChatAutoscroll(id, chatroom.messages);
+  useChatAutoscroll(id, messages);
 
   return (
     <>
@@ -100,8 +99,8 @@ export function ChatMessageList({
                   style={{ textTransform: "uppercase", letterSpacing: 2 }}
                 >
                   <small>
-                    Showing {chatroom.messages.length} messages from{" "}
-                    {uniqueAuthorCount} users
+                    Showing {messages.length} messages from {uniqueAuthorCount}{" "}
+                    users
                   </small>
                 </Typography.Text>
               )}
@@ -173,7 +172,7 @@ export function ChatMessageList({
         <ChatroomDrawer onClose={toggleChatroomDrawer} />
       )}
       {showingUserListDrawer && (
-        <UserListDrawer users={chatroom.users} onClose={toggleUserListDrawer} />
+        <UserListDrawer users={[]} onClose={toggleUserListDrawer} />
       )}
     </>
   );

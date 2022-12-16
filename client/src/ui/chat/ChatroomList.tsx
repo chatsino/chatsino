@@ -57,7 +57,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
             style={{ cursor: "pointer" }}
             extra={
               <Typography.Text>
-                {item.users.length} <UserOutlined />
+                {[]} <UserOutlined />
               </Typography.Text>
             }
           >

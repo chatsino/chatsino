@@ -3,7 +3,7 @@ import debounce from "lodash.debounce";
 
 export const CHAT_SEARCH_DEBOUNCE_RATE = 1000;
 
-export function useChatSearch(chatroom: ChatroomData) {
+export function useChatSearch(messages: ChatMessageData[]) {
   const [query, setQuery] = useState("");
   const debouncedChangeQuery = useRef(
     debounce(
@@ -14,10 +14,10 @@ export function useChatSearch(chatroom: ChatroomData) {
   );
   const results = useMemo(
     () =>
-      chatroom.messages.filter((message) =>
+      messages.filter((message) =>
         message.content.toLowerCase().includes(query.toLowerCase())
       ),
-    [query, chatroom.messages]
+    [query, messages]
   );
 
   return {

@@ -17,6 +17,4 @@ declare interface ChatroomData {
   title: string;
   description: string;
   createdBy: null | ChatUserData;
-  users: ChatUserData[];
-  messages: ChatMessageData[];
 }

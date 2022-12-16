@@ -9,7 +9,7 @@
     "test": "react-scripts test --transformIgnorePatterns \"node_modules/(?!axios)\"",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public",
-    "circular-dependency-check": "npx madge -c --extensions ts,tsx ./src"
+    "check:circular-dependency": "npx madge -c --extensions ts,tsx ./src"
   },
   "eslintConfig": {
     "extends": [

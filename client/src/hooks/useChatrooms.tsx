@@ -81,8 +81,6 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
   const initiallyFetched = useRef(false);
 
   const fetchChatrooms = useCallback(async () => {
-    console.log(123);
-
     const response = await oneTimeRequest(ChatroomSocketRequests.ListChatrooms);
 
     if (response.error) {

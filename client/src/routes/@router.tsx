@@ -1,11 +1,12 @@
 import {
   chatRedirectLoader,
+  chatroomLoader,
   requireAdminLoader,
   requireClientLoader,
 } from "loaders";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import { AdminRoute } from "./Admin.route";
-import { ChatRoute } from "./Chat.route";
+import { ChatroomRoute } from "./Chatroom.route";
 import { ErrorRoute } from "./Error.route";
 import {
   BlackjackRoute,
@@ -37,12 +38,13 @@ export const router = createBrowserRouter([
       },
       {
         path: "/chat",
-        loader: requireClientLoader,
-        element: <ChatRoute />,
+        // loader: requireClientLoader,
+        element: <Outlet />,
         children: [
           {
             path: ":chatroomId",
-            element: <ChatRoute />,
+            loader: chatroomLoader,
+            element: <ChatroomRoute />,
           },
         ],
       },

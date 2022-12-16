@@ -4,9 +4,9 @@ import { SafeClient } from "schemas";
 
 export async function clientLoader() {
   try {
-    const { client } = await makeHttpRequest<{
+    const { client } = (await makeHttpRequest("get", "/auth/validate")) as {
       client: SafeClient;
-    }>("get", "/auth/validate");
+    };
 
     return { client };
   } catch (error) {

@@ -1,6 +1,6 @@
 export * from "./@router";
 export * from "./Admin.route";
-export * from "./Chat.route";
+export * from "./Chatroom.route";
 export * from "./Error.route";
 export * from "./Games.route";
 export * from "./Help.route";
