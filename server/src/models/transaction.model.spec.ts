@@ -1,6 +1,5 @@
 import Chance from "chance";
-import { initializeCache } from "../cache";
-import { initializeDatabase } from "../database";
+import { initializeCache, initializeDatabase } from "persistence";
 import { Client, createClient } from "./client.model";
 import {
   createTransaction,

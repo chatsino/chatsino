@@ -1,5 +1,5 @@
 import * as config from "config";
-import * as models from "./models";
+import * as models from "models";
 import knex from "knex";
 
 export const postgres = knex({

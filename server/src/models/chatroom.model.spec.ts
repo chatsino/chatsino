@@ -1,15 +1,14 @@
 import Chance from "chance";
-import { initializeCache } from "../cache";
-import { initializeDatabase } from "../database";
+import { initializeCache, initializeDatabase } from "persistence";
 import {
-  createChatroom,
-  updateChatroom,
-  deleteChatroom,
-  deleteAllChatrooms,
-  readChatroom as readChatroom,
-  readChatroomList as readChatroomList,
-  Chatroom,
   blacklistFromChatroom,
+  Chatroom,
+  createChatroom,
+  deleteAllChatrooms,
+  deleteChatroom,
+  readChatroom,
+  readChatroomList,
+  updateChatroom,
   whitelistToChatroom,
 } from "./chatroom.model";
 import { Client, createClient } from "./client.model";
