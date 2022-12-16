@@ -175,6 +175,10 @@ export async function getChatroom(chatroomId: number) {
       throw new Error();
     }
 
+    delete chatroom.password;
+    delete chatroom.blacklist;
+    delete chatroom.whitelist;
+
     return chatroom;
   } catch (error) {
     return null;
@@ -185,7 +189,13 @@ export async function getAllChatrooms() {
   try {
     const chatrooms = await postgres<Chatroom>(CHATROOM_TABLE_NAME).select();
 
-    return chatrooms;
+    return chatrooms.map((chatroom) => {
+      delete chatroom.password;
+      delete chatroom.blacklist;
+      delete chatroom.whitelist;
+
+      return chatroom;
+    });
   } catch (error) {
     /* istanbul ignore next */
     return null;

@@ -2,6 +2,7 @@ export * from "./useAuthentication";
 export * from "./useBlackjack";
 export * from "./useChat";
 export * from "./useChatAutoscroll";
+export * from "./useChatrooms";
 export * from "./useChatSearch";
 export * from "./useClient";
 export * from "./useFormFields";

@@ -25,7 +25,7 @@ export interface SocketContextType {
   socket: null | WebSocket;
   initialized: boolean;
   initialize: () => void;
-  makeRequest: (kind: string, args: Record<string, unknown>) => void;
+  makeRequest: (kind: string, args?: Record<string, unknown>) => void;
   subscribe: (
     name: string,
     kind: string,

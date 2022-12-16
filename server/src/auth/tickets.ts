@@ -1,19 +1,24 @@
 import * as config from "config";
 import { Request } from "express";
 import { decrypt, encrypt, now } from "helpers";
-import {
-  ClientNotFoundError,
-  Client,
-  getClientByIdentifier,
-} from "persistence";
+import { createLogger } from "logger";
 import querystring from "node:querystring";
-import { clearCachedValue, getCachedValue, setCachedValue } from "persistence";
+import {
+  clearCachedValue,
+  Client,
+  ClientNotFoundError,
+  getCachedValue,
+  getClientByIdentifier,
+  setCachedValue,
+} from "persistence";
 
 export interface Ticket {
   issuedAt: number;
   issuedTo: string;
   username: string;
 }
+
+export const TICKET_LOGGER = createLogger("Tickets");
 
 export async function issueTicket(username: string, remoteAddress: string) {
   const client = await getClientByIdentifier(username);
@@ -43,20 +48,32 @@ export async function validateTicket(request: Request) {
   const { remoteAddress } = request.socket;
 
   if (!encryptedTicket || !remoteAddress) {
+    TICKET_LOGGER.error(
+      { encryptedTicket, remoteAddress },
+      "Missing ticket and/or remote address."
+    );
+
     return null;
   }
 
   const client = (await getCachedValue(`Tickets/${encryptedTicket}`)) as Client;
 
   if (!client) {
+    TICKET_LOGGER.error({ client }, "Ticket not in cache.");
+
     return null;
   }
 
   const ticket = decryptTicket(encryptedTicket);
 
-  if (ticket.issuedTo !== remoteAddress) {
-    return null;
-  }
+  // if (ticket.issuedTo !== remoteAddress) {
+  //   TICKET_LOGGER.error(
+  //     { ticket, remoteAddress },
+  //     "Ticket not assigned to same address."
+  //   );
+
+  //   return null;
+  // }
 
   await clearCachedValue(`Tickets/${encryptedTicket}`);
 

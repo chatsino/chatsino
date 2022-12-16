@@ -1,10 +1,11 @@
 import { Col, Divider, Row } from "antd";
-import { ChatroomGenerator } from "helpers";
 import {
   ClientProvider,
   SocketProvider,
   useAuthentication,
   useClient,
+  useChatrooms,
+  useSocket,
   useUniversalVhUnit,
 } from "hooks";
 import { useEffect, useRef } from "react";
@@ -41,10 +42,13 @@ export function RootRoute() {
 function Inner() {
   const { validate } = useAuthentication();
   const { client, setClient } = useClient();
+  const { initialize, initialized } = useSocket();
+  const { chatrooms, listChatrooms } = useChatrooms();
+  const users = chatrooms
+    .map((chatroom) => chatroom.users)
+    .reduce((prev, next) => prev.concat(next), [] as Array<ChatUserData>);
   const data = useLoaderData() as { client: SafeClient };
   const initiallyValidated = useRef(false);
-  const someChatrooms = useChatrooms();
-  const chatroom = someChatrooms[0];
   const games = [
     {
       title: "Blackjack",
@@ -87,6 +91,12 @@ function Inner() {
   useUniversalVhUnit();
 
   useEffect(() => {
+    if (initialized) {
+      listChatrooms();
+    }
+  }, [initialized, listChatrooms]);
+
+  useEffect(() => {
     if (data?.client && !client) {
       setClient(data.client);
     }
@@ -102,18 +112,19 @@ function Inner() {
 
           if (client) {
             setClient(client);
+            initialize();
           }
         } catch (error) {}
       };
 
       handleValidate();
     }
-  }, [validate, setClient]);
+  }, [validate, setClient, initialize]);
 
   return (
     <Row gutter={20}>
       <Col xs={0} lg={4}>
-        <ChatUserList users={chatroom.users} />
+        <ChatUserList users={users} />
         <Divider />
         <ChatGameList games={games} />
       </Col>
@@ -121,7 +132,7 @@ function Inner() {
         <Outlet />
       </Col>
       <Col xs={0} lg={4}>
-        <ChatroomList chatrooms={someChatrooms} />
+        <ChatroomList chatrooms={chatrooms} />
         <Divider />
         <JoinPrivateRoomForm onSubmit={() => Promise.resolve()} />
         <Divider />
@@ -129,8 +140,4 @@ function Inner() {
       </Col>
     </Row>
   );
-}
-
-function useChatrooms() {
-  return ChatroomGenerator.generateChatroomList(30);
 }

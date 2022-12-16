@@ -1,8 +1,11 @@
 import {
   canClientMessageChatroom,
   ChatMessage,
+  Chatroom,
   clientVotedInPoll,
   createChatMessage,
+  getAllChatrooms,
+  getClientById,
   readChatMessage,
   SUBSCRIBER,
 } from "persistence";
@@ -17,8 +20,8 @@ export enum ChatroomSocketRequests {
   SendChatMessage = "send-chat-message",
   ListChatrooms = "list-chatrooms",
   ListChatroomMessages = "list-chatroom-messages",
-  NewChatMessage = "new-chat-message",
   VoteInPoll = "vote-in-poll",
+  NewChatMessage = "new-chat-message",
 }
 
 export function initializeChatroomManager() {
@@ -74,7 +77,35 @@ export async function handleSendChatMessage(messageString: string) {
   }
 }
 
-export function handleListChatrooms() {}
+export async function handleListChatrooms(messageString: string) {
+  const { kind, from } = JSON.parse(messageString) as SourcedSocketMessage;
+
+  try {
+    const chatrooms = (await getAllChatrooms()) as Chatroom[];
+    const chatroomsWithData = await Promise.all(
+      chatrooms?.map(async (chatroom) => {
+        return {
+          ...chatroom,
+          createdBy: await getClientById(chatroom.createdBy),
+          updatedBy: await getClientById(chatroom.updatedBy),
+          users: [],
+          messages: [],
+        };
+      })
+    );
+
+    return SocketServer.success(from.id, kind, {
+      chatrooms: chatroomsWithData,
+    });
+  } catch (error) {
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      "Failed to list chatrooms."
+    );
+  }
+}
 
 export function handleListChatroomMessages() {}
 
