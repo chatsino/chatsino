@@ -207,14 +207,27 @@ export async function readHydratedChatroom(chatroomId: number) {
   try {
     const { rows } = (await postgres.raw(
       `
-      SELECT chatroom.id, chatroom.avatar, chatroom.title, chatroom.description, chatroom.password, chatroom."createdAt", chatroom."updatedAt",
-          client_created.id as "createdById", client_created.avatar as "createdByAvatar", client_created.username as "createdByUsername",
-          client_updated.id as "updatedById", client_updated.avatar as "updatedByAvatar", client_updated.username as "updatedByUsername"
-      FROM chatroom
-      JOIN client client_created ON client_created.id = chatroom."createdBy"
-      JOIN client client_updated ON client_updated.id = chatroom."updatedBy"
-      WHERE chatroom.id = ?;
-    `,
+      SELECT
+        chatroom.id,
+        chatroom.avatar,
+        chatroom.title,
+        chatroom.description,
+        chatroom.password,
+        chatroom."createdAt",
+        chatroom."updatedAt",
+        client_created.id as "createdById",
+        client_created.avatar as "createdByAvatar",
+        client_created.username as "createdByUsername",
+        client_updated.id as "updatedById",
+        client_updated.avatar as "updatedByAvatar",
+        client_updated.username as "updatedByUsername"
+      FROM
+        chatroom
+        JOIN client client_created ON client_created.id = chatroom."createdBy"
+        JOIN client client_updated ON client_updated.id = chatroom."updatedBy"
+      WHERE
+        chatroom.id = ?;
+      `,
       [chatroomId]
     )) as {
       rows: HydratedChatroomQuery[];

@@ -21,6 +21,20 @@ export type ChatMessageUpdate = Partial<
   Pick<ChatMessage, "content" | "reactions" | "pinned" | "poll">
 >;
 
+export type HydratedChatMessageQuery = ChatMessage & {
+  authorId: number;
+  authorAvatar: string;
+  authorUsername: string;
+};
+
+export type HydratedChatMessage = ChatMessage & {
+  author: {
+    id: number;
+    avatar: string;
+    username: string;
+  };
+};
+
 export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
 
 // #region Tables
@@ -135,23 +149,36 @@ export async function readChatMessage(messageId: number) {
   }
 }
 
-export async function readChatMessageList(chatroomId?: number) {
+export async function readChatMessageList(chatroomId: number) {
   try {
-    const messages =
-      chatroomId == null
-        ? await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME).select()
-        : await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME).where(
-            "chatroomId",
-            chatroomId
-          );
-    const messagesWithAuthors = await Promise.all(
-      messages.map(async (message) => ({
-        ...message,
-        author: await getClientById(message.clientId),
-      }))
-    );
+    const { rows } = (await postgres.raw(
+      `
+      SELECT
+        chat_message.*,
+        author.id as "authorId",
+        author.avatar as "authorAvatar",
+        author.username as "authorUsername"
+      FROM
+        chat_message
+        JOIN client author ON author.id = chat_message."clientId"
+      WHERE
+        chat_message."chatroomId" = ?;
+      `,
+      [chatroomId]
+    )) as {
+      rows: HydratedChatMessageQuery[];
+    };
 
-    return messagesWithAuthors;
+    return rows.map(
+      ({ authorId, authorAvatar, authorUsername, ...message }) => ({
+        ...message,
+        author: {
+          id: authorId,
+          avatar: authorAvatar,
+          username: authorUsername,
+        },
+      })
+    ) as HydratedChatMessage[];
   } catch (error) {
     /* istanbul ignore next */
     return null;
