@@ -18,7 +18,7 @@ export type TransactionListRead = Partial<
 export const TRANSACTION_MODEL_LOGGER = createLogger("Transaction Model");
 
 // #region Table
-export const TRANSACTION_TABLE_NAME = "transactions";
+export const TRANSACTION_TABLE_NAME = "transaction";
 
 /* istanbul ignore next */
 export async function createTransactionTable() {

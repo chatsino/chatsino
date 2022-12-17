@@ -24,7 +24,7 @@ export type ChatMessageUpdate = Partial<
 export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
 
 // #region Tables
-export const CHAT_MESSAGE_TABLE_NAME = "chat_messages";
+export const CHAT_MESSAGE_TABLE_NAME = "chat_message";
 
 /* istanbul ignore next */
 export async function createChatMessageTable() {

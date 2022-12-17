@@ -27,10 +27,32 @@ export type ChatroomUpdate = Partial<
   >
 >;
 
+export type HydratedChatroomQuery = Chatroom & {
+  createdById: number;
+  createdByAvatar: string;
+  createdByUsername: string;
+  updatedById: number;
+  updatedByAvatar: string;
+  updatedByUsername: string;
+};
+
+export type HydratedChatroom = Omit<Chatroom, "createdBy" | "updatedBy"> & {
+  createdBy: {
+    id: number;
+    avatar: string;
+    username: string;
+  };
+  updatedBy: {
+    id: number;
+    avatar: string;
+    username: string;
+  };
+};
+
 export const CHATROOM_MODEL_LOGGER = createLogger("Chatroom Model");
 
 // #region SQL
-export const CHATROOM_TABLE_NAME = "chatrooms";
+export const CHATROOM_TABLE_NAME = "chatroom";
 
 /* istanbul ignore next */
 export async function createChatroomTable() {
@@ -175,15 +197,52 @@ export async function readChatroom(chatroomId: number) {
       throw new Error();
     }
 
-    delete chatroom.password;
-    delete chatroom.blacklist;
-    delete chatroom.whitelist;
+    return chatroom;
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function readHydratedChatroom(chatroomId: number) {
+  try {
+    const { rows } = (await postgres.raw(
+      `
+      SELECT chatroom.id, chatroom.avatar, chatroom.title, chatroom.description, chatroom.password, chatroom."createdAt", chatroom."updatedAt",
+          client_created.id as "createdById", client_created.avatar as "createdByAvatar", client_created.username as "createdByUsername",
+          client_updated.id as "updatedById", client_updated.avatar as "updatedByAvatar", client_updated.username as "updatedByUsername"
+      FROM chatroom
+      JOIN client client_created ON client_created.id = chatroom."createdBy"
+      JOIN client client_updated ON client_updated.id = chatroom."updatedBy"
+      WHERE chatroom.id = ?;
+    `,
+      [chatroomId]
+    )) as {
+      rows: HydratedChatroomQuery[];
+    };
+    const [result] = rows;
+    const {
+      createdById,
+      createdByAvatar,
+      createdByUsername,
+      updatedById,
+      updatedByAvatar,
+      updatedByUsername,
+      ...chatroom
+    } = result;
 
     return {
       ...chatroom,
-      createdBy: await getClientById(chatroom.createdBy),
-      updatedBy: await getClientById(chatroom.updatedBy),
-    };
+      createdBy: {
+        id: createdById,
+        avatar: createdByAvatar,
+        username: createdByUsername,
+      },
+      updatedBy: {
+        id: updatedById,
+        avatar: updatedByAvatar,
+        username: updatedByUsername,
+      },
+    } as HydratedChatroom;
   } catch (error) {
     return null;
   }
@@ -191,25 +250,57 @@ export async function readChatroom(chatroomId: number) {
 
 export async function readChatroomList() {
   try {
-    const chatrooms = await postgres<Chatroom>(CHATROOM_TABLE_NAME).select();
+    const { rows } = (await postgres.raw(
+      `
+        SELECT chatroom.id, chatroom.avatar, chatroom.title, chatroom.description, chatroom.password, chatroom."createdAt", chatroom."updatedAt",
+            client_created.id as "createdById", client_created.avatar as "createdByAvatar", client_created.username as "createdByUsername",
+            client_updated.id as "updatedById", client_updated.avatar as "updatedByAvatar", client_updated.username as "updatedByUsername"
+        FROM chatroom
+        JOIN client client_created ON client_created.id = chatroom."createdBy"
+        JOIN client client_updated ON client_updated.id = chatroom."updatedBy";
+      `
+    )) as {
+      rows: HydratedChatroomQuery[];
+    };
 
-    return Promise.all(
-      chatrooms.map(async (chatroom) => {
-        delete chatroom.password;
-        delete chatroom.blacklist;
-        delete chatroom.whitelist;
-
-        return {
-          ...chatroom,
-          createdBy: await getClientById(chatroom.createdBy),
-          updatedBy: await getClientById(chatroom.updatedBy),
-        };
+    return rows.map(
+      ({
+        createdById,
+        createdByAvatar,
+        createdByUsername,
+        updatedById,
+        updatedByAvatar,
+        updatedByUsername,
+        ...chatroom
+      }) => ({
+        ...chatroom,
+        createdBy: {
+          id: createdById,
+          avatar: createdByAvatar,
+          username: createdByUsername,
+        },
+        updatedBy: {
+          id: updatedById,
+          avatar: updatedByAvatar,
+          username: updatedByUsername,
+        },
       })
-    );
+    ) as HydratedChatroom[];
   } catch (error) {
-    /* istanbul ignore next */
     return null;
   }
+}
+
+export function safetifyChatroom<
+  T extends {
+    password?: string;
+    blacklist?: Record<number, true>;
+    whitelist?: Record<number, true>;
+  }
+>(chatroom: T) {
+  const { password, blacklist, whitelist, ...safeChatroom } = chatroom;
+
+  return safeChatroom;
 }
 
 export async function blacklistFromChatroom(

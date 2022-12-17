@@ -30,7 +30,7 @@ export type ClientIdentifier = number | string;
 export const CLIENT_MODEL_LOGGER = createLogger("Client Model");
 
 // #region SQL
-export const CLIENT_TABLE_NAME = "clients";
+export const CLIENT_TABLE_NAME = "client";
 
 /* istanbul ignore next */
 export async function createClientTable() {
@@ -120,6 +120,8 @@ export async function updateClient(
         .update(update)
         .returning("*");
 
+      cacheClient(updatedClient);
+
       return updatedClient;
     } else {
       return null;
@@ -204,7 +206,9 @@ export async function getClientById(clientId: number, breakCache = false) {
 
     if (client) {
       const safeClient = safetifyClient(client);
+
       cacheClient(safeClient);
+
       return safeClient;
     } else {
       return null;
@@ -227,7 +231,9 @@ export async function getClientByUsername(
 
     if (client) {
       const safeClient = safetifyClient(client);
+
       cacheClient(safeClient);
+
       return safeClient;
     } else {
       return null;

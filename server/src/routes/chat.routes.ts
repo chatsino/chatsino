@@ -19,6 +19,8 @@ import {
   deleteChatMessage,
   pinChatMessage,
   clientVotedInPoll,
+  readHydratedChatroom,
+  safetifyChatroom,
 } from "persistence";
 import {
   editChatMessageSchema,
@@ -91,7 +93,7 @@ export async function getChatroomRoute(
     }
 
     const chatroomId = parseInt(req.params.chatroomId);
-    const chatroom = await readChatroom(chatroomId);
+    const chatroom = await readHydratedChatroom(chatroomId);
 
     if (!chatroom) {
       return errorResponse(res, `Chatroom#${chatroomId} does not exist.`);
@@ -109,7 +111,7 @@ export async function getChatroomRoute(
     const users = await Promise.resolve([]);
 
     return successResponse(res, "Chatroom retrieved.", {
-      chatroom,
+      chatroom: safetifyChatroom(chatroom),
       messages,
       users,
     });
