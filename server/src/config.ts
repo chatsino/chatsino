@@ -29,6 +29,12 @@ export const POSTGRES_PORT = 5432;
 export const POSTGRES_CONNECTION_STRING =
   process.env.POSTGRES_CONNECTION_STRING ?? "";
 
+export const BLACKJACK_TABLE_NAME = "blackjack";
+export const CHAT_MESSAGE_TABLE_NAME = "chat_message";
+export const CHATROOM_TABLE_NAME = "chatroom";
+export const CLIENT_TABLE_NAME = "client";
+export const TRANSACTION_TABLE_NAME = "transaction";
+
 // Redis
 export const REDIS_HOST = process.env.REDIS_HOST;
 export const REDIS_PORT = 6379;
@@ -36,8 +42,20 @@ export const REDIS_CONNECTION_STRING =
   process.env.REDIS_CONNECTION_STRING ?? "";
 
 // Caching
+export const TICKET_CACHE_KEY = "Ticket";
 export const TICKET_CACHE_TTL_SECONDS = 10;
+
+export const CLIENT_CACHE_KEY = "Client";
+export const CLIENT_BY_USERNAME_CACHE_KEY = "Client/ByUsername";
 export const CLIENT_CACHE_TTL_SECONDS = 60 * 3;
+
+export const CHATROOM_CACHE_KEY = "Chatroom";
+export const CHATROOM_LIST_CACHE_KEY = "ChatroomList";
+export const CAN_CLIENT_MESSAGE_CHATROOM_CACHE_KEY = "CanClientMessageChatroom";
+export const CHATROOM_CACHE_TTL_SECONDS = 60 * 3;
+
+export const CHAT_MESSAGE_CACHE_KEY = "ChatMessage";
+export const CHAT_MESSAGE_LIST_CACHE_KEY = "ChatMessageList";
 export const CHAT_MESSAGE_CACHE_TTL_SECONDS = 60 * 3;
 
 // Sockets

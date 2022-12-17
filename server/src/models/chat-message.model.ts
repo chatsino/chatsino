@@ -42,26 +42,7 @@ export type HydratedChatMessage = ChatMessage & {
 
 export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
 
-// #region Caching
-export function cacheChatMessageList(
-  chatroomId: number,
-  chatMessageList: HydratedChatMessage[]
-) {
-  const chatMessageListString = JSON.stringify(chatMessageList);
-
-  return setCachedValue(
-    `ChatMessages/ByChatroom/${chatroomId}`,
-    chatMessageListString,
-    config.CHAT_MESSAGE_CACHE_TTL_SECONDS
-  );
-}
-
-export function clearChatMessageListFromCache(chatroomId: number) {
-  return clearCachedValue(`ChatMessages/ByChatroom/${chatroomId}`);
-}
-// #endregion
-
-// #region Tables
+// #region Table
 export const CHAT_MESSAGE_TABLE_NAME = "chat_message";
 
 /* istanbul ignore next */
@@ -147,7 +128,8 @@ export async function createChatMessage(
       throw new Error();
     }
 
-    clearChatMessageListFromCache(message.chatroomId);
+    CHAT_MESSAGE_CACHE.CHAT_MESSAGE.cache(message);
+    CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.clear(message.chatroomId);
 
     return message;
   } catch (error) {
@@ -161,15 +143,29 @@ export async function createChatMessage(
 
 export async function readChatMessage(messageId: number) {
   try {
-    const [message] = await postgres<ChatMessage>(
-      CHAT_MESSAGE_TABLE_NAME
-    ).where("id", messageId);
+    const cached = await CHAT_MESSAGE_CACHE.CHAT_MESSAGE.read(messageId);
 
-    if (!message) {
-      throw new Error();
+    if (cached) {
+      return {
+        message: cached,
+        cached: true,
+      };
+    } else {
+      const [message] = await postgres<ChatMessage>(
+        CHAT_MESSAGE_TABLE_NAME
+      ).where("id", messageId);
+
+      if (!message) {
+        throw new Error();
+      }
+
+      CHAT_MESSAGE_CACHE.CHAT_MESSAGE.cache(message);
+
+      return {
+        message,
+        cached: false,
+      };
     }
-
-    return message;
   } catch (error) {
     return null;
   }
@@ -177,9 +173,7 @@ export async function readChatMessage(messageId: number) {
 
 export async function readChatMessageList(chatroomId: number) {
   try {
-    const cached = await getCachedValue(
-      `ChatMessages/ByChatroom/${chatroomId}`
-    );
+    const cached = await CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.read(chatroomId);
 
     if (cached) {
       return {
@@ -215,7 +209,7 @@ export async function readChatMessageList(chatroomId: number) {
         })
       ) as HydratedChatMessage[];
 
-      cacheChatMessageList(chatroomId, chatMessageList);
+      CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.cache(chatroomId, chatMessageList);
 
       return {
         messages: chatMessageList,
@@ -242,7 +236,8 @@ export async function updateChatMessage(
       throw new Error();
     }
 
-    clearChatMessageListFromCache(message.chatroomId);
+    CHAT_MESSAGE_CACHE.CHAT_MESSAGE.cache(message);
+    CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.clear(message.chatroomId);
 
     return message;
   } catch (error) {
@@ -261,7 +256,8 @@ export async function deleteChatMessage(messageId: number) {
       throw new Error();
     }
 
-    clearChatMessageListFromCache(message.chatroomId);
+    CHAT_MESSAGE_CACHE.CHAT_MESSAGE.clear(message.id);
+    CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.clear(message.chatroomId);
 
     return message;
   } catch (error) {
@@ -276,7 +272,11 @@ export async function deleteAllChatMessages(chatroomId: number) {
       .delete()
       .returning("*");
 
-    clearChatMessageListFromCache(chatroomId);
+    CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.clear(chatroomId);
+
+    for (const { id: messageId } of messages) {
+      CHAT_MESSAGE_CACHE.CHAT_MESSAGE.clear(messageId);
+    }
 
     return messages;
   } catch (error) {
@@ -296,11 +296,13 @@ export async function reactToChatMessage(
   reaction: string
 ) {
   try {
-    const message = await readChatMessage(messageId);
+    const messageData = await readChatMessage(messageId);
 
-    if (!message) {
+    if (!messageData) {
       throw new Error();
     }
+
+    const { message } = messageData;
 
     if (!message.reactions[reaction]) {
       message.reactions[reaction] = [];
@@ -337,9 +339,15 @@ export async function clientVotedInPoll(
   response: string
 ) {
   try {
-    const message = await readChatMessage(messageId);
+    const messageData = await readChatMessage(messageId);
 
-    if (!message?.poll) {
+    if (!messageData) {
+      throw new Error();
+    }
+
+    const { message } = messageData;
+
+    if (!message.poll) {
       return false;
     }
 
@@ -363,10 +371,43 @@ export async function clientVotedInPoll(
       throw new Error();
     }
 
-    clearChatMessageListFromCache(message.chatroomId);
-
     return votedMessage;
   } catch (error) {
     return null;
   }
 }
+
+// #region Caching
+export const CHAT_MESSAGE_CACHE = {
+  CHAT_MESSAGE: {
+    key: (messageId: number) =>
+      [config.CHAT_MESSAGE_CACHE_KEY, messageId].join("/"),
+    cache: (message: ChatMessage) =>
+      setCachedValue(
+        CHAT_MESSAGE_CACHE.CHAT_MESSAGE.key(message.id),
+        JSON.stringify(message),
+        config.CHAT_MESSAGE_CACHE_TTL_SECONDS
+      ),
+    read: (messageId: number) =>
+      getCachedValue(
+        CHAT_MESSAGE_CACHE.CHAT_MESSAGE.key(messageId)
+      ) as Promise<null | ChatMessage>,
+    clear: (messageId: number) =>
+      clearCachedValue(CHAT_MESSAGE_CACHE.CHAT_MESSAGE.key(messageId)),
+  },
+  CHAT_MESSAGE_LIST: {
+    key: (chatroomId: number) =>
+      [config.CHAT_MESSAGE_LIST_CACHE_KEY, chatroomId].join("/"),
+    cache: (chatroomId: number, chatMessageList: HydratedChatMessage[]) =>
+      setCachedValue(
+        CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.key(chatroomId),
+        JSON.stringify(chatMessageList),
+        config.CHAT_MESSAGE_CACHE_TTL_SECONDS
+      ),
+    read: (chatroomId: number) =>
+      getCachedValue(CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.key(chatroomId)),
+    clear: (chatroomId: number) =>
+      clearCachedValue(CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.key(chatroomId)),
+  },
+};
+// #endregion

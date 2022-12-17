@@ -8,7 +8,6 @@ import { createLogger } from "logger";
 import * as chatroomManager from "managers/chatroom.manager";
 import { AuthenticatedRequest, authenticatedRouteMiddleware } from "middleware";
 import {
-  readChatroom,
   readChatMessageList,
   readChatroomList,
   canClientMessageChatroom,
@@ -75,8 +74,17 @@ export async function getChatroomListRoute(
   res: Response
 ) {
   try {
+    const chatroomsData = await readChatroomList();
+
+    if (!chatroomsData) {
+      throw new Error();
+    }
+
+    const { chatrooms, cached } = chatroomsData;
+
     return successResponse(res, "Chatroom list retrieved.", {
-      chatrooms: await readChatroomList(),
+      chatrooms,
+      cached,
     });
   } catch (error) {
     return errorResponse(res, "Unable to retrieve chatrooms.");
@@ -93,11 +101,13 @@ export async function getChatroomRoute(
     }
 
     const chatroomId = parseInt(req.params.chatroomId);
-    const chatroom = await readHydratedChatroom(chatroomId);
+    const chatroomData = await readHydratedChatroom(chatroomId);
 
-    if (!chatroom) {
+    if (!chatroomData) {
       return errorResponse(res, `Chatroom#${chatroomId} does not exist.`);
     }
+
+    const { chatroom, cached: chatroomCached } = chatroomData;
 
     if (chatroom.password) {
       const { password } = req.query;
@@ -119,6 +129,7 @@ export async function getChatroomRoute(
       messages,
       users,
       cached: {
+        chatroom: chatroomCached,
         messages: messagesCached,
       },
     });
@@ -186,11 +197,13 @@ export async function editChatMessageRoute(
     const messageId = parseInt(req.params.messageId);
     const { id: clientId } = req.chatsinoClient!;
     const { message } = await editChatMessageSchema.validate(req.body);
-    const existingMessage = await readChatMessage(messageId);
+    const existingMessageData = await readChatMessage(messageId);
 
-    if (!existingMessage) {
+    if (!existingMessageData) {
       throw new Error();
     }
+
+    const { message: existingMessage } = existingMessageData;
 
     if (existingMessage.clientId !== clientId) {
       return errorResponse(res, "You cannot edit someone else's message.");
@@ -222,12 +235,13 @@ export async function reactToChatMessageRoute(
     const messageId = parseInt(req.params.messageId);
     const { id: clientId } = req.chatsinoClient!;
     const { reaction } = await reactToChatMessageSchema.validate(req.body);
-    const existingMessage = await readChatMessage(messageId);
+    const existingMessageData = await readChatMessage(messageId);
 
-    if (!existingMessage) {
+    if (!existingMessageData) {
       throw new Error();
     }
 
+    const { message: existingMessage } = existingMessageData;
     const { can, reason } = await canClientMessageChatroom(
       req.chatsinoClient!.id,
       existingMessage.chatroomId
@@ -262,11 +276,13 @@ export async function deleteChatMessageRoute(
 
     const messageId = parseInt(req.params.messageId);
     const { id: clientId, permissionLevel } = req.chatsinoClient!;
-    const existingMessage = await readChatMessage(messageId);
+    const existingMessageData = await readChatMessage(messageId);
 
-    if (!existingMessage) {
+    if (!existingMessageData) {
       throw new Error();
     }
+
+    const { message: existingMessage } = existingMessageData;
 
     if (
       existingMessage.clientId !== clientId &&
@@ -337,12 +353,13 @@ export async function voteInPollRoute(
       messageId,
       response: req.body.response,
     });
-    const existingMessage = await readChatMessage(messageId);
+    const existingMessageData = await readChatMessage(messageId);
 
-    if (!existingMessage) {
+    if (!existingMessageData) {
       throw new Error();
     }
 
+    const { message: existingMessage } = existingMessageData;
     const { can, reason } = await canClientMessageChatroom(
       clientId,
       existingMessage.chatroomId
