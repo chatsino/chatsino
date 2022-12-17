@@ -1,6 +1,11 @@
+import * as config from "config";
 import { createLogger } from "logger";
-import { postgres } from "persistence";
-import { getClientById } from "./client.model";
+import {
+  clearCachedValue,
+  getCachedValue,
+  postgres,
+  setCachedValue,
+} from "persistence";
 
 export interface ChatMessage {
   id: number;
@@ -36,6 +41,25 @@ export type HydratedChatMessage = ChatMessage & {
 };
 
 export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
+
+// #region Caching
+export function cacheChatMessageList(
+  chatroomId: number,
+  chatMessageList: HydratedChatMessage[]
+) {
+  const chatMessageListString = JSON.stringify(chatMessageList);
+
+  return setCachedValue(
+    `ChatMessages/ByChatroom/${chatroomId}`,
+    chatMessageListString,
+    config.CHAT_MESSAGE_CACHE_TTL_SECONDS
+  );
+}
+
+export function clearChatMessageListFromCache(chatroomId: number) {
+  return clearCachedValue(`ChatMessages/ByChatroom/${chatroomId}`);
+}
+// #endregion
 
 // #region Tables
 export const CHAT_MESSAGE_TABLE_NAME = "chat_message";
@@ -123,6 +147,8 @@ export async function createChatMessage(
       throw new Error();
     }
 
+    clearChatMessageListFromCache(message.chatroomId);
+
     return message;
   } catch (error) {
     /* istanbul ignore next */
@@ -151,34 +177,51 @@ export async function readChatMessage(messageId: number) {
 
 export async function readChatMessageList(chatroomId: number) {
   try {
-    const { rows } = (await postgres.raw(
-      `
-      SELECT
-        chat_message.*,
-        author.id as "authorId",
-        author.avatar as "authorAvatar",
-        author.username as "authorUsername"
-      FROM
-        chat_message
-        JOIN client author ON author.id = chat_message."clientId"
-      WHERE
-        chat_message."chatroomId" = ?;
-      `,
-      [chatroomId]
-    )) as {
-      rows: HydratedChatMessageQuery[];
-    };
+    const cached = await getCachedValue(
+      `ChatMessages/ByChatroom/${chatroomId}`
+    );
 
-    return rows.map(
-      ({ authorId, authorAvatar, authorUsername, ...message }) => ({
-        ...message,
-        author: {
-          id: authorId,
-          avatar: authorAvatar,
-          username: authorUsername,
-        },
-      })
-    ) as HydratedChatMessage[];
+    if (cached) {
+      return {
+        messages: cached as HydratedChatMessage[],
+        cached: true,
+      };
+    } else {
+      const { rows } = (await postgres.raw(
+        `
+        SELECT
+          chat_message.*,
+          author.id as "authorId",
+          author.avatar as "authorAvatar",
+          author.username as "authorUsername"
+        FROM
+          chat_message
+          JOIN client author ON author.id = chat_message."clientId"
+        WHERE
+          chat_message."chatroomId" = ?;
+        `,
+        [chatroomId]
+      )) as {
+        rows: HydratedChatMessageQuery[];
+      };
+      const chatMessageList = rows.map(
+        ({ authorId, authorAvatar, authorUsername, ...message }) => ({
+          ...message,
+          author: {
+            id: authorId,
+            avatar: authorAvatar,
+            username: authorUsername,
+          },
+        })
+      ) as HydratedChatMessage[];
+
+      cacheChatMessageList(chatroomId, chatMessageList);
+
+      return {
+        messages: chatMessageList,
+        cached: false,
+      };
+    }
   } catch (error) {
     /* istanbul ignore next */
     return null;
@@ -199,6 +242,8 @@ export async function updateChatMessage(
       throw new Error();
     }
 
+    clearChatMessageListFromCache(message.chatroomId);
+
     return message;
   } catch (error) {
     return null;
@@ -216,23 +261,22 @@ export async function deleteChatMessage(messageId: number) {
       throw new Error();
     }
 
+    clearChatMessageListFromCache(message.chatroomId);
+
     return message;
   } catch (error) {
     return null;
   }
 }
 
-export async function deleteAllChatMessages(chatroomId?: number) {
+export async function deleteAllChatMessages(chatroomId: number) {
   try {
-    const messages =
-      chatroomId == null
-        ? await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
-            .delete()
-            .returning("*")
-        : await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
-            .where("chatroomId", chatroomId)
-            .delete()
-            .returning("*");
+    const messages = await postgres<ChatMessage>(CHAT_MESSAGE_TABLE_NAME)
+      .where("chatroomId", chatroomId)
+      .delete()
+      .returning("*");
+
+    clearChatMessageListFromCache(chatroomId);
 
     return messages;
   } catch (error) {
@@ -318,6 +362,8 @@ export async function clientVotedInPoll(
     if (!votedMessage) {
       throw new Error();
     }
+
+    clearChatMessageListFromCache(message.chatroomId);
 
     return votedMessage;
   } catch (error) {

@@ -38,6 +38,7 @@ export const REDIS_CONNECTION_STRING =
 // Caching
 export const TICKET_CACHE_TTL_SECONDS = 10;
 export const CLIENT_CACHE_TTL_SECONDS = 60 * 3;
+export const CHAT_MESSAGE_CACHE_TTL_SECONDS = 60 * 3;
 
 // Sockets
 export const CONNECTION_STATUS_CHECK_RATE_MS = 1000 * 30;
