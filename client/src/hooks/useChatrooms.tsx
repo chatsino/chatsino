@@ -10,31 +10,7 @@ import {
 } from "react";
 import { useSocket } from "./useSocket";
 
-export interface ChatUser {
-  id: number;
-  avatar: string;
-  username: string;
-}
-
-export interface ChatPoll {
-  question: string;
-  answers: Array<{ text: string; respondents: number[] }>;
-}
-
-export interface Chatroom {
-  id: number;
-  avatar: string;
-  title: string;
-  description: string;
-  users: [];
-  messages: [];
-  createdBy: ChatUser;
-  updatedBy: ChatUser;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-enum ChatroomSocketRequests {
+export enum ChatroomSocketRequests {
   ListChatrooms = "list-chatrooms",
   ListChatroomMessages = "list-chatroom-messages",
   SendChatMessage = "send-chat-message",
@@ -45,8 +21,8 @@ enum ChatroomSocketRequests {
 export const ChatroomContext = createContext<{
   data: {
     chatroomMessages: Record<number, ChatMessageData[]>;
-    chatrooms: Chatroom[];
-    users: ChatUser[];
+    chatrooms: ChatroomData[];
+    users: ChatUserData[];
   };
   requests: {
     fetchChatrooms(): Promise<void>;
@@ -54,7 +30,7 @@ export const ChatroomContext = createContext<{
     sendChatMessage(
       chatroomId: number,
       message: string,
-      poll?: ChatPoll
+      poll?: ChatMessagePollData
     ): Promise<void>;
     voteInPoll(messageId: number, response: string): Promise<void>;
   };
@@ -74,7 +50,7 @@ export const ChatroomContext = createContext<{
 
 export function ChatroomProvider({ children }: { children?: ReactNode }) {
   const { oneTimeRequest, initialized } = useSocket();
-  const [chatrooms, setChatrooms] = useState([] as Array<Chatroom>);
+  const [chatrooms, setChatrooms] = useState([] as Array<ChatroomData>);
   const [chatroomMessages, setChatroomMessages] = useState(
     {} as Record<number, ChatMessageData[]>
   );
@@ -87,7 +63,7 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
       // TODO
     } else {
       const { chatrooms } = response.data as {
-        chatrooms: Chatroom[];
+        chatrooms: ChatroomData[];
       };
 
       setChatrooms(chatrooms);
@@ -118,7 +94,7 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
   );
 
   const sendChatMessage = useCallback(
-    async (chatroomId: number, message: string, poll: ChatPoll) => {
+    async (chatroomId: number, message: string, poll: ChatMessagePollData) => {
       const response = await oneTimeRequest(
         ChatroomSocketRequests.SendChatMessage,
         {

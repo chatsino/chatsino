@@ -1,3 +1,5 @@
+import * as config from "config";
+import { createLogger } from "logger";
 import {
   canClientMessageChatroom,
   ChatMessage,
@@ -26,6 +28,10 @@ export enum ChatroomSocketRequests {
   VoteInPoll = "vote-in-poll",
   NewChatMessage = "new-chat-message",
 }
+
+export const CHATROOM_MANAGER_LOGGER = createLogger(
+  config.LOGGER_NAMES.CHATROOM_MANAGER
+);
 
 export function initializeChatroomManager() {
   SUBSCRIBER.subscribe(
@@ -147,7 +153,14 @@ export async function handleVoteInPoll(messageString: string) {
 
   try {
     const { messageId, response } = await voteInPollSchema.validate(args);
-    const message = (await readChatMessage(messageId)) as ChatMessage;
+    const messageData = await readChatMessage(messageId);
+
+    if (!messageData) {
+      throw new Error();
+    }
+
+    const { message } = messageData;
+
     const { can, reason } = await canClientMessageChatroom(
       from.id,
       message.chatroomId
@@ -187,19 +200,24 @@ export async function handleNewChatMessage(messageString: string) {
   ) as SourcedSocketMessage;
 
   try {
-    const { chatroomId } = await newChatMessageSchema.validate(args);
+    const { message } = await newChatMessageSchema.validate(args);
 
     await SocketServer.broadcastToSubscription(
-      `Chatrooms/${chatroomId}/Messages`,
+      `Chatrooms/${message.chatroomId}/Messages`,
       {
-        shouldUpdate: true,
+        message,
       }
     );
 
-    return SocketServer.success(0, kind, {
-      message: `Alerted clients in Chatroom#${chatroomId} to a new message.`,
+    return SocketServer.success(from.id, kind, {
+      message: `Alerted clients in Chatroom#${message.chatroomId} to a new message.`,
     });
   } catch (error) {
+    CHATROOM_MANAGER_LOGGER.error(
+      { error },
+      "Failed to handle new chat message."
+    );
+
     return handleChatroomErrors(
       from.id,
       kind,
@@ -233,4 +251,3 @@ export function handleChatroomErrors(
 export class CannotMessageChatroomError extends Error {}
 export class CannotVoteInPollError extends Error {}
 export class SendChatMessageFailedError extends Error {}
-//

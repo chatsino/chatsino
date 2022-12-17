@@ -10,7 +10,7 @@ export const axios = axiosLib.create({
 export async function makeHttpRequest<T>(
   method: "get" | "post",
   route: string,
-  body?: Record<string, string>
+  body?: Record<string, unknown>
 ): Promise<T> {
   const response = await axios[method](route, body);
   const data = response.data as ServerResponse<T>;

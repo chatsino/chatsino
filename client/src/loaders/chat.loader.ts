@@ -1,24 +1,24 @@
 import { makeHttpRequest } from "helpers";
-import { Chatroom } from "hooks";
 import { LoaderFunctionArgs, redirect } from "react-router-dom";
 import { SafeClient } from "schemas";
 import { requireClientLoader } from "./client.loader";
 
 export interface ChatroomLoaderData {
   client: SafeClient;
-  chatroom: Chatroom;
+  chatroom: ChatroomData;
   messages: ChatMessageData[];
   users: ChatUserData[];
+  sendMessage(message: string): Promise<unknown>;
 }
 
 export interface ChatroomListLoaderData {
-  chatrooms: Chatroom[];
+  chatrooms: ChatroomData[];
 }
 
 export async function chatroomLoader(
   loader: LoaderFunctionArgs
 ): Promise<ChatroomLoaderData> {
-  const { chatroomId } = loader.params;
+  const chatroomId = parseInt(loader.params.chatroomId as string);
   const { client } = await requireClientLoader(loader);
 
   try {
@@ -26,7 +26,7 @@ export async function chatroomLoader(
       "get",
       `/chat/chatrooms/${chatroomId}`
     )) as {
-      chatroom: Chatroom;
+      chatroom: ChatroomData;
       messages: ChatMessageData[];
       users: ChatUserData[];
     };
@@ -36,6 +36,16 @@ export async function chatroomLoader(
       chatroom,
       messages,
       users,
+      sendMessage(message: string) {
+        return makeHttpRequest(
+          "post",
+          `/chat/chatrooms/${chatroomId}/messages`,
+          {
+            chatroomId,
+            message,
+          }
+        );
+      },
     };
   } catch (error) {
     console.error({ error });
@@ -45,7 +55,7 @@ export async function chatroomLoader(
 
 export async function chatroomListLoader(): Promise<ChatroomListLoaderData> {
   const { chatrooms } = (await makeHttpRequest("get", "/chat/chatrooms")) as {
-    chatrooms: Chatroom[];
+    chatrooms: ChatroomData[];
   };
 
   return {

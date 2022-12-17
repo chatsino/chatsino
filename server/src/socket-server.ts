@@ -139,8 +139,6 @@ export class SocketServer {
 
     const client = await validateTicket(request);
 
-    SOCKETS_LOGGER.info({ client }, "\n\n\n\n UPGRADE");
-
     if (!client) {
       SOCKETS_LOGGER.info("The request to upgrade was denied.");
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
@@ -251,6 +249,8 @@ export class SocketServer {
 
   private async sendSuccessResponse(response: SocketSuccessResponse) {
     try {
+      SOCKETS_LOGGER.info({ response }, "Sending success response.");
+
       const { to, kind, data } = await socketSuccessResponseSchema.validate(
         response
       );
@@ -277,6 +277,8 @@ export class SocketServer {
 
   private async sendErrorResponse(response: SocketErrorResponse) {
     try {
+      SOCKETS_LOGGER.info({ response }, "Sending error response.");
+
       const { to, kind, error } = await socketErrorResponseSchema.validate(
         response
       );

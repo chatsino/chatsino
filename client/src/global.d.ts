@@ -4,17 +4,36 @@ declare interface ChatUserData {
   username: string;
 }
 
+declare interface ChatMessagePollAnswer {
+  text: string;
+  respondents: number[];
+}
+
+declare interface ChatMessagePollData {
+  question: string;
+  answers: ChatMessagePollAnswer[];
+}
+
 declare interface ChatMessageData {
   id: number;
-  author: ChatUserData;
+  clientId: number;
+  chatroomId: number;
   content: string;
+  pinned: boolean;
+  reactions: Record<string, number[]>;
+  poll: null | ChatMessagePollData;
   createdAt: string;
   updatedAt: string;
+  author: ChatUserData;
 }
 
 declare interface ChatroomData {
   id: number;
+  avatar: string;
   title: string;
   description: string;
-  createdBy: null | ChatUserData;
+  createdBy: ChatUserData;
+  updatedBy: ChatUserData;
+  createdAt: string;
+  updatedAt: string;
 }

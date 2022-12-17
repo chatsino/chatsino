@@ -1,5 +1,7 @@
 import pino from "pino";
 
+export type Logger = ReturnType<typeof createLogger>;
+
 export const createLogger = (name: string) => {
   const _pino = pino({
     name,

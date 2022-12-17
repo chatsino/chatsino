@@ -64,6 +64,7 @@ export const LOGGER_NAMES = {
   BLACKJACK_MODEL: "Managers/Blackjack",
   CHAT_MESSAGE_MODEL: "Models/ChatMessage",
   CHATROOM_MODEL: "Models/Chatroom",
+  CHATROOM_MANAGER: "Managers/Chatroom",
   CLIENT_MODEL: "Models/Client",
   TRANSACTION_MODEL: "Models/Transaction",
   CACHE: "Persistence/Cache",

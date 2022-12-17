@@ -21,6 +21,8 @@ import {
   clientVotedInPoll,
   readHydratedChatroom,
   safetifyChatroom,
+  getClientById,
+  HydratedChatMessage,
 } from "persistence";
 import {
   editChatMessageSchema,
@@ -168,12 +170,27 @@ export async function sendChatMessageRoute(
       throw new Error();
     }
 
+    const author = await getClientById(clientId);
+
+    if (!author) {
+      throw new Error();
+    }
+
+    const hydratedChatMessage = {
+      ...chatMessage,
+      author: {
+        id: author.id,
+        avatar: author.avatar,
+        username: author.username,
+      },
+    } as HydratedChatMessage;
+
     await chatroomManager.handleNewChatMessage(
       JSON.stringify({
-        from: clientId,
+        from: author,
         kind: chatroomManager.ChatroomSocketRequests.NewChatMessage,
         args: {
-          chatroomId,
+          message: hydratedChatMessage,
         },
       })
     );
