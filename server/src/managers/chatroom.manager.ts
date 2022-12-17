@@ -2,7 +2,6 @@ import * as config from "config";
 import { createLogger } from "logger";
 import {
   canClientMessageChatroom,
-  ChatMessage,
   Chatroom,
   clientVotedInPoll,
   createChatMessage,
@@ -14,6 +13,7 @@ import {
 } from "persistence";
 import {
   chatMessageDeletedSchema,
+  chatMessageUpdatedSchema,
   listChatroomMessagesSchema,
   newChatMessageSchema,
   sendChatMessageSchema,
@@ -28,6 +28,7 @@ export enum ChatroomSocketRequests {
   ListChatroomMessages = "list-chatroom-messages",
   VoteInPoll = "vote-in-poll",
   NewChatMessage = "new-chat-message",
+  ChatMessageUpdated = "chat-message-updated",
   ChatMessageDeleted = "chat-message-deleted",
 }
 
@@ -52,6 +53,10 @@ export function initializeChatroomManager() {
   SUBSCRIBER.subscribe(
     ChatroomSocketRequests.NewChatMessage,
     handleNewChatMessage
+  );
+  SUBSCRIBER.subscribe(
+    ChatroomSocketRequests.ChatMessageUpdated,
+    handleChatMessageUpdated
   );
   SUBSCRIBER.subscribe(
     ChatroomSocketRequests.ChatMessageDeleted,
@@ -200,10 +205,24 @@ export async function handleVoteInPoll(messageString: string) {
   }
 }
 
-export async function handleNewChatMessage(messageString: string) {
-  const { kind, args, from } = JSON.parse(
-    messageString
-  ) as SourcedSocketMessage;
+export async function handleNewChatMessage(
+  sourcedSocketMessage: string
+): Promise<number | undefined>;
+export async function handleNewChatMessage(
+  sourcedSocketMessage: SourcedSocketMessage
+): Promise<number | undefined>;
+export async function handleNewChatMessage(
+  sourcedSocketMessage: string | SourcedSocketMessage
+) {
+  let socketMessage: SourcedSocketMessage;
+
+  if (typeof sourcedSocketMessage === "string") {
+    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
+  } else {
+    socketMessage = sourcedSocketMessage;
+  }
+
+  const { from, kind, args } = socketMessage;
 
   try {
     const { message } = await newChatMessageSchema.validate(args);
@@ -233,10 +252,71 @@ export async function handleNewChatMessage(messageString: string) {
   }
 }
 
-export async function handleChatMessageDeleted(messageString: string) {
-  const { kind, args, from } = JSON.parse(
-    messageString
-  ) as SourcedSocketMessage;
+export async function handleChatMessageUpdated(
+  sourcedSocketMessage: SourcedSocketMessage
+): Promise<number | undefined>;
+export async function handleChatMessageUpdated(
+  sourcedSocketMessage: string
+): Promise<number | undefined>;
+export async function handleChatMessageUpdated(
+  sourcedSocketMessage: string | SourcedSocketMessage
+) {
+  let socketMessage: SourcedSocketMessage;
+
+  if (typeof sourcedSocketMessage === "string") {
+    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
+  } else {
+    socketMessage = sourcedSocketMessage;
+  }
+
+  const { from, kind, args } = socketMessage;
+
+  try {
+    const { message } = await chatMessageUpdatedSchema.validate(args);
+
+    await SocketServer.broadcastToSubscription(
+      `Chatrooms/${message.chatroomId}/MessageUpdated`,
+      {
+        message,
+      }
+    );
+
+    return SocketServer.success(from.id, kind, {
+      message: `Alerted clients in Chatroom#${message.chatroomId} to an updated message.`,
+    });
+  } catch (error) {
+    CHATROOM_MANAGER_LOGGER.error(
+      { error },
+      "Failed to handle updated chat message."
+    );
+
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      `Failed to alert clients to an updated message.`
+    );
+  }
+}
+
+export async function handleChatMessageDeleted(
+  sourcedSocketMessage: SourcedSocketMessage
+): Promise<number | undefined>;
+export async function handleChatMessageDeleted(
+  sourcedSocketMessage: string
+): Promise<number | undefined>;
+export async function handleChatMessageDeleted(
+  sourcedSocketMessage: SourcedSocketMessage | string
+) {
+  let socketMessage: SourcedSocketMessage;
+
+  if (typeof sourcedSocketMessage === "string") {
+    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
+  } else {
+    socketMessage = sourcedSocketMessage;
+  }
+
+  const { from, kind, args } = socketMessage;
 
   try {
     const { chatroomId, messageId } = await chatMessageDeletedSchema.validate(

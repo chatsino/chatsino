@@ -3,6 +3,7 @@ import { createLogger } from "logger";
 import {
   clearCachedValue,
   getCachedValue,
+  getClientById,
   postgres,
   setCachedValue,
 } from "persistence";
@@ -233,15 +234,25 @@ export async function updateChatMessage(
       .where("id", messageId)
       .update(update)
       .returning("*");
+    const author = await getClientById(message.clientId);
 
-    if (!message) {
+    if (!message || !author) {
       throw new Error();
     }
+
+    const hydratedMessage = {
+      ...message,
+      author: {
+        id: author.id,
+        avatar: author.avatar,
+        username: author.username,
+      },
+    } as HydratedChatMessage;
 
     CHAT_MESSAGE_CACHE.CHAT_MESSAGE.cache(message);
     CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.clear(message.chatroomId);
 
-    return message;
+    return hydratedMessage;
   } catch (error) {
     return null;
   }
@@ -350,7 +361,7 @@ export async function clientVotedInPoll(
     const { message } = messageData;
 
     if (!message.poll) {
-      return false;
+      return null;
     }
 
     const { answers } = message.poll;
@@ -360,7 +371,7 @@ export async function clientVotedInPoll(
     );
 
     if (!answerEntry || previouslyAnswered) {
-      return false;
+      return null;
     }
 
     answerEntry.respondents.push(clientId);

@@ -90,6 +90,12 @@ export const newChatMessageSchema = yup
   })
   .required();
 
+export const chatMessageUpdatedSchema = yup
+  .object({
+    message: hydratedChatMessageSchema,
+  })
+  .required();
+
 export const chatMessageDeletedSchema = yup
   .object({
     chatroomId: yup.number().required(),

@@ -24,12 +24,14 @@ export function ChatMessageList({
   chatroom,
   messages,
   onSendMessage,
+  onPinMessage,
   onDeleteMessage,
 }: {
   id: string;
   chatroom: ChatroomData;
   messages: ChatMessageData[];
   onSendMessage: (message: string) => unknown;
+  onPinMessage: (messageId: number) => unknown;
   onDeleteMessage: (messageId: number) => unknown;
 }) {
   const { sm } = Grid.useBreakpoint();
@@ -163,6 +165,7 @@ export function ChatMessageList({
               <List.Item key={key(messageGroup)}>
                 <ChatMessageGroup
                   messageGroup={messageGroup}
+                  onPinMessage={onPinMessage}
                   onDeleteMessage={onDeleteMessage}
                 />
               </List.Item>

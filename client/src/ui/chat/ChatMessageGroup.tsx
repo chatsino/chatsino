@@ -1,13 +1,16 @@
 import { Avatar, List, Typography } from "antd";
+import { BsPinAngle } from "react-icons/bs";
 import { ChatMessageMenu } from "./ChatMessageMenu";
 import { formatMessageTimestamp } from "./format-message-timestamp";
 import { groupMessages } from "./group-messages";
 
 export function ChatMessageGroup({
   messageGroup,
+  onPinMessage,
   onDeleteMessage,
 }: {
   messageGroup: ReturnType<typeof groupMessages>[0];
+  onPinMessage: (messageId: number) => unknown;
   onDeleteMessage: (messageId: number) => unknown;
 }) {
   return (
@@ -25,8 +28,10 @@ export function ChatMessageGroup({
                 style={{ position: "relative" }}
                 extra={
                   <div style={{ position: "absolute", top: 0, right: 0 }}>
+                    {message.pinned && <BsPinAngle />}
                     <ChatMessageMenu
                       message={message}
+                      onPin={onPinMessage}
                       onDelete={onDeleteMessage}
                     />
                   </div>

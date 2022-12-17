@@ -3,9 +3,11 @@ import { Button, Dropdown, Typography } from "antd";
 
 export function ChatMessageMenu({
   message,
+  onPin,
   onDelete,
 }: {
   message: ChatMessageData;
+  onPin: (messageId: number) => unknown;
   onDelete: (messageId: number) => unknown;
 }) {
   return (
@@ -24,6 +26,11 @@ export function ChatMessageMenu({
             {
               key: "mention",
               label: "Mention",
+            },
+            {
+              key: "pin",
+              label: "Pin",
+              onClick: () => onPin(message.id),
             },
             {
               key: "edit",

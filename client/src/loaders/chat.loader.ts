@@ -10,6 +10,7 @@ export interface ChatroomLoaderData {
   messages: ChatMessageData[];
   users: ChatUserData[];
   sendMessage(message: string): Promise<unknown>;
+  pinMessage(messageId: number): Promise<unknown>;
   deleteMessage(messageId: number): Promise<unknown>;
 }
 
@@ -47,6 +48,22 @@ export async function chatroomLoader(
             message,
           }
         );
+      },
+      async pinMessage(messageId: number) {
+        try {
+          const {
+            message: { pinned },
+          } = (await makeHttpRequest(
+            "post",
+            `/chat/chatrooms/${chatroomId}/messages/${messageId}/pin`
+          )) as {
+            message: ChatMessageData;
+          };
+
+          showMessage.success(`Message ${pinned ? "pinned" : "unpinned"}.`);
+        } catch (error) {
+          showMessage.error(error.message);
+        }
       },
       async deleteMessage(messageId: number) {
         try {

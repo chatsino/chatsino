@@ -23,6 +23,7 @@ import {
   safetifyChatroom,
   getClientById,
   HydratedChatMessage,
+  Client,
 } from "persistence";
 import {
   editChatMessageSchema,
@@ -185,15 +186,13 @@ export async function sendChatMessageRoute(
       },
     } as HydratedChatMessage;
 
-    await chatroomManager.handleNewChatMessage(
-      JSON.stringify({
-        from: author,
-        kind: chatroomManager.ChatroomSocketRequests.NewChatMessage,
-        args: {
-          message: hydratedChatMessage,
-        },
-      })
-    );
+    await chatroomManager.handleNewChatMessage({
+      from: author,
+      kind: chatroomManager.ChatroomSocketRequests.NewChatMessage,
+      args: {
+        message: hydratedChatMessage,
+      },
+    });
 
     return successResponse(res, "Successfully sent chat message.", {
       message: chatMessage,
@@ -216,8 +215,9 @@ export async function editChatMessageRoute(
     const { id: clientId } = req.chatsinoClient!;
     const { message } = await editChatMessageSchema.validate(req.body);
     const existingMessageData = await readChatMessage(messageId);
+    const author = await getClientById(clientId);
 
-    if (!existingMessageData) {
+    if (!existingMessageData || !author) {
       throw new Error();
     }
 
@@ -232,6 +232,14 @@ export async function editChatMessageRoute(
     if (!editedMessage) {
       throw new Error();
     }
+
+    await chatroomManager.handleChatMessageUpdated({
+      from: author,
+      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      args: {
+        message: editedMessage,
+      },
+    });
 
     return successResponse(res, "Successfully edited chat message.", {
       message: editedMessage,
@@ -254,8 +262,9 @@ export async function reactToChatMessageRoute(
     const { id: clientId } = req.chatsinoClient!;
     const { reaction } = await reactToChatMessageSchema.validate(req.body);
     const existingMessageData = await readChatMessage(messageId);
+    const author = await getClientById(clientId);
 
-    if (!existingMessageData) {
+    if (!existingMessageData || !author) {
       throw new Error();
     }
 
@@ -275,11 +284,112 @@ export async function reactToChatMessageRoute(
       throw new Error();
     }
 
+    await chatroomManager.handleChatMessageUpdated({
+      from: author,
+      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      args: {
+        message,
+      },
+    });
+
     return successResponse(res, "Successfully reacted to chat message.", {
       message,
     });
   } catch (error) {
     return errorResponse(res, "Unable to react to chat message.");
+  }
+}
+
+export async function pinChatMessageRoute(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  try {
+    if (!req.params.messageId) {
+      return errorResponse(res, "Parameter `messageId` is required.");
+    }
+
+    const messageId = parseInt(req.params.messageId);
+    const pinnedMessage = await pinChatMessage(messageId);
+    const pinner = await getClientById(req.chatsinoClient!.id);
+
+    if (!pinnedMessage || !pinner) {
+      throw new Error();
+    }
+
+    await chatroomManager.handleChatMessageUpdated({
+      from: pinner,
+      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      args: {
+        message: pinnedMessage,
+      },
+    });
+
+    return successResponse(
+      res,
+      `Successfully ${
+        pinnedMessage.pinned ? "pinned" : "unpinned"
+      } chat message.`,
+      {
+        message: pinnedMessage,
+      }
+    );
+  } catch (error) {
+    return errorResponse(res, "Unable to pin chat message.");
+  }
+}
+
+export async function voteInPollRoute(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  try {
+    if (!req.params.messageId) {
+      return errorResponse(res, "Parameter `messageId` is required.");
+    }
+
+    const messageId = parseInt(req.params.messageId);
+    const { id: clientId } = req.chatsinoClient!;
+    const { response } = await voteInPollSchema.validate({
+      messageId,
+      response: req.body.response,
+    });
+    const existingMessageData = await readChatMessage(messageId);
+    const voter = await getClientById(req.chatsinoClient!.id);
+
+    if (!existingMessageData || !voter) {
+      throw new Error();
+    }
+
+    const { message: existingMessage } = existingMessageData;
+    const { can, reason } = await canClientMessageChatroom(
+      clientId,
+      existingMessage.chatroomId
+    );
+
+    if (!can) {
+      return errorResponse(res, reason);
+    }
+
+    const votedMessage = await clientVotedInPoll(clientId, messageId, response);
+
+    if (!votedMessage) {
+      throw new Error();
+    }
+
+    await chatroomManager.handleChatMessageUpdated({
+      from: voter,
+      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      args: {
+        message: votedMessage,
+      },
+    });
+
+    return successResponse(res, "Successfully voted in poll.", {
+      message: votedMessage,
+    });
+  } catch (error) {
+    return errorResponse(res, "Unable to vote in poll.");
   }
 }
 
@@ -318,16 +428,14 @@ export async function deleteChatMessageRoute(
       throw new Error("Message not found post-deletion.");
     }
 
-    await chatroomManager.handleChatMessageDeleted(
-      JSON.stringify({
-        from: await getClientById(clientId),
-        kind: chatroomManager.ChatroomSocketRequests.ChatMessageDeleted,
-        args: {
-          chatroomId: deletedMessage.chatroomId,
-          messageId: deletedMessage.id,
-        },
-      })
-    );
+    await chatroomManager.handleChatMessageDeleted({
+      from: (await getClientById(clientId)) as Client,
+      kind: chatroomManager.ChatroomSocketRequests.ChatMessageDeleted,
+      args: {
+        chatroomId: deletedMessage.chatroomId,
+        messageId: deletedMessage.id,
+      },
+    });
 
     return successResponse(res, "Successfully deleted chat message.", {
       message: deletedMessage,
@@ -336,80 +444,5 @@ export async function deleteChatMessageRoute(
     CHAT_ROUTER_LOGGER.error({ error }, "Failed to delete chat message.");
 
     return errorResponse(res, "Unable to delete chat message.");
-  }
-}
-
-export async function pinChatMessageRoute(
-  req: AuthenticatedRequest,
-  res: Response
-) {
-  try {
-    if (!req.params.messageId) {
-      return errorResponse(res, "Parameter `messageId` is required.");
-    }
-
-    const messageId = parseInt(req.params.messageId);
-    const pinnedMessage = await pinChatMessage(messageId);
-
-    if (!pinnedMessage) {
-      throw new Error();
-    }
-
-    return successResponse(
-      res,
-      `Successfully ${
-        pinnedMessage.pinned ? "pinned" : "unpinned"
-      } chat message.`,
-      {
-        message: pinnedMessage,
-      }
-    );
-  } catch (error) {
-    return errorResponse(res, "Unable to pin chat message.");
-  }
-}
-
-export async function voteInPollRoute(
-  req: AuthenticatedRequest,
-  res: Response
-) {
-  try {
-    if (!req.params.messageId) {
-      return errorResponse(res, "Parameter `messageId` is required.");
-    }
-
-    const messageId = parseInt(req.params.messageId);
-    const { id: clientId } = req.chatsinoClient!;
-    const { response } = await voteInPollSchema.validate({
-      messageId,
-      response: req.body.response,
-    });
-    const existingMessageData = await readChatMessage(messageId);
-
-    if (!existingMessageData) {
-      throw new Error();
-    }
-
-    const { message: existingMessage } = existingMessageData;
-    const { can, reason } = await canClientMessageChatroom(
-      clientId,
-      existingMessage.chatroomId
-    );
-
-    if (!can) {
-      return errorResponse(res, reason);
-    }
-
-    const votedMessage = await clientVotedInPoll(clientId, messageId, response);
-
-    if (!votedMessage) {
-      throw new Error();
-    }
-
-    return successResponse(res, "Successfully voted in poll.", {
-      message: votedMessage,
-    });
-  } catch (error) {
-    return errorResponse(res, "Unable to vote in poll.");
   }
 }
