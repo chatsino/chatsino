@@ -48,3 +48,9 @@ export const reactToChatMessageSchema = yup
     reaction: yup.string().min(1).required(),
   })
   .required();
+
+export const newChatMessageSchema = yup
+  .object({
+    chatroomId: yup.number().required(),
+  })
+  .required();

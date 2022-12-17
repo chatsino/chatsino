@@ -4,14 +4,15 @@ import {
   Chatroom,
   clientVotedInPoll,
   createChatMessage,
-  readChatroomList,
   getClientById,
   readChatMessage,
   readChatMessageList,
+  readChatroomList,
   SUBSCRIBER,
 } from "persistence";
 import {
   listChatroomMessagesSchema,
+  newChatMessageSchema,
   sendChatMessageSchema,
   SourcedSocketMessage,
   voteInPollSchema,
@@ -40,6 +41,10 @@ export function initializeChatroomManager() {
     handleListChatroomMessages
   );
   SUBSCRIBER.subscribe(ChatroomSocketRequests.VoteInPoll, handleVoteInPoll);
+  SUBSCRIBER.subscribe(
+    ChatroomSocketRequests.NewChatMessage,
+    handleNewChatMessage
+  );
 }
 
 export async function handleSendChatMessage(messageString: string) {
@@ -172,6 +177,34 @@ export async function handleVoteInPoll(messageString: string) {
       kind,
       error,
       "Failed to vote in poll."
+    );
+  }
+}
+
+export async function handleNewChatMessage(messageString: string) {
+  const { kind, args, from } = JSON.parse(
+    messageString
+  ) as SourcedSocketMessage;
+
+  try {
+    const { chatroomId } = await newChatMessageSchema.validate(args);
+
+    await SocketServer.broadcastToSubscription(
+      `Chatrooms/${chatroomId}/Messages`,
+      {
+        shouldUpdate: true,
+      }
+    );
+
+    return SocketServer.success(0, kind, {
+      message: `Alerted clients in Chatroom#${chatroomId} to a new message.`,
+    });
+  } catch (error) {
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      `Failed to alert clients to a new message.`
     );
   }
 }

@@ -38,6 +38,7 @@ export async function chatroomLoader(
       users,
     };
   } catch (error) {
+    console.error({ error });
     throw redirect("/chat");
   }
 }

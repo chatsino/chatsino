@@ -5,6 +5,7 @@ import {
   successResponse,
 } from "helpers";
 import { createLogger } from "logger";
+import * as chatroomManager from "managers/chatroom.manager";
 import { AuthenticatedRequest, authenticatedRouteMiddleware } from "middleware";
 import {
   readChatroom,
@@ -31,8 +32,8 @@ export const CHAT_ROUTER_LOGGER = createLogger("Chat");
 export function createChatRouter() {
   const chatRouter = Router();
 
-  chatRouter.get("/chatrooms", chatroomListRoute);
-  chatRouter.get("/chatrooms/:chatroomId", chatroomRoute);
+  chatRouter.get("/chatrooms", getChatroomListRoute);
+  chatRouter.get("/chatrooms/:chatroomId", getChatroomRoute);
   chatRouter.post(
     "/chatrooms/:chatroomId/messages",
     authenticatedRouteMiddleware("user"),
@@ -67,7 +68,7 @@ export function createChatRouter() {
   return chatRouter;
 }
 
-export async function chatroomListRoute(
+export async function getChatroomListRoute(
   _: AuthenticatedRequest,
   res: Response
 ) {
@@ -80,7 +81,10 @@ export async function chatroomListRoute(
   }
 }
 
-export async function chatroomRoute(req: AuthenticatedRequest, res: Response) {
+export async function getChatroomRoute(
+  req: AuthenticatedRequest,
+  res: Response
+) {
   try {
     if (!req.params.chatroomId) {
       return errorResponse(res, "Parameter `chatroomId` is required.");
@@ -142,6 +146,16 @@ export async function sendChatMessageRoute(
     if (!chatMessage) {
       throw new Error();
     }
+
+    await chatroomManager.handleNewChatMessage(
+      JSON.stringify({
+        from: clientId,
+        kind: chatroomManager.ChatroomSocketRequests.NewChatMessage,
+        args: {
+          chatroomId,
+        },
+      })
+    );
 
     return successResponse(res, "Successfully sent chat message.", {
       message: chatMessage,

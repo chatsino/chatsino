@@ -42,7 +42,7 @@ export interface SocketClientSubscription {
 
 export interface SocketSubscriptionPublished {
   subscription: string;
-  data: object;
+  data: unknown;
 }
 
 export enum SocketResponseKind {
@@ -59,6 +59,10 @@ export enum SocketResponseKind {
 export const SOCKETS_LOGGER = createLogger("Sockets");
 
 export class SocketServer {
+  public static publish(kind: string, data: unknown) {
+    return PUBLISHER.publish(kind, JSON.stringify(data));
+  }
+
   public static success(to: number, kind: string, data: unknown) {
     return PUBLISHER.publish(
       SocketResponseKind.SuccessResponse,
@@ -77,6 +81,22 @@ export class SocketServer {
         to,
         kind,
         error,
+      })
+    );
+  }
+
+  public static broadcastToSubscription(subscription: string, data: unknown) {
+    SOCKETS_LOGGER.info(
+      { subscription, data },
+      "Broadcasting to subscription."
+    );
+
+    return PUBLISHER.publish(
+      SocketResponseKind.BroadcastToAll, // TODO: Replace with below when subscriptions are server-side.
+      // SocketResponseKind.BroadcastToSubscription,
+      JSON.stringify({
+        kind: subscription,
+        data,
       })
     );
   }
@@ -282,7 +302,7 @@ export class SocketServer {
     subscription,
     data,
   }: SocketSubscriptionPublished) {
-    const subscribers = this.subscriptions[subscription];
+    const subscribers = this.subscriptions[subscription] ?? [];
 
     for (const websocket of [...subscribers]) {
       if (websocket.readyState === websocket.OPEN) {
