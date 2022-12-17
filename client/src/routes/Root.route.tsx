@@ -9,6 +9,7 @@ import {
   useSocket,
   useUniversalVhUnit,
 } from "hooks";
+import { ChatroomListLoaderData } from "loaders";
 import { useEffect, useRef } from "react";
 import { FaHorse } from "react-icons/fa";
 import {
@@ -43,11 +44,12 @@ export function RootRoute() {
 }
 
 function Inner() {
+  const { chatrooms } = useLoaderData() as ChatroomListLoaderData;
   const { validate } = useAuthentication();
   const { client, setClient } = useClient();
   const { initialize } = useSocket();
   const {
-    data: { chatrooms, users },
+    data: { users },
   } = useChatrooms();
   const data = useLoaderData() as { client: SafeClient };
   const initiallyValidated = useRef(false);

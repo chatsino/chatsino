@@ -2,11 +2,13 @@ import { PlusOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Input, List, Tooltip, Typography } from "antd";
 import { toUniversalVh } from "helpers";
 import { BsDoorOpen } from "react-icons/bs";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 export const CHATROOM_DESCRIPTION_TRUNCATION_LIMIT = 40;
 
 export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
+  const { chatroomId } = useParams();
+
   return (
     <List
       itemLayout="vertical"
@@ -62,7 +64,19 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
             }
           >
             <Tooltip title={item.description}>
-              <List.Item.Meta title={item.title} />
+              <List.Item.Meta
+                title={
+                  <Typography.Text
+                    type={
+                      chatroomId && parseInt(chatroomId) === item.id
+                        ? "warning"
+                        : undefined
+                    }
+                  >
+                    {item.title}
+                  </Typography.Text>
+                }
+              />
             </Tooltip>
           </List.Item>
         </Link>

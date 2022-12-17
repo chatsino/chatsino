@@ -1,5 +1,6 @@
 import {
   chatRedirectLoader,
+  chatroomListLoader,
   chatroomLoader,
   requireAdminLoader,
   requireClientLoader,
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
     path: "/",
     element: <RootRoute />,
     errorElement: <ErrorRoute />,
+    loader: chatroomListLoader,
     children: [
       {
         path: "/admin",
@@ -38,7 +40,6 @@ export const router = createBrowserRouter([
       },
       {
         path: "/chat",
-        // loader: requireClientLoader,
         element: <Outlet />,
         children: [
           {

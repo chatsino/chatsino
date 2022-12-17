@@ -11,6 +11,10 @@ export interface ChatroomLoaderData {
   users: ChatUserData[];
 }
 
+export interface ChatroomListLoaderData {
+  chatrooms: Chatroom[];
+}
+
 export async function chatroomLoader(
   loader: LoaderFunctionArgs
 ): Promise<ChatroomLoaderData> {
@@ -36,4 +40,14 @@ export async function chatroomLoader(
   } catch (error) {
     throw redirect("/chat");
   }
+}
+
+export async function chatroomListLoader(): Promise<ChatroomListLoaderData> {
+  const { chatrooms } = (await makeHttpRequest("get", "/chat/chatrooms")) as {
+    chatrooms: Chatroom[];
+  };
+
+  return {
+    chatrooms,
+  };
 }
