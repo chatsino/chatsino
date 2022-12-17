@@ -297,7 +297,7 @@ export async function deleteChatMessageRoute(
     const existingMessageData = await readChatMessage(messageId);
 
     if (!existingMessageData) {
-      throw new Error();
+      throw new Error("Existing message data not found.");
     }
 
     const { message: existingMessage } = existingMessageData;
@@ -315,13 +315,26 @@ export async function deleteChatMessageRoute(
     const deletedMessage = await deleteChatMessage(messageId);
 
     if (!deletedMessage) {
-      throw new Error();
+      throw new Error("Message not found post-deletion.");
     }
+
+    await chatroomManager.handleChatMessageDeleted(
+      JSON.stringify({
+        from: await getClientById(clientId),
+        kind: chatroomManager.ChatroomSocketRequests.ChatMessageDeleted,
+        args: {
+          chatroomId: deletedMessage.chatroomId,
+          messageId: deletedMessage.id,
+        },
+      })
+    );
 
     return successResponse(res, "Successfully deleted chat message.", {
       message: deletedMessage,
     });
   } catch (error) {
+    CHAT_ROUTER_LOGGER.error({ error }, "Failed to delete chat message.");
+
     return errorResponse(res, "Unable to delete chat message.");
   }
 }

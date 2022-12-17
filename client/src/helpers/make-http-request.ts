@@ -8,7 +8,7 @@ export const axios = axiosLib.create({
 });
 
 export async function makeHttpRequest<T>(
-  method: "get" | "post",
+  method: "get" | "post" | "delete",
   route: string,
   body?: Record<string, unknown>
 ): Promise<T> {

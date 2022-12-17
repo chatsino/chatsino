@@ -89,3 +89,10 @@ export const newChatMessageSchema = yup
     message: hydratedChatMessageSchema,
   })
   .required();
+
+export const chatMessageDeletedSchema = yup
+  .object({
+    chatroomId: yup.number().required(),
+    messageId: yup.number().required(),
+  })
+  .required();

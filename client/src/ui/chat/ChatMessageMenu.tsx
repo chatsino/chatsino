@@ -1,7 +1,13 @@
 import { EllipsisOutlined } from "@ant-design/icons";
 import { Button, Dropdown, Typography } from "antd";
 
-export function ChatMessageMenu() {
+export function ChatMessageMenu({
+  message,
+  onDelete,
+}: {
+  message: ChatMessageData;
+  onDelete: (messageId: number) => unknown;
+}) {
   return (
     <Typography.Text>
       <Dropdown
@@ -26,6 +32,7 @@ export function ChatMessageMenu() {
             {
               key: "delete",
               label: <Typography.Text type="danger">Delete</Typography.Text>,
+              onClick: () => onDelete(message.id),
             },
           ],
           onClick: (item) => console.info(item),

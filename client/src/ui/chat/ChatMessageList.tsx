@@ -24,11 +24,13 @@ export function ChatMessageList({
   chatroom,
   messages,
   onSendMessage,
+  onDeleteMessage,
 }: {
   id: string;
   chatroom: ChatroomData;
   messages: ChatMessageData[];
   onSendMessage: (message: string) => unknown;
+  onDeleteMessage: (messageId: number) => unknown;
 }) {
   const { sm } = Grid.useBreakpoint();
   const onMobile = !sm;
@@ -159,7 +161,10 @@ export function ChatMessageList({
           <div ref={listBodyRef}>
             {groupedMessages.map((messageGroup) => (
               <List.Item key={key(messageGroup)}>
-                <ChatMessageGroup messageGroup={messageGroup} />
+                <ChatMessageGroup
+                  messageGroup={messageGroup}
+                  onDeleteMessage={onDeleteMessage}
+                />
               </List.Item>
             ))}
           </div>

@@ -5,8 +5,10 @@ import { groupMessages } from "./group-messages";
 
 export function ChatMessageGroup({
   messageGroup,
+  onDeleteMessage,
 }: {
   messageGroup: ReturnType<typeof groupMessages>[0];
+  onDeleteMessage: (messageId: number) => unknown;
 }) {
   return (
     <List.Item
@@ -23,7 +25,10 @@ export function ChatMessageGroup({
                 style={{ position: "relative" }}
                 extra={
                   <div style={{ position: "absolute", top: 0, right: 0 }}>
-                    <ChatMessageMenu />
+                    <ChatMessageMenu
+                      message={message}
+                      onDelete={onDeleteMessage}
+                    />
                   </div>
                 }
               >

@@ -1,3 +1,4 @@
+import { message as showMessage } from "antd";
 import { makeHttpRequest } from "helpers";
 import { LoaderFunctionArgs, redirect } from "react-router-dom";
 import { SafeClient } from "schemas";
@@ -9,6 +10,7 @@ export interface ChatroomLoaderData {
   messages: ChatMessageData[];
   users: ChatUserData[];
   sendMessage(message: string): Promise<unknown>;
+  deleteMessage(messageId: number): Promise<unknown>;
 }
 
 export interface ChatroomListLoaderData {
@@ -45,6 +47,18 @@ export async function chatroomLoader(
             message,
           }
         );
+      },
+      async deleteMessage(messageId: number) {
+        try {
+          await makeHttpRequest(
+            "delete",
+            `/chat/chatrooms/${chatroomId}/messages/${messageId}`
+          );
+
+          showMessage.success("Message deleted.");
+        } catch (error) {
+          showMessage.error(error.message);
+        }
       },
     };
   } catch (error) {

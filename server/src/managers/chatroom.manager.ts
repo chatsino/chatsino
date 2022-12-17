@@ -13,6 +13,7 @@ import {
   SUBSCRIBER,
 } from "persistence";
 import {
+  chatMessageDeletedSchema,
   listChatroomMessagesSchema,
   newChatMessageSchema,
   sendChatMessageSchema,
@@ -27,6 +28,7 @@ export enum ChatroomSocketRequests {
   ListChatroomMessages = "list-chatroom-messages",
   VoteInPoll = "vote-in-poll",
   NewChatMessage = "new-chat-message",
+  ChatMessageDeleted = "chat-message-deleted",
 }
 
 export const CHATROOM_MANAGER_LOGGER = createLogger(
@@ -50,6 +52,10 @@ export function initializeChatroomManager() {
   SUBSCRIBER.subscribe(
     ChatroomSocketRequests.NewChatMessage,
     handleNewChatMessage
+  );
+  SUBSCRIBER.subscribe(
+    ChatroomSocketRequests.ChatMessageDeleted,
+    handleChatMessageDeleted
   );
 }
 
@@ -203,7 +209,7 @@ export async function handleNewChatMessage(messageString: string) {
     const { message } = await newChatMessageSchema.validate(args);
 
     await SocketServer.broadcastToSubscription(
-      `Chatrooms/${message.chatroomId}/Messages`,
+      `Chatrooms/${message.chatroomId}/NewMessage`,
       {
         message,
       }
@@ -223,6 +229,41 @@ export async function handleNewChatMessage(messageString: string) {
       kind,
       error,
       `Failed to alert clients to a new message.`
+    );
+  }
+}
+
+export async function handleChatMessageDeleted(messageString: string) {
+  const { kind, args, from } = JSON.parse(
+    messageString
+  ) as SourcedSocketMessage;
+
+  try {
+    const { chatroomId, messageId } = await chatMessageDeletedSchema.validate(
+      args
+    );
+
+    await SocketServer.broadcastToSubscription(
+      `Chatrooms/${chatroomId}/MessageDeleted`,
+      {
+        messageId,
+      }
+    );
+
+    return SocketServer.success(from.id, kind, {
+      message: `Alerted clients in Chatroom#${chatroomId} to a deleted message.`,
+    });
+  } catch (error) {
+    CHATROOM_MANAGER_LOGGER.error(
+      { error },
+      "Failed to handle deleted chat message."
+    );
+
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      `Failed to alert clients to a deleted message.`
     );
   }
 }
