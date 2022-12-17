@@ -7,7 +7,7 @@ import { clientSchema } from "schemas";
 
 export const TOKEN_KEY = "token";
 
-export const TOKEN_LOGGER = createLogger("Tokens");
+export const TOKEN_LOGGER = createLogger(config.LOGGER_NAMES.TOKEN);
 
 export async function createToken(
   label: string,

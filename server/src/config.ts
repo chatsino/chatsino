@@ -66,3 +66,21 @@ export const MINIMUM_PASSWORD_SIZE = 8;
 export const PASSWORD_SALT_SIZE = 128;
 export const PASSWORD_HASH_SIZE = 60;
 export const JWT_ACCESS_EXPIRATON_TIME_SECONDS = 60 * 20;
+
+// Logging
+export const LOGGER_NAMES = {
+  AUTH_ROUTER: "Router/Auth",
+  CHAT_ROUTER: "Router/Chat",
+  TICKET: "Auth/Tickets",
+  TOKEN: "Auth/Tokens",
+  REQUEST: "Middleware/Request",
+  RESPONSE: "Helpers/Response",
+  BLACKJACK_MODEL: "Managers/Blackjack",
+  CHAT_MESSAGE_MODEL: "Models/ChatMessage",
+  CHATROOM_MODEL: "Models/Chatroom",
+  CLIENT_MODEL: "Models/Client",
+  TRANSACTION_MODEL: "Models/Transaction",
+  CACHE: "Persistence/Cache",
+  SERVER: "Server",
+  SOCKET_SERVER: "Socket Server",
+};

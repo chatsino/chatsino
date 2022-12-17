@@ -1,8 +1,9 @@
+import * as config from "config";
 import type { NextFunction, Response } from "express";
 import { createLogger } from "logger";
 import type { AuthenticatedRequest } from "./authenticated-route";
 
-const INCOMING_REQUEST_LOGGER = createLogger("Incoming Request");
+const INCOMING_REQUEST_LOGGER = createLogger(config.LOGGER_NAMES.REQUEST);
 
 export function requestLoggingMiddleware(
   req: AuthenticatedRequest,

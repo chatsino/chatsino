@@ -1,3 +1,4 @@
+import * as config from "config";
 import { createLogger } from "logger";
 import { postgres } from "persistence";
 
@@ -15,7 +16,9 @@ export type TransactionListRead = Partial<
   Pick<Transaction, "from" | "to" | "memo">
 >;
 
-export const TRANSACTION_MODEL_LOGGER = createLogger("Transaction Model");
+export const TRANSACTION_MODEL_LOGGER = createLogger(
+  config.LOGGER_NAMES.TRANSACTION_MODEL
+);
 
 // #region Table
 export const TRANSACTION_TABLE_NAME = "transaction";

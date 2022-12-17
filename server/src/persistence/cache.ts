@@ -11,7 +11,7 @@ export type CacheConnectionStatus =
   | "error"
   | "reconnecting";
 
-export const CACHE_LOGGER = createLogger("Cache");
+export const CACHE_LOGGER = createLogger(config.LOGGER_NAMES.CACHE);
 
 export const REDIS = createClient({
   url: config.REDIS_CONNECTION_STRING,

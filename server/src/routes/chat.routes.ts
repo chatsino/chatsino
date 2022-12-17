@@ -1,3 +1,4 @@
+import * as config from "config";
 import { Response, Router } from "express";
 import {
   errorResponse,
@@ -28,7 +29,7 @@ import {
   voteInPollSchema,
 } from "schemas";
 
-export const CHAT_ROUTER_LOGGER = createLogger("Chat");
+export const CHAT_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.CHAT_ROUTER);
 
 export function createChatRouter() {
   const chatRouter = Router();

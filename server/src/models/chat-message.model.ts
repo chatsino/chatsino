@@ -40,7 +40,9 @@ export type HydratedChatMessage = ChatMessage & {
   };
 };
 
-export const CHAT_MESSAGE_MODEL_LOGGER = createLogger("Chat Message Model");
+export const CHAT_MESSAGE_MODEL_LOGGER = createLogger(
+  config.LOGGER_NAMES.CHAT_MESSAGE_MODEL
+);
 
 // #region Table
 export const CHAT_MESSAGE_TABLE_NAME = "chat_message";

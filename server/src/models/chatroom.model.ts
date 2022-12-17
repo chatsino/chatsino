@@ -55,7 +55,9 @@ export type HydratedChatroom = Omit<Chatroom, "createdBy" | "updatedBy"> & {
   };
 };
 
-export const CHATROOM_MODEL_LOGGER = createLogger("Chatroom Model");
+export const CHATROOM_MODEL_LOGGER = createLogger(
+  config.LOGGER_NAMES.CHATROOM_MODEL
+);
 
 // #region Table
 /* istanbul ignore next */

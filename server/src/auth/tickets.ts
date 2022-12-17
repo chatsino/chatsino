@@ -18,7 +18,7 @@ export interface Ticket {
   username: string;
 }
 
-export const TICKET_LOGGER = createLogger("Tickets");
+export const TICKET_LOGGER = createLogger(config.LOGGER_NAMES.TICKET);
 
 export async function issueTicket(username: string, remoteAddress: string) {
   const client = await getClientByIdentifier(username);

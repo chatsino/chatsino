@@ -56,7 +56,7 @@ export enum SocketResponseKind {
   ClientErrorMessage = "client-error-message",
 }
 
-export const SOCKETS_LOGGER = createLogger("Sockets");
+export const SOCKETS_LOGGER = createLogger(config.LOGGER_NAMES.SOCKET_SERVER);
 
 export class SocketServer {
   public static publish(kind: string, data: unknown) {

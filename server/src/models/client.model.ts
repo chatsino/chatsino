@@ -27,7 +27,9 @@ export type Client = Omit<FullClient, "hash" | "salt">;
 
 export type ClientIdentifier = number | string;
 
-export const CLIENT_MODEL_LOGGER = createLogger("Client Model");
+export const CLIENT_MODEL_LOGGER = createLogger(
+  config.LOGGER_NAMES.CLIENT_MODEL
+);
 
 // #region SQL
 export const CLIENT_TABLE_NAME = "client";

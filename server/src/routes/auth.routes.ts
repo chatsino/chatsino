@@ -1,3 +1,4 @@
+import * as config from "config";
 import { assignToken, issueTicket, revokeToken } from "auth";
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse, handleGenericErrors } from "helpers";
@@ -13,7 +14,7 @@ import {
 } from "persistence";
 import { clientSigninSchema, clientSignupSchema } from "schemas";
 
-export const AUTH_ROUTER_LOGGER = createLogger("Authentication");
+export const AUTH_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.AUTH_ROUTER);
 
 export function createAuthRouter() {
   const authRouter = Router();

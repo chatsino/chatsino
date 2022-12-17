@@ -1,8 +1,9 @@
+import * as config from "config";
 import { Response } from "express";
 import { createLogger } from "logger";
 import { ValidationError } from "yup";
 
-export const RESPONSE_LOGGER = createLogger("Response");
+export const RESPONSE_LOGGER = createLogger(config.LOGGER_NAMES.RESPONSE);
 
 export const successResponse = (
   res: Response,

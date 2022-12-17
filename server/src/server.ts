@@ -14,7 +14,7 @@ import {
 import * as routes from "routes";
 import { SocketServer } from "socket-server";
 
-const SERVER_LOGGER = createLogger("Server");
+const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
 export async function startServer() {
   SERVER_LOGGER.info(
