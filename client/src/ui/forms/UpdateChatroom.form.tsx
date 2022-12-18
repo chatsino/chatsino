@@ -50,21 +50,34 @@ export function UpdateChatroomForm({ chatroom, onSubmit, onCancel }: Props) {
         autoComplete="off"
         size="middle"
       >
-        <Form.Item label="Avatar">
-          <AvatarUpload action={`/chat/chatrooms/${chatroom.id}/avatar`} />
-        </Form.Item>
-        <Form.Item label="Title" name="title">
-          <Input type="text" />
-        </Form.Item>
-        <Form.Item label="Description" name="description">
-          <Input.TextArea />
-        </Form.Item>
+        <Divider orientation="left" style={{ margin: "2rem 0" }}>
+          General
+        </Divider>
+        <Row gutter={12}>
+          <Col xs={24} sm={4}>
+            <Form.Item label="Avatar">
+              <AvatarUpload action={`/chat/chatrooms/${chatroom.id}/avatar`} />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={20}>
+            <Form.Item label="Title" name="title">
+              <Input type="text" />
+            </Form.Item>
+            <Form.Item label="Description" name="description">
+              <Input.TextArea />
+            </Form.Item>
+          </Col>
+        </Row>
         <Divider orientation="left" style={{ margin: "2rem 0" }}>
           Security
         </Divider>
-        <Form.Item label="Password" name="password">
-          <Input type="text" />
-        </Form.Item>
+        <Row gutter={12}>
+          <Col xs={24} sm={12}>
+            <Form.Item label="Password" name="password">
+              <Input type="text" />
+            </Form.Item>
+          </Col>
+        </Row>
         <Row gutter={12}>
           <Col xs={24} sm={12}>
             <Form.Item label="Whitelist" name="whitelist">

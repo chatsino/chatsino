@@ -1,4 +1,4 @@
-import { Descriptions, Space } from "antd";
+import { Descriptions, Divider, Space } from "antd";
 import { ChatroomSettingsLoaderData } from "loaders";
 import { BsDoorOpen } from "react-icons/bs";
 import { useLoaderData, useNavigate } from "react-router-dom";
@@ -18,13 +18,15 @@ export function ChatroomSettingsRoute() {
         <Space direction="vertical">
           <Descriptions
             title={
-              <InlineClient
-                client={{
-                  id: chatroom.id,
-                  avatar: chatroom.avatar,
-                  username: chatroom.title,
-                }}
-              />
+              <Divider orientation="left">
+                <InlineClient
+                  client={{
+                    id: chatroom.id,
+                    avatar: chatroom.avatar,
+                    username: chatroom.title,
+                  }}
+                />
+              </Divider>
             }
             bordered={true}
             layout="vertical"
