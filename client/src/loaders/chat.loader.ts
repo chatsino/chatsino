@@ -39,15 +39,19 @@ export async function chatroomLoader(
       chatroom,
       messages,
       users,
-      sendMessage(message: string) {
-        return makeHttpRequest(
-          "post",
-          `/chat/chatrooms/${chatroomId}/messages`,
-          {
-            chatroomId,
-            message,
-          }
-        );
+      async sendMessage(message: string) {
+        try {
+          await makeHttpRequest(
+            "post",
+            `/chat/chatrooms/${chatroomId}/messages`,
+            {
+              chatroomId,
+              message,
+            }
+          );
+        } catch (error) {
+          showMessage.error(`Unable to send message.`);
+        }
       },
       async pinMessage(messageId: number) {
         try {
@@ -62,7 +66,7 @@ export async function chatroomLoader(
 
           showMessage.success(`Message ${pinned ? "pinned" : "unpinned"}.`);
         } catch (error) {
-          showMessage.error(error.message);
+          showMessage.error("Unable to pin message.");
         }
       },
       async deleteMessage(messageId: number) {
@@ -74,7 +78,7 @@ export async function chatroomLoader(
 
           showMessage.success("Message deleted.");
         } catch (error) {
-          showMessage.error(error.message);
+          showMessage.error("Unable to delete message.");
         }
       },
     };
