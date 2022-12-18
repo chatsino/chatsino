@@ -146,25 +146,29 @@ function Inner() {
         <div
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
-          <ChatroomList chatrooms={chatrooms} />
-          <Collapse accordion={true} ghost={true}>
-            <Collapse.Panel
-              key="JoinPrivateRoomForm"
-              header="Join private room"
-              extra={<LockFilled />}
-              showArrow={false}
-            >
-              <JoinPrivateRoomForm onSubmit={() => Promise.resolve()} />
-            </Collapse.Panel>
-            <Collapse.Panel
-              key="PurchaseChipsForm"
-              header="Purchase chips"
-              extra={<BiCoinStack />}
-              showArrow={false}
-            >
-              <PurchaseChipsForm onSubmit={() => Promise.resolve()} />
-            </Collapse.Panel>
-          </Collapse>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <ChatroomList chatrooms={chatrooms} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <Collapse accordion={true} ghost={true}>
+              <Collapse.Panel
+                key="JoinPrivateRoomForm"
+                header="Join private room"
+                extra={<LockFilled />}
+                showArrow={false}
+              >
+                <JoinPrivateRoomForm onSubmit={() => Promise.resolve()} />
+              </Collapse.Panel>
+              <Collapse.Panel
+                key="PurchaseChipsForm"
+                header="Purchase chips"
+                extra={<BiCoinStack />}
+                showArrow={false}
+              >
+                <PurchaseChipsForm onSubmit={() => Promise.resolve()} />
+              </Collapse.Panel>
+            </Collapse>
+          </div>
         </div>
       </Col>
     </Row>

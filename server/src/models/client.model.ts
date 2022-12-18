@@ -1,8 +1,8 @@
 import * as config from "config";
 import { generatePasswordHash, generatePasswordSaltHash } from "helpers";
 import { createLogger } from "logger";
-import { postgres, getCachedValue, setCachedValue } from "persistence";
-import { PERMISSION_RANKING, clientSigninSchema } from "schemas";
+import { getCachedValue, postgres, setCachedValue } from "persistence";
+import { clientSigninSchema, PERMISSION_RANKING } from "schemas";
 import { createTransaction } from "./transaction.model";
 
 export type ClientPermissionLevel =

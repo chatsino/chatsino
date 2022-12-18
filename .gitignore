@@ -20,6 +20,9 @@ cache
 # caddy
 caddy
 
+# file uploads
+uploads
+
 # misc
 /**/.DS_Store
 /**/.env.local

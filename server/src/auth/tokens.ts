@@ -1,7 +1,7 @@
 import * as config from "config";
 import { Response } from "express";
 import { createLogger } from "logger";
-import { getClientByIdentifier, Client } from "persistence";
+import { Client, getClientByIdentifier } from "models";
 import { ensureCacheConnected, JWT_REDIS } from "persistence";
 import { clientSchema } from "schemas";
 

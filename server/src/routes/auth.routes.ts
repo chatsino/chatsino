@@ -1,7 +1,7 @@
-import * as config from "config";
 import { assignToken, issueTicket, revokeToken } from "auth";
+import * as config from "config";
 import { Request, Response, Router } from "express";
-import { errorResponse, successResponse, handleGenericErrors } from "helpers";
+import { errorResponse, handleGenericErrors, successResponse } from "helpers";
 import { createLogger } from "logger";
 import { AuthenticatedRequest } from "middleware";
 import {
@@ -11,7 +11,7 @@ import {
   IncorrectPasswordError,
   safetifyClient,
   verifyClientPassword,
-} from "persistence";
+} from "models";
 import { clientSigninSchema, clientSignupSchema } from "schemas";
 
 export const AUTH_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.AUTH_ROUTER);

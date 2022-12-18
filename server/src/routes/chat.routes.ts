@@ -6,25 +6,12 @@ import {
   successResponse,
 } from "helpers";
 import { createLogger } from "logger";
+import path from "path";
 import * as chatroomManager from "managers/chatroom.manager";
 import { AuthenticatedRequest, authenticatedRouteMiddleware } from "middleware";
-import {
-  readChatMessageList,
-  readChatroomList,
-  canClientMessageChatroom,
-  createChatMessage,
-  editChatMessage,
-  readChatMessage,
-  reactToChatMessage,
-  deleteChatMessage,
-  pinChatMessage,
-  clientVotedInPoll,
-  readHydratedChatroom,
-  safetifyChatroom,
-  getClientById,
-  HydratedChatMessage,
-  Client,
-} from "persistence";
+import * as clientModel from "models/client.model";
+import * as chatroomModel from "models/chatroom.model";
+import * as chatMessageModel from "models/chat-message.model";
 import {
   editChatMessageSchema,
   reactToChatMessageSchema,
@@ -39,6 +26,7 @@ export function createChatRouter() {
 
   chatRouter.get("/chatrooms", getChatroomListRoute);
   chatRouter.get("/chatrooms/:chatroomId", getChatroomRoute);
+  chatRouter.post("/chatrooms/:chatroomId/avatar", changeChatroomAvatarRoute);
   chatRouter.post(
     "/chatrooms/:chatroomId/messages",
     authenticatedRouteMiddleware("user"),
@@ -78,7 +66,7 @@ export async function getChatroomListRoute(
   res: Response
 ) {
   try {
-    const chatroomsData = await readChatroomList();
+    const chatroomsData = await chatroomModel.readChatroomList();
 
     if (!chatroomsData) {
       throw new Error();
@@ -105,7 +93,7 @@ export async function getChatroomRoute(
     }
 
     const chatroomId = parseInt(req.params.chatroomId);
-    const chatroomData = await readHydratedChatroom(chatroomId);
+    const chatroomData = await chatroomModel.readHydratedChatroom(chatroomId);
 
     if (!chatroomData) {
       return errorResponse(res, `Chatroom#${chatroomId} does not exist.`);
@@ -121,15 +109,14 @@ export async function getChatroomRoute(
       }
     }
 
-    const { messages, cached: messagesCached } = (await readChatMessageList(
-      chatroomId
-    )) ?? {
-      messages: [],
-    };
+    const { messages, cached: messagesCached } =
+      (await chatMessageModel.readChatMessageList(chatroomId)) ?? {
+        messages: [],
+      };
     const users = await Promise.resolve([]);
 
     return successResponse(res, "Chatroom retrieved.", {
-      chatroom: safetifyChatroom(chatroom),
+      chatroom: chatroomModel.safetifyChatroom(chatroom),
       messages,
       users,
       cached: {
@@ -142,6 +129,38 @@ export async function getChatroomRoute(
   }
 }
 
+export async function changeChatroomAvatarRoute(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  try {
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return errorResponse(res, "No files were uploaded.");
+    }
+
+    const { avatar } = req.files;
+
+    if (avatar instanceof Array) {
+      return errorResponse(res, "Only one avatar may be uploaded.");
+    }
+
+    const uploadPath = path.join(config.FILE_UPLOAD_DIRECTORY, avatar.name);
+
+    try {
+      await new Promise((resolve, reject) =>
+        avatar.mv(uploadPath, (err) => (err ? reject(err) : resolve(undefined)))
+      );
+
+      return successResponse(res, "Successfully changed chatroom avatar.");
+    } catch (error) {
+      CHAT_ROUTER_LOGGER.error({ error }, "Failed to upload a file.");
+      throw error;
+    }
+  } catch (error) {
+    return errorResponse(res, "Unable to change chatroom avatar.");
+  }
+}
+
 export async function sendChatMessageRoute(
   req: AuthenticatedRequest,
   res: Response
@@ -151,7 +170,7 @@ export async function sendChatMessageRoute(
     const { chatroomId, message, poll } = await sendChatMessageSchema.validate(
       req.body
     );
-    const { can, reason } = await canClientMessageChatroom(
+    const { can, reason } = await chatroomModel.canClientMessageChatroom(
       req.chatsinoClient!.id,
       chatroomId
     );
@@ -160,7 +179,7 @@ export async function sendChatMessageRoute(
       return errorResponse(res, reason);
     }
 
-    const chatMessage = await createChatMessage(
+    const chatMessage = await chatMessageModel.createChatMessage(
       clientId,
       chatroomId,
       message,
@@ -171,7 +190,7 @@ export async function sendChatMessageRoute(
       throw new Error();
     }
 
-    const author = await getClientById(clientId);
+    const author = await clientModel.getClientById(clientId);
 
     if (!author) {
       throw new Error();
@@ -184,7 +203,7 @@ export async function sendChatMessageRoute(
         avatar: author.avatar,
         username: author.username,
       },
-    } as HydratedChatMessage;
+    } as chatMessageModel.HydratedChatMessage;
 
     await chatroomManager.handleNewChatMessage({
       from: author,
@@ -214,8 +233,10 @@ export async function editChatMessageRoute(
     const messageId = parseInt(req.params.messageId);
     const { id: clientId } = req.chatsinoClient!;
     const { message } = await editChatMessageSchema.validate(req.body);
-    const existingMessageData = await readChatMessage(messageId);
-    const author = await getClientById(clientId);
+    const existingMessageData = await chatMessageModel.readChatMessage(
+      messageId
+    );
+    const author = await clientModel.getClientById(clientId);
 
     if (!existingMessageData || !author) {
       throw new Error();
@@ -227,7 +248,10 @@ export async function editChatMessageRoute(
       return errorResponse(res, "You cannot edit someone else's message.");
     }
 
-    const editedMessage = await editChatMessage(messageId, message);
+    const editedMessage = await chatMessageModel.editChatMessage(
+      messageId,
+      message
+    );
 
     if (!editedMessage) {
       throw new Error();
@@ -261,15 +285,17 @@ export async function reactToChatMessageRoute(
     const messageId = parseInt(req.params.messageId);
     const { id: clientId } = req.chatsinoClient!;
     const { reaction } = await reactToChatMessageSchema.validate(req.body);
-    const existingMessageData = await readChatMessage(messageId);
-    const author = await getClientById(clientId);
+    const existingMessageData = await chatMessageModel.readChatMessage(
+      messageId
+    );
+    const author = await clientModel.getClientById(clientId);
 
     if (!existingMessageData || !author) {
       throw new Error();
     }
 
     const { message: existingMessage } = existingMessageData;
-    const { can, reason } = await canClientMessageChatroom(
+    const { can, reason } = await chatroomModel.canClientMessageChatroom(
       req.chatsinoClient!.id,
       existingMessage.chatroomId
     );
@@ -278,7 +304,11 @@ export async function reactToChatMessageRoute(
       return errorResponse(res, reason);
     }
 
-    const message = await reactToChatMessage(messageId, clientId, reaction);
+    const message = await chatMessageModel.reactToChatMessage(
+      messageId,
+      clientId,
+      reaction
+    );
 
     if (!message) {
       throw new Error();
@@ -310,8 +340,8 @@ export async function pinChatMessageRoute(
     }
 
     const messageId = parseInt(req.params.messageId);
-    const pinnedMessage = await pinChatMessage(messageId);
-    const pinner = await getClientById(req.chatsinoClient!.id);
+    const pinnedMessage = await chatMessageModel.pinChatMessage(messageId);
+    const pinner = await clientModel.getClientById(req.chatsinoClient!.id);
 
     if (!pinnedMessage || !pinner) {
       throw new Error();
@@ -354,15 +384,17 @@ export async function voteInPollRoute(
       messageId,
       response: req.body.response,
     });
-    const existingMessageData = await readChatMessage(messageId);
-    const voter = await getClientById(req.chatsinoClient!.id);
+    const existingMessageData = await chatMessageModel.readChatMessage(
+      messageId
+    );
+    const voter = await clientModel.getClientById(req.chatsinoClient!.id);
 
     if (!existingMessageData || !voter) {
       throw new Error();
     }
 
     const { message: existingMessage } = existingMessageData;
-    const { can, reason } = await canClientMessageChatroom(
+    const { can, reason } = await chatroomModel.canClientMessageChatroom(
       clientId,
       existingMessage.chatroomId
     );
@@ -371,7 +403,11 @@ export async function voteInPollRoute(
       return errorResponse(res, reason);
     }
 
-    const votedMessage = await clientVotedInPoll(clientId, messageId, response);
+    const votedMessage = await chatMessageModel.clientVotedInPoll(
+      clientId,
+      messageId,
+      response
+    );
 
     if (!votedMessage) {
       throw new Error();
@@ -404,7 +440,9 @@ export async function deleteChatMessageRoute(
 
     const messageId = parseInt(req.params.messageId);
     const { id: clientId, permissionLevel } = req.chatsinoClient!;
-    const existingMessageData = await readChatMessage(messageId);
+    const existingMessageData = await chatMessageModel.readChatMessage(
+      messageId
+    );
 
     if (!existingMessageData) {
       throw new Error("Existing message data not found.");
@@ -422,14 +460,14 @@ export async function deleteChatMessageRoute(
       );
     }
 
-    const deletedMessage = await deleteChatMessage(messageId);
+    const deletedMessage = await chatMessageModel.deleteChatMessage(messageId);
 
     if (!deletedMessage) {
       throw new Error("Message not found post-deletion.");
     }
 
     await chatroomManager.handleChatMessageDeleted({
-      from: (await getClientById(clientId)) as Client,
+      from: (await clientModel.getClientById(clientId)) as clientModel.Client,
       kind: chatroomManager.ChatroomSocketRequests.ChatMessageDeleted,
       args: {
         chatroomId: deletedMessage.chatroomId,

@@ -1,11 +1,11 @@
 import { GameInProgressError, NoGameInProgressError } from "games";
 import { createLogger } from "logger";
 import {
-  SUBSCRIBER,
+  CannotAffordWagerError,
   getClientBlackjackGame,
   startBlackjackGame,
-  CannotAffordWagerError,
-} from "persistence";
+} from "models";
+import { SUBSCRIBER } from "persistence";
 import {
   getActiveBlackjackGameSchema,
   SourcedSocketMessage,

@@ -1,6 +1,6 @@
 import { NextFunction, Response, Request } from "express";
 import { errorResponse, meetsPermissionRequirement } from "helpers";
-import { ClientPermissionLevel, Client } from "persistence";
+import { ClientPermissionLevel, Client } from "models";
 
 export interface AuthenticatedRequest extends Request {
   chatsinoClient: null | Client;

@@ -1,9 +1,9 @@
 import * as config from "config";
 import { createLogger } from "logger";
+import { getClientById } from "models";
 import {
   clearCachedValue,
   getCachedValue,
-  getClientById,
   postgres,
   setCachedValue,
 } from "persistence";

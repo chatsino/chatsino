@@ -2,6 +2,7 @@ import bodyParser from "body-parser";
 import * as config from "config";
 import cookieParser from "cookie-parser";
 import express, { Express, Router } from "express";
+import fileUpload from "express-fileupload";
 import { createServer } from "http";
 import { createLogger } from "logger";
 import * as managers from "managers";
@@ -65,6 +66,7 @@ function applyMiddleware(app: Express) {
     bodyParser.urlencoded({ extended: false }),
     bodyParser.json(),
     cookieParser(config.COOKIE_SECRET),
+    fileUpload(),
     middleware.clientSettingMiddleware,
     middleware.requestLoggingMiddleware,
     middleware.cacheCheckingMiddleware

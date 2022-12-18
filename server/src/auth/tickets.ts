@@ -2,15 +2,9 @@ import * as config from "config";
 import { Request } from "express";
 import { decrypt, encrypt, now } from "helpers";
 import { createLogger } from "logger";
+import { Client, ClientNotFoundError, getClientByIdentifier } from "models";
 import querystring from "node:querystring";
-import {
-  clearCachedValue,
-  Client,
-  ClientNotFoundError,
-  getCachedValue,
-  getClientByIdentifier,
-  setCachedValue,
-} from "persistence";
+import { clearCachedValue, getCachedValue, setCachedValue } from "persistence";
 
 export interface Ticket {
   issuedAt: number;

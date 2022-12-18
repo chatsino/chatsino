@@ -45,7 +45,8 @@ describe("Chat Message Model", () => {
       description: CHANCE.word({ length: 12 }),
     })) as Chatroom;
 
-    await deleteAllChatMessages();
+    await deleteAllChatMessages(chatroomA.id);
+    await deleteAllChatMessages(chatroomB.id);
   });
 
   describe("CRUD", () => {
@@ -112,7 +113,10 @@ describe("Chat Message Model", () => {
           chatroomB.id,
           "Bar"
         );
-        const messages = await readChatMessageList();
+        const messages = await Promise.all([
+          readChatMessageList(chatroomA.id),
+          readChatMessageList(chatroomB.id),
+        ]);
 
         expect(messages).toEqual([messageA, messageB]);
       });
@@ -181,52 +185,23 @@ describe("Chat Message Model", () => {
     });
 
     describe(deleteAllChatMessages.name, () => {
-      it("should remove a collection of all chat messages", async () => {
-        const messageA = await createChatMessage(
-          client.id,
-          chatroomA.id,
-          "Foo"
-        );
-        const messageB = await createChatMessage(
-          client.id,
-          chatroomB.id,
-          "Bar"
-        );
-        const messages = await readChatMessageList();
-
-        expect(messages).toEqual([messageA, messageB]);
-
-        const deletedMessages = await deleteAllChatMessages();
-
-        expect(deletedMessages).toEqual([messageA, messageB]);
-
-        const remainingMessages = await readChatMessageList();
-
-        expect(remainingMessages).toEqual([]);
-      });
-
       it("should remove a collection of all chat messages belonging to a given chatroom", async () => {
         const messageA = await createChatMessage(
           client.id,
           chatroomA.id,
           "Foo"
         );
-        const messageB = await createChatMessage(
-          client.id,
-          chatroomB.id,
-          "Bar"
-        );
-        const messages = await readChatMessageList();
+        const messages = await readChatMessageList(chatroomA.id);
 
-        expect(messages).toEqual([messageA, messageB]);
+        expect(messages).toEqual([messageA]);
 
-        const deletedMessages = await deleteAllChatMessages(chatroomB.id);
+        const deletedMessages = await deleteAllChatMessages(chatroomA.id);
 
-        expect(deletedMessages).toEqual([messageB]);
+        expect(deletedMessages).toEqual([messageA]);
 
-        const remainingMessages = await readChatMessageList();
+        const remainingMessages = await readChatMessageList(chatroomA.id);
 
-        expect(remainingMessages).toEqual([messageA]);
+        expect(remainingMessages).toEqual([]);
       });
     });
   });

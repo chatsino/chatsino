@@ -8,7 +8,8 @@ import {
   NoGameInProgressError,
 } from "games";
 import { createLogger } from "logger";
-import { chargeClient, payClient, postgres } from "persistence";
+import { postgres } from "persistence";
+import { chargeClient, payClient } from "./client.model";
 
 export interface Blackjack {
   clientId: number;

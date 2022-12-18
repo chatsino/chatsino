@@ -5,6 +5,7 @@ import type {
   UploadChangeParam,
   UploadFile,
 } from "antd/es/upload/interface";
+import { makeFileUploadRequest, makeHttpRequest } from "helpers";
 import { useCallback, useState } from "react";
 
 interface Props {
@@ -30,7 +31,26 @@ export function AvatarUpload({ original = "", action }: Props) {
 
   const handleBeforeUpload = (file: UploadFile) => {
     setFile(file);
-    return true;
+    handleUpload(file);
+    return false;
+  };
+
+  const handleUpload = async (toUpload: UploadFile) => {
+    const formData = new FormData();
+
+    formData.append("avatar", toUpload as RcFile);
+
+    setUploading(true);
+
+    try {
+      const result = await makeFileUploadRequest(action, formData);
+
+      console.log({ result });
+    } catch (error) {
+      console.error({ error });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleChange = useCallback((info: UploadChangeParam<UploadFile>) => {

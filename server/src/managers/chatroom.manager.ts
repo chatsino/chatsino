@@ -9,8 +9,8 @@ import {
   readChatMessage,
   readChatMessageList,
   readChatroomList,
-  SUBSCRIBER,
-} from "persistence";
+} from "models";
+import { SUBSCRIBER } from "persistence";
 import {
   chatMessageDeletedSchema,
   chatMessageUpdatedSchema,

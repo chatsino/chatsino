@@ -71,3 +71,6 @@ export const LOGGER_NAMES = {
   SERVER: "Server",
   SOCKET_SERVER: "Socket Server",
 };
+
+// File Uploads
+export const FILE_UPLOAD_DIRECTORY = path.join(__dirname, "../../uploads");

@@ -1,7 +1,7 @@
-import { isCacheHealthy } from "persistence";
 import type { NextFunction, Response } from "express";
-import type { AuthenticatedRequest } from "./authenticated-route";
 import { errorResponse } from "helpers";
+import { isCacheHealthy } from "persistence";
+import type { AuthenticatedRequest } from "./authenticated-route";
 
 export function cacheCheckingMiddleware(
   _: AuthenticatedRequest,

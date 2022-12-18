@@ -6,7 +6,7 @@ import {
   chargeClient,
   ClientPermissionLevel,
   payClient,
-} from "persistence";
+} from "models";
 import { adminChangePermissionSchema, adminPaymentSchema } from "schemas";
 
 export function createAdminRouter() {
