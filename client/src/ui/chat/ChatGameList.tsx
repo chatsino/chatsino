@@ -66,7 +66,6 @@ export function ChatGameList({
                   </span>
                 </Space>
               }
-              description={item.description}
             />
           </List.Item>
         </Link>

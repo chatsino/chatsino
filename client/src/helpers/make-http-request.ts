@@ -1,6 +1,6 @@
 import axiosLib from "axios";
-import { ServerResponse } from "shared";
 import * as config from "config";
+import { ServerResponse } from "shared";
 
 export const axios = axiosLib.create({
   baseURL: config.API_BASE_URL,

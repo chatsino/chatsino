@@ -1,3 +1,5 @@
+import { Chance } from "chance";
+import * as config from "config";
 import {
   createContext,
   PropsWithChildren,
@@ -7,10 +9,8 @@ import {
   useRef,
   useState,
 } from "react";
-import * as config from "config";
 import { useAuthentication } from "./useAuthentication";
 import { useClient } from "./useClient";
-import { Chance } from "chance";
 
 type Response = {
   data?: unknown;

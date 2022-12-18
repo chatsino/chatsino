@@ -74,3 +74,4 @@ export const LOGGER_NAMES = {
 
 // File Uploads
 export const FILE_UPLOAD_DIRECTORY = path.join(__dirname, "../../uploads");
+export const FILE_UPLOAD_URL = "/file";

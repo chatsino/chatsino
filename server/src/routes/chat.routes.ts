@@ -6,18 +6,19 @@ import {
   successResponse,
 } from "helpers";
 import { createLogger } from "logger";
-import path from "path";
 import * as chatroomManager from "managers/chatroom.manager";
 import { AuthenticatedRequest, authenticatedRouteMiddleware } from "middleware";
-import * as clientModel from "models/client.model";
-import * as chatroomModel from "models/chatroom.model";
 import * as chatMessageModel from "models/chat-message.model";
+import * as chatroomModel from "models/chatroom.model";
+import * as clientModel from "models/client.model";
+import path from "path";
 import {
   editChatMessageSchema,
   reactToChatMessageSchema,
   sendChatMessageSchema,
   voteInPollSchema,
 } from "schemas";
+import uuid from "uuid4";
 
 export const CHAT_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.CHAT_ROUTER);
 
@@ -144,14 +145,19 @@ export async function changeChatroomAvatarRoute(
       return errorResponse(res, "Only one avatar may be uploaded.");
     }
 
-    const uploadPath = path.join(config.FILE_UPLOAD_DIRECTORY, avatar.name);
+    const identifier = uuid();
+    const extension = path.extname(avatar.name);
+    const resource = identifier + extension;
+    const uploadPath = path.join(config.FILE_UPLOAD_DIRECTORY, resource);
 
     try {
       await new Promise((resolve, reject) =>
         avatar.mv(uploadPath, (err) => (err ? reject(err) : resolve(undefined)))
       );
 
-      return successResponse(res, "Successfully changed chatroom avatar.");
+      return successResponse(res, "Successfully changed chatroom avatar.", {
+        url: `${config.FILE_UPLOAD_URL}/${resource}`,
+      });
     } catch (error) {
       CHAT_ROUTER_LOGGER.error({ error }, "Failed to upload a file.");
       throw error;

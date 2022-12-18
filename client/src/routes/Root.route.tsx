@@ -128,26 +128,8 @@ function Inner() {
         <div
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
-          <ChatUserList users={users} />
-          <ChatGameList games={games} />
-        </div>
-      </Col>
-      <Col
-        xs={24}
-        lg={14}
-        style={{
-          height: toUniversalVh(85),
-          overflow: "auto",
-        }}
-      >
-        <Outlet />
-      </Col>
-      <Col xs={0} lg={5}>
-        <div
-          style={{ display: "flex", flexDirection: "column", height: "100%" }}
-        >
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <ChatroomList chatrooms={chatrooms} />
+            <ChatUserList users={users} />
           </div>
           <div style={{ flex: 1 }}>
             <Collapse accordion={true} ghost={true}>
@@ -168,6 +150,28 @@ function Inner() {
                 <PurchaseChipsForm onSubmit={() => Promise.resolve()} />
               </Collapse.Panel>
             </Collapse>
+          </div>
+        </div>
+      </Col>
+      <Col
+        xs={24}
+        lg={14}
+        style={{
+          height: toUniversalVh(85),
+          overflow: "auto",
+        }}
+      >
+        <Outlet />
+      </Col>
+      <Col xs={0} lg={5}>
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <ChatroomList chatrooms={chatrooms} />
+          </div>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+            <ChatGameList games={games} />
           </div>
         </div>
       </Col>

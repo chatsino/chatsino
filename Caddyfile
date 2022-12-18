@@ -5,6 +5,13 @@
         reverse_proxy server:3001
     }
 
+    handle /file/* {
+        root * /uploads
+        uri strip_prefix /file
+        try_files {path}
+        file_server
+    }
+
     handle {
 		root * /static
 		try_files {path} /index.html
