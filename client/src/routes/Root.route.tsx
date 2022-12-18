@@ -10,8 +10,8 @@ import {
   useClient,
   useSocket,
   useUniversalVhUnit,
+  useUpdatingChatroomList,
 } from "hooks";
-import { ChatroomListLoaderData } from "loaders";
 import { useEffect, useRef } from "react";
 import { BiCoinStack } from "react-icons/bi";
 import { FaHorse } from "react-icons/fa";
@@ -47,7 +47,7 @@ export function RootRoute() {
 }
 
 function Inner() {
-  const { chatrooms } = useLoaderData() as ChatroomListLoaderData;
+  const { chatrooms } = useUpdatingChatroomList();
   const { validate } = useAuthentication();
   const { client, setClient } = useClient();
   const { initialize } = useSocket();
@@ -124,7 +124,7 @@ function Inner() {
 
   return (
     <Row gutter={20}>
-      <Col xs={0} lg={5}>
+      <Col xs={0} lg={4}>
         <div
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
@@ -155,7 +155,7 @@ function Inner() {
       </Col>
       <Col
         xs={24}
-        lg={14}
+        lg={17}
         style={{
           height: toUniversalVh(85),
           overflow: "auto",
@@ -163,7 +163,7 @@ function Inner() {
       >
         <Outlet />
       </Col>
-      <Col xs={0} lg={5}>
+      <Col xs={0} lg={3}>
         <div
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >

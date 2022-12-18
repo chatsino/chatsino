@@ -154,8 +154,15 @@ export async function changeChatroomAvatarRoute(
       return errorResponse(res, "Only one avatar may be uploaded.");
     }
 
+    // Ensure the client is actually allowed to change the avatar.
     const chatroomId = parseInt(req.params.chatroomId);
     const { id: clientId } = req.chatsinoClient!;
+    const client = (await clientModel.getClientById(
+      clientId
+    )) as clientModel.Client;
+    const chatroom = (await chatroomModel.readChatroom(
+      chatroomId
+    )) as chatroomModel.Chatroom;
     const { can } = await chatroomModel.canClientModifyChatroom(
       clientId,
       chatroomId
@@ -165,26 +172,30 @@ export async function changeChatroomAvatarRoute(
       return errorResponse(res, "You do not have permission to do that.");
     }
 
-    const identifier = uuid();
-    const extension = path.extname(avatar.name);
-    const resource = identifier + extension;
+    // Change the avatar in the database.
+    const resource = uuid() + path.extname(avatar.name);
     const uploadPath = path.join(config.FILE_UPLOAD_DIRECTORY, resource);
-    const uploadUrl = `${config.FILE_UPLOAD_URL}/${resource}`;
-    const { avatar: previousResource } = (await chatroomModel.readChatroom(
-      chatroomId
-    )) as chatroomModel.Chatroom;
-    const previousUploadPath = path.join(
-      config.FILE_UPLOAD_DIRECTORY,
-      previousResource
-    );
-    const successfullyChanged = await chatroomModel.changeChatroomAvatar(
+    const filePath = [config.FILE_UPLOAD_URL, resource].join("/");
+    const updatedChatroom = await chatroomModel.changeChatroomAvatar(
       chatroomId,
-      resource
+      filePath
     );
 
-    if (!successfullyChanged) {
+    if (!updatedChatroom) {
       throw new Error();
     }
+
+    // Move the new avatar to /uploads
+    await new Promise((resolve, reject) =>
+      avatar.mv(uploadPath, (err) => (err ? reject(err) : resolve(undefined)))
+    );
+
+    // Remove the previous avatar from /uploads
+    const previousFilePath = chatroom.avatar;
+    const previousUploadPath = path.join(
+      config.FILE_UPLOAD_DIRECTORY,
+      path.basename(previousFilePath)
+    );
 
     let previousAvatarExists = false;
 
@@ -193,28 +204,21 @@ export async function changeChatroomAvatarRoute(
       previousAvatarExists = true;
     } catch {}
 
-    try {
-      await new Promise((resolve, reject) =>
-        avatar.mv(uploadPath, (err) => (err ? reject(err) : resolve(undefined)))
-      );
-
-      if (previousAvatarExists) {
-        await unlink(previousUploadPath);
-      }
-
-      return successResponse(res, "Successfully changed chatroom avatar.", {
-        url: uploadUrl,
-      });
-    } catch (error) {
-      CHAT_ROUTER_LOGGER.error(
-        { error },
-        "Failed to move new upload; reverting change."
-      );
-
-      await chatroomModel.changeChatroomAvatar(chatroomId, previousResource);
-
-      throw error;
+    if (previousAvatarExists) {
+      await unlink(previousUploadPath);
     }
+
+    await chatroomManager.handleChatroomUpdated({
+      from: client,
+      kind: chatroomManager.ChatroomSocketRequests.ChatroomUpdated,
+      args: {
+        chatroom: updatedChatroom,
+      },
+    });
+
+    return successResponse(res, "Successfully changed chatroom avatar.", {
+      url: filePath,
+    });
   } catch (error) {
     CHAT_ROUTER_LOGGER.error({ error }, "Failed to change chatroom avatar.");
 

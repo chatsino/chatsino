@@ -1,5 +1,5 @@
 import * as config from "config";
-import type { ClientPermissionLevel } from "persistence";
+import type { ClientPermissionLevel } from "models";
 import * as yup from "yup";
 
 export const PASSWORD_MESSAGE = `A password must include a minimum of ${config.MINIMUM_PASSWORD_SIZE} characters.`;
@@ -45,3 +45,11 @@ export const clientSignupSchema = clientSigninSchema.shape({
     })
     .required("Please re-enter your chosen password."),
 });
+
+export const clientChatUserSchema = yup
+  .object({
+    id: yup.number().required(),
+    avatar: yup.string().optional().default(""),
+    username: yup.string().required(),
+  })
+  .required();

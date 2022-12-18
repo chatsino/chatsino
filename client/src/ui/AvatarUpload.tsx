@@ -2,7 +2,7 @@ import { LoadingOutlined } from "@ant-design/icons";
 import { Avatar, message as showMessage, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
 import type { RcFile, UploadFile } from "antd/es/upload/interface";
-import { makeFileUploadRequest, makeFileUrl } from "helpers";
+import { makeFileUploadRequest } from "helpers";
 import { useCallback, useState } from "react";
 
 interface Props {
@@ -11,8 +11,7 @@ interface Props {
 }
 
 export function AvatarUpload({ original = "", action }: Props) {
-  console.log(makeFileUrl(original));
-  const [imageUrl, setImageUrl] = useState(makeFileUrl(original));
+  const [imageUrl, setImageUrl] = useState(original);
   const [uploading, setUploading] = useState(false);
   const handleUpload = useCallback(
     async (file: UploadFile) => {
@@ -27,12 +26,11 @@ export function AvatarUpload({ original = "", action }: Props) {
           url: string;
         };
 
-        setImageUrl(makeFileUrl(url));
+        setImageUrl(url);
 
         showMessage.success("Avatar changed.");
       } catch (error) {
         console.error({ error });
-
         showMessage.error("Unabled to change avatar.");
       } finally {
         setUploading(false);

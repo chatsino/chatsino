@@ -3,14 +3,14 @@ import { Button, Divider, Space, Typography } from "antd";
 import { useClient } from "hooks";
 import { BiCoinStack } from "react-icons/bi";
 import { Link } from "react-router-dom";
-import { InlineClient } from "./InlineClient";
+import { ClientAvatarStrip } from "./ClientAvatarStrip";
 
 export function CurrentClientStrip() {
   const { client } = useClient();
 
   return client ? (
     <Space>
-      <InlineClient client={client} link="/me" />
+      <ClientAvatarStrip client={client} link="/me" size="small" />
       <Divider type="vertical" />
       <Typography.Text>
         <strong style={{ marginRight: "1rem" }}>Balance:</strong> {client.chips}{" "}

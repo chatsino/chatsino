@@ -14,6 +14,7 @@ import { SUBSCRIBER } from "persistence";
 import {
   chatMessageDeletedSchema,
   chatMessageUpdatedSchema,
+  chatroomUpdatedSchema,
   listChatroomMessagesSchema,
   newChatMessageSchema,
   sendChatMessageSchema,
@@ -30,6 +31,7 @@ export enum ChatroomSocketRequests {
   NewChatMessage = "new-chat-message",
   ChatMessageUpdated = "chat-message-updated",
   ChatMessageDeleted = "chat-message-deleted",
+  ChatroomUpdated = "chatroom-updated",
 }
 
 export const CHATROOM_MANAGER_LOGGER = createLogger(
@@ -62,45 +64,13 @@ export function initializeChatroomManager() {
     ChatroomSocketRequests.ChatMessageDeleted,
     handleChatMessageDeleted
   );
+  SUBSCRIBER.subscribe(
+    ChatroomSocketRequests.ChatroomUpdated,
+    handleChatroomUpdated
+  );
 }
 
-export async function handleSendChatMessage(messageString: string) {
-  const { kind, args, from } = JSON.parse(
-    messageString
-  ) as SourcedSocketMessage;
-
-  try {
-    const { chatroomId, message, poll } = await sendChatMessageSchema.validate(
-      args
-    );
-    const { can, reason } = await canClientMessageChatroom(from.id, chatroomId);
-
-    if (!can) {
-      throw new CannotMessageChatroomError(reason);
-    }
-
-    const chatMessage = await createChatMessage(
-      from.id,
-      chatroomId,
-      message,
-      poll
-    );
-
-    if (!chatMessage) {
-      throw new SendChatMessageFailedError();
-    }
-
-    return SocketServer.success(from.id, kind, chatMessage);
-  } catch (error) {
-    return handleChatroomErrors(
-      from.id,
-      kind,
-      error,
-      "Failed to send message."
-    );
-  }
-}
-
+// #region Chatrooms
 export async function handleListChatrooms(messageString: string) {
   const { kind, from } = JSON.parse(messageString) as SourcedSocketMessage;
 
@@ -157,50 +127,88 @@ export async function handleListChatroomMessages(messageString: string) {
   }
 }
 
-export async function handleVoteInPoll(messageString: string) {
+export async function handleChatroomUpdated(
+  sourcedSocketMessage: SourcedSocketMessage
+): Promise<number | undefined>;
+export async function handleChatroomUpdated(
+  sourcedSocketMessage: string
+): Promise<number | undefined>;
+export async function handleChatroomUpdated(
+  sourcedSocketMessage: string | SourcedSocketMessage
+) {
+  let socketMessage: SourcedSocketMessage;
+
+  if (typeof sourcedSocketMessage === "string") {
+    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
+  } else {
+    socketMessage = sourcedSocketMessage;
+  }
+
+  const { from, kind, args } = socketMessage;
+
+  try {
+    const { chatroom } = await chatroomUpdatedSchema.validate(args);
+
+    await SocketServer.broadcastToSubscription(
+      `Chatrooms/${chatroom.id}/Updated`,
+      {
+        chatroom,
+      }
+    );
+
+    return SocketServer.success(from.id, kind, {
+      message: `Alerted clients in Chatroom#${chatroom.id} that the chatroom was updated.`,
+    });
+  } catch (error) {
+    CHATROOM_MANAGER_LOGGER.error(
+      { error },
+      "Failed to handle updated chatroom."
+    );
+
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      `Failed to alert clients to an updated chatroom.`
+    );
+  }
+}
+// #endregion
+
+// #region Chat Messages
+export async function handleSendChatMessage(messageString: string) {
   const { kind, args, from } = JSON.parse(
     messageString
   ) as SourcedSocketMessage;
 
   try {
-    const { messageId, response } = await voteInPollSchema.validate(args);
-    const messageData = await readChatMessage(messageId);
-
-    if (!messageData) {
-      throw new Error();
-    }
-
-    const { message } = messageData;
-
-    const { can, reason } = await canClientMessageChatroom(
-      from.id,
-      message.chatroomId
+    const { chatroomId, message, poll } = await sendChatMessageSchema.validate(
+      args
     );
+    const { can, reason } = await canClientMessageChatroom(from.id, chatroomId);
 
     if (!can) {
-      throw new CannotVoteInPollError(reason);
+      throw new CannotMessageChatroomError(reason);
     }
 
-    const successfullyVoted = await clientVotedInPoll(
+    const chatMessage = await createChatMessage(
       from.id,
-      messageId,
-      response
+      chatroomId,
+      message,
+      poll
     );
 
-    if (!successfullyVoted) {
-      throw new CannotVoteInPollError();
+    if (!chatMessage) {
+      throw new SendChatMessageFailedError();
     }
 
-    return SocketServer.success(from.id, kind, {
-      success: successfullyVoted,
-      chatroomId: message.chatroomId,
-    });
+    return SocketServer.success(from.id, kind, chatMessage);
   } catch (error) {
     return handleChatroomErrors(
       from.id,
       kind,
       error,
-      "Failed to vote in poll."
+      "Failed to send message."
     );
   }
 }
@@ -347,6 +355,55 @@ export async function handleChatMessageDeleted(
     );
   }
 }
+
+export async function handleVoteInPoll(messageString: string) {
+  const { kind, args, from } = JSON.parse(
+    messageString
+  ) as SourcedSocketMessage;
+
+  try {
+    const { messageId, response } = await voteInPollSchema.validate(args);
+    const messageData = await readChatMessage(messageId);
+
+    if (!messageData) {
+      throw new Error();
+    }
+
+    const { message } = messageData;
+
+    const { can, reason } = await canClientMessageChatroom(
+      from.id,
+      message.chatroomId
+    );
+
+    if (!can) {
+      throw new CannotVoteInPollError(reason);
+    }
+
+    const successfullyVoted = await clientVotedInPoll(
+      from.id,
+      messageId,
+      response
+    );
+
+    if (!successfullyVoted) {
+      throw new CannotVoteInPollError();
+    }
+
+    return SocketServer.success(from.id, kind, {
+      success: successfullyVoted,
+      chatroomId: message.chatroomId,
+    });
+  } catch (error) {
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      "Failed to vote in poll."
+    );
+  }
+}
+// #endregion
 
 export function handleChatroomErrors(
   to: number,

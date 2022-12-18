@@ -1,7 +1,7 @@
 import Chance from "chance";
-import sampleAvatarA from "assets/avatars/sampleA.png";
-import sampleAvatarB from "assets/avatars/sampleB.png";
-import sampleAvatarC from "assets/avatars/sampleC.png";
+import sampleAvatarA from "assets/sample-avatar-a.png";
+import sampleAvatarB from "assets/sample-avatar-b.png";
+import sampleAvatarC from "assets/sample-avatar-c.png";
 
 const CHANCE = new Chance();
 

@@ -2,6 +2,7 @@ import { PlusOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Input, List, Tooltip, Typography } from "antd";
 import { BsDoorOpen } from "react-icons/bs";
 import { Link, useParams } from "react-router-dom";
+import { ChatroomAvatarStrip } from "./ChatroomAvatarStrip";
 
 export const CHATROOM_DESCRIPTION_TRUNCATION_LIMIT = 40;
 
@@ -73,7 +74,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
                         : undefined
                     }
                   >
-                    {item.title}
+                    <ChatroomAvatarStrip chatroom={item} size="small" />
                   </Typography.Text>
                 }
               />

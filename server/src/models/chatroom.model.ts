@@ -444,11 +444,17 @@ export async function changeChatroomAvatar(chatroomId: number, url: string) {
       avatar: url,
     });
 
-    return true;
+    const updatedChatroomData = await readHydratedChatroom(chatroomId);
+
+    if (!updatedChatroomData) {
+      throw new Error();
+    }
+
+    return updatedChatroomData.chatroom;
   } catch (error) {
     CHATROOM_MODEL_LOGGER.error({ error }, "Failed to change chatroom avatar.");
 
-    return false;
+    return null;
   }
 }
 

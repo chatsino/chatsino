@@ -1,3 +1,4 @@
+export * from "./updaters";
 export * from "./useAuthentication";
 export * from "./useBlackjack";
 export * from "./useChatAutoscroll";

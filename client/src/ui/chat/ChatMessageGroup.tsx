@@ -1,6 +1,7 @@
-import { Avatar, List, Typography } from "antd";
+import { Button, List, Typography } from "antd";
 import { useClient } from "hooks";
 import { BsPinAngle } from "react-icons/bs";
+import { ClientAvatarStrip } from "ui/client";
 import { ChatMessageMenu } from "./ChatMessageMenu";
 import { groupMessages } from "./group-messages";
 
@@ -29,22 +30,13 @@ export function ChatMessageGroup({
       style={{ borderBottom: "1px solid #424242", position: "relative" }}
     >
       <List.Item.Meta
-        avatar={
-          <Avatar
-            src={messageGroup.author.avatar}
-            onClick={() => onMentionUser(messageGroup.author.username)}
-            style={{ cursor: "pointer" }}
-          />
-        }
         title={
-          <Typography.Text
-            role="button"
-            strong={true}
+          <Button
+            type="text"
             onClick={() => onMentionUser(messageGroup.author.username)}
-            style={{ cursor: "pointer" }}
           >
-            {messageGroup.author.username}
-          </Typography.Text>
+            <ClientAvatarStrip client={messageGroup.author} link={false} />
+          </Button>
         }
         description={
           <List bordered={false} split={false}>
