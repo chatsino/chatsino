@@ -38,6 +38,7 @@ export const CLIENT_CACHE_TTL_SECONDS = 60 * 3;
 export const CHATROOM_CACHE_KEY = "Chatroom";
 export const CHATROOM_LIST_CACHE_KEY = "ChatroomList";
 export const CAN_CLIENT_MESSAGE_CHATROOM_CACHE_KEY = "CanClientMessageChatroom";
+export const CAN_CLIENT_MODIFY_CHATROOM_CACHE_KEY = "CanClientModifyChatroom";
 export const CHATROOM_CACHE_TTL_SECONDS = 60 * 3;
 
 export const CHAT_MESSAGE_CACHE_KEY = "ChatMessage";

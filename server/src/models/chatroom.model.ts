@@ -1,4 +1,5 @@
 import * as config from "config";
+import { meetsPermissionRequirement } from "helpers";
 import { createLogger } from "logger";
 import {
   clearCachedValue,
@@ -6,6 +7,7 @@ import {
   postgres,
   setCachedValue,
 } from "persistence";
+import { getClientById } from "./client.model";
 
 export interface Chatroom {
   id: number;
@@ -436,6 +438,20 @@ export async function whitelistToChatroom(
   }
 }
 
+export async function changeChatroomAvatar(chatroomId: number, url: string) {
+  try {
+    await updateChatroom(chatroomId, {
+      avatar: url,
+    });
+
+    return true;
+  } catch (error) {
+    CHATROOM_MODEL_LOGGER.error({ error }, "Failed to change chatroom avatar.");
+
+    return false;
+  }
+}
+
 export async function canClientMessageChatroom(
   clientId: number,
   chatroomId: number,
@@ -488,6 +504,53 @@ export async function canClientMessageChatroom(
     return {
       can: false,
       reason: "An error occurred.",
+      cached: false,
+    };
+  }
+}
+
+export async function canClientModifyChatroom(
+  clientId: number,
+  chatroomId: number
+) {
+  try {
+    const cached = await CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.read(
+      clientId,
+      chatroomId
+    );
+
+    if (cached != null) {
+      return {
+        can: cached,
+        cached: true,
+      };
+    } else {
+      const client = await getClientById(clientId);
+      const chatroom = await readChatroom(chatroomId);
+      const isOwnChatroom = Boolean(
+        client && chatroom && client.id === chatroom.createdBy
+      );
+      const isAdministrator = Boolean(
+        client &&
+          meetsPermissionRequirement(client.permissionLevel, "admin:limited")
+      );
+      const can = isOwnChatroom || isAdministrator;
+
+      CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.cache(
+        clientId,
+        chatroomId,
+        can
+      );
+
+      return {
+        can,
+        cached: false,
+      };
+    }
+  } catch (error) {
+    return {
+      can: false,
+      cached: false,
     };
   }
 }
@@ -573,6 +636,58 @@ export const CHATROOM_CACHE = {
 
         if (cachedChatroomId === chatroomId) {
           CHATROOM_CACHE.CAN_CLIENT_MESSAGE_CHATROOM.clear(
+            cachedClientId,
+            cachedChatroomId
+          );
+        }
+      }
+    },
+  },
+  CAN_CLIENT_MODIFY_CHATROOM: {
+    cached: [] as string[],
+    key: (clientId: number, chatroomId: number) =>
+      [config.CAN_CLIENT_MODIFY_CHATROOM_CACHE_KEY, clientId, chatroomId].join(
+        "/"
+      ),
+    cache: (clientId: number, chatroomId: number, can: boolean) => {
+      const key = CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.key(
+        clientId,
+        chatroomId
+      );
+
+      CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.cached.push(key);
+
+      return setCachedValue(
+        key,
+        JSON.stringify(can),
+        config.CHATROOM_CACHE_TTL_SECONDS
+      );
+    },
+    read: (clientId: number, chatroomId: number) =>
+      getCachedValue(
+        CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.key(clientId, chatroomId)
+      ) as Promise<null | boolean>,
+    clear: (clientId: number, chatroomId: number) => {
+      const key = CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.key(
+        clientId,
+        chatroomId
+      );
+
+      CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.cached =
+        CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.cached.filter(
+          (each) => each !== key
+        );
+
+      return clearCachedValue(key);
+    },
+    clearAllClients: (chatroomId: number) => {
+      for (const [_, _cachedClientId, _cachedChatroomId] of CHATROOM_CACHE
+        .CAN_CLIENT_MODIFY_CHATROOM.cached) {
+        const cachedClientId = parseInt(_cachedClientId);
+        const cachedChatroomId = parseInt(_cachedChatroomId);
+
+        if (cachedChatroomId === chatroomId) {
+          CHATROOM_CACHE.CAN_CLIENT_MODIFY_CHATROOM.clear(
             cachedClientId,
             cachedChatroomId
           );

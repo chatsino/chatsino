@@ -1,4 +1,5 @@
 import * as config from "config";
+import { stat, unlink } from "fs/promises";
 import { Response, Router } from "express";
 import {
   errorResponse,
@@ -27,7 +28,11 @@ export function createChatRouter() {
 
   chatRouter.get("/chatrooms", getChatroomListRoute);
   chatRouter.get("/chatrooms/:chatroomId", getChatroomRoute);
-  chatRouter.post("/chatrooms/:chatroomId/avatar", changeChatroomAvatarRoute);
+  chatRouter.post(
+    "/chatrooms/:chatroomId/avatar",
+    authenticatedRouteMiddleware("user"),
+    changeChatroomAvatarRoute
+  );
   chatRouter.post(
     "/chatrooms/:chatroomId/messages",
     authenticatedRouteMiddleware("user"),
@@ -135,6 +140,10 @@ export async function changeChatroomAvatarRoute(
   res: Response
 ) {
   try {
+    if (!req.params.chatroomId) {
+      return errorResponse(res, "Parameter `chatroomId` is required.");
+    }
+
     if (!req.files || Object.keys(req.files).length === 0) {
       return errorResponse(res, "No files were uploaded.");
     }
@@ -145,24 +154,70 @@ export async function changeChatroomAvatarRoute(
       return errorResponse(res, "Only one avatar may be uploaded.");
     }
 
+    const chatroomId = parseInt(req.params.chatroomId);
+    const { id: clientId } = req.chatsinoClient!;
+    const { can } = await chatroomModel.canClientModifyChatroom(
+      clientId,
+      chatroomId
+    );
+
+    if (!can) {
+      return errorResponse(res, "You do not have permission to do that.");
+    }
+
     const identifier = uuid();
     const extension = path.extname(avatar.name);
     const resource = identifier + extension;
     const uploadPath = path.join(config.FILE_UPLOAD_DIRECTORY, resource);
+    const uploadUrl = `${config.FILE_UPLOAD_URL}/${resource}`;
+    const { avatar: previousResource } = (await chatroomModel.readChatroom(
+      chatroomId
+    )) as chatroomModel.Chatroom;
+    const previousUploadPath = path.join(
+      config.FILE_UPLOAD_DIRECTORY,
+      previousResource
+    );
+    const successfullyChanged = await chatroomModel.changeChatroomAvatar(
+      chatroomId,
+      resource
+    );
+
+    if (!successfullyChanged) {
+      throw new Error();
+    }
+
+    let previousAvatarExists = false;
+
+    try {
+      await stat(previousUploadPath);
+      previousAvatarExists = true;
+    } catch {}
 
     try {
       await new Promise((resolve, reject) =>
         avatar.mv(uploadPath, (err) => (err ? reject(err) : resolve(undefined)))
       );
 
+      if (previousAvatarExists) {
+        await unlink(previousUploadPath);
+      }
+
       return successResponse(res, "Successfully changed chatroom avatar.", {
-        url: `${config.FILE_UPLOAD_URL}/${resource}`,
+        url: uploadUrl,
       });
     } catch (error) {
-      CHAT_ROUTER_LOGGER.error({ error }, "Failed to upload a file.");
+      CHAT_ROUTER_LOGGER.error(
+        { error },
+        "Failed to move new upload; reverting change."
+      );
+
+      await chatroomModel.changeChatroomAvatar(chatroomId, previousResource);
+
       throw error;
     }
   } catch (error) {
+    CHAT_ROUTER_LOGGER.error({ error }, "Failed to change chatroom avatar.");
+
     return errorResponse(res, "Unable to change chatroom avatar.");
   }
 }

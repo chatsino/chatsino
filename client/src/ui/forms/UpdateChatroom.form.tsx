@@ -56,7 +56,10 @@ export function UpdateChatroomForm({ chatroom, onSubmit, onCancel }: Props) {
         <Row gutter={12}>
           <Col xs={24} sm={4}>
             <Form.Item label="Avatar">
-              <AvatarUpload action={`/chat/chatrooms/${chatroom.id}/avatar`} />
+              <AvatarUpload
+                original={chatroom.avatar}
+                action={`/chat/chatrooms/${chatroom.id}/avatar`}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} sm={20}>

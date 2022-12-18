@@ -1,10 +1,9 @@
-import * as config from "config";
+import { LoadingOutlined } from "@ant-design/icons";
 import { Avatar, message as showMessage, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
 import type { RcFile, UploadFile } from "antd/es/upload/interface";
-import { makeFileUploadRequest } from "helpers";
-import { useState } from "react";
-import { LoadingOutlined } from "@ant-design/icons";
+import { makeFileUploadRequest, makeFileUrl } from "helpers";
+import { useCallback, useState } from "react";
 
 interface Props {
   original?: string;
@@ -12,44 +11,44 @@ interface Props {
 }
 
 export function AvatarUpload({ original = "", action }: Props) {
-  const [imageUrl, setImageUrl] = useState(original);
+  console.log(makeFileUrl(original));
+  const [imageUrl, setImageUrl] = useState(makeFileUrl(original));
   const [uploading, setUploading] = useState(false);
+  const handleUpload = useCallback(
+    async (file: UploadFile) => {
+      const formData = new FormData();
 
-  const handleBeforeUpload = (file: UploadFile) => {
-    handleUpload(file);
-    return false;
-  };
+      formData.append("avatar", file as RcFile);
 
-  const handleUpload = async (toUpload: UploadFile) => {
-    const formData = new FormData();
+      setUploading(true);
 
-    formData.append("avatar", toUpload as RcFile);
+      try {
+        const { url } = (await makeFileUploadRequest(action, formData)) as {
+          url: string;
+        };
 
-    setUploading(true);
+        setImageUrl(makeFileUrl(url));
 
-    try {
-      const { url } = (await makeFileUploadRequest(action, formData)) as {
-        url: string;
-      };
+        showMessage.success("Avatar changed.");
+      } catch (error) {
+        console.error({ error });
 
-      setImageUrl(`${config.FILE_UPLOAD_URL}/${url}`);
+        showMessage.error("Unabled to change avatar.");
+      } finally {
+        setUploading(false);
+      }
 
-      showMessage.success("Chatroom avatar changed.");
-    } catch (error) {
-      console.error({ error });
-
-      showMessage.error("Unabled to change chatroom avatar.");
-    } finally {
-      setUploading(false);
-    }
-  };
+      return false;
+    },
+    [action]
+  );
 
   return (
     <ImgCrop shape="round" rotate={true}>
       <Upload
         listType="picture-card"
         showUploadList={false}
-        beforeUpload={handleBeforeUpload}
+        beforeUpload={handleUpload}
         disabled={uploading}
       >
         {uploading ? (
