@@ -44,11 +44,13 @@ export function ChatInput({
   useEffect(() => {
     if (draftUpdate) {
       const draft = form.getFieldValue("draft");
-      form.setFieldValue("draft", `${draft} ${draftUpdate} `);
+      const updatedDraft =
+        draft.length === 0 ? `${draftUpdate} ` : `${draft} ${draftUpdate} `;
+      form.setFieldValue("draft", updatedDraft);
       clearDraftUpdate();
       inputRef.current?.focus();
     }
-  }, [draftUpdate, clearDraftUpdate]);
+  }, [form, draftUpdate, clearDraftUpdate]);
 
   return (
     <>

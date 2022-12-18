@@ -66,7 +66,7 @@ export function ChatMessageList({
     return setShowingUsersDrawer((prev) => !prev);
   }
 
-  function onMentionUser(username: string) {
+  function mentionUser(username: string) {
     setDraftUpdate(`@${username}`);
   }
 
@@ -177,7 +177,7 @@ export function ChatMessageList({
               <List.Item key={key(messageGroup)}>
                 <ChatMessageGroup
                   messageGroup={messageGroup}
-                  onMentionUser={onMentionUser}
+                  onMentionUser={mentionUser}
                   onPinMessage={onPinMessage}
                   onDeleteMessage={onDeleteMessage}
                 />

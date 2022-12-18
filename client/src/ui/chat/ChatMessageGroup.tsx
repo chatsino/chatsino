@@ -2,7 +2,6 @@ import { Avatar, List, Typography } from "antd";
 import { useClient } from "hooks";
 import { BsPinAngle } from "react-icons/bs";
 import { ChatMessageMenu } from "./ChatMessageMenu";
-import { formatMessageTimestamp } from "./format-message-timestamp";
 import { groupMessages } from "./group-messages";
 
 export function ChatMessageGroup({
@@ -30,8 +29,23 @@ export function ChatMessageGroup({
       style={{ borderBottom: "1px solid #424242", position: "relative" }}
     >
       <List.Item.Meta
-        avatar={<Avatar src={messageGroup.author.avatar} />}
-        title={messageGroup.author.username}
+        avatar={
+          <Avatar
+            src={messageGroup.author.avatar}
+            onClick={() => onMentionUser(messageGroup.author.username)}
+            style={{ cursor: "pointer" }}
+          />
+        }
+        title={
+          <Typography.Text
+            role="button"
+            strong={true}
+            onClick={() => onMentionUser(messageGroup.author.username)}
+            style={{ cursor: "pointer" }}
+          >
+            {messageGroup.author.username}
+          </Typography.Text>
+        }
         description={
           <List bordered={false} split={false}>
             {messageGroup.messages.map((message) => (
@@ -54,21 +68,13 @@ export function ChatMessageGroup({
                 }
               >
                 <List.Item.Meta
-                  title={
+                  description={
                     <Typography.Paragraph
                       key={message.id}
                       style={{ marginRight: "1rem" }}
                     >
                       {message.content}
                     </Typography.Paragraph>
-                  }
-                  description={
-                    <Typography.Text
-                      type="secondary"
-                      style={{ display: "block", textAlign: "right" }}
-                    >
-                      <em>{formatMessageTimestamp(message)}</em>
-                    </Typography.Text>
                   }
                 />
               </List.Item>
