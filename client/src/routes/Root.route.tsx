@@ -1,16 +1,19 @@
-import { Col, Divider, Row } from "antd";
+import { LockFilled } from "@ant-design/icons";
+import { Col, Collapse, Row } from "antd";
+import { toUniversalVh } from "helpers";
 import {
-  ClientProvider,
   ChatroomProvider,
+  ClientProvider,
   SocketProvider,
   useAuthentication,
-  useClient,
   useChatrooms,
+  useClient,
   useSocket,
   useUniversalVhUnit,
 } from "hooks";
 import { ChatroomListLoaderData } from "loaders";
 import { useEffect, useRef } from "react";
+import { BiCoinStack } from "react-icons/bi";
 import { FaHorse } from "react-icons/fa";
 import {
   GiCardAceSpades,
@@ -121,20 +124,48 @@ function Inner() {
 
   return (
     <Row gutter={20}>
-      <Col xs={0} lg={4}>
-        <ChatUserList users={users} />
-        <Divider />
-        <ChatGameList games={games} />
+      <Col xs={0} lg={5}>
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <ChatUserList users={users} />
+          <ChatGameList games={games} />
+        </div>
       </Col>
-      <Col xs={24} lg={16}>
+      <Col
+        xs={24}
+        lg={14}
+        style={{
+          height: toUniversalVh(85),
+          overflow: "auto",
+        }}
+      >
         <Outlet />
       </Col>
-      <Col xs={0} lg={4}>
-        <ChatroomList chatrooms={chatrooms} />
-        <Divider />
-        <JoinPrivateRoomForm onSubmit={() => Promise.resolve()} />
-        <Divider />
-        <PurchaseChipsForm onSubmit={() => Promise.resolve()} />
+      <Col xs={0} lg={5}>
+        <div
+          style={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <ChatroomList chatrooms={chatrooms} />
+          <Collapse accordion={true} ghost={true}>
+            <Collapse.Panel
+              key="JoinPrivateRoomForm"
+              header="Join private room"
+              extra={<LockFilled />}
+              showArrow={false}
+            >
+              <JoinPrivateRoomForm onSubmit={() => Promise.resolve()} />
+            </Collapse.Panel>
+            <Collapse.Panel
+              key="PurchaseChipsForm"
+              header="Purchase chips"
+              extra={<BiCoinStack />}
+              showArrow={false}
+            >
+              <PurchaseChipsForm onSubmit={() => Promise.resolve()} />
+            </Collapse.Panel>
+          </Collapse>
+        </div>
       </Col>
     </Row>
   );

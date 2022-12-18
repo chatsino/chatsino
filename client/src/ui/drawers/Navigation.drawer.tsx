@@ -1,7 +1,7 @@
 import { Drawer, Menu, Typography } from "antd";
 import { useNavigation } from "hooks";
 import { useNavigate } from "react-router-dom";
-import { CurrentClientStrip } from "../CurrentClientStrip";
+import { CurrentClientStrip } from "../client";
 
 export function NavigationDrawer({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();

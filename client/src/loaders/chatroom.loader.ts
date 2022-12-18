@@ -14,10 +14,6 @@ export interface ChatroomLoaderData {
   deleteMessage(messageId: number): Promise<unknown>;
 }
 
-export interface ChatroomListLoaderData {
-  chatrooms: ChatroomData[];
-}
-
 export async function chatroomLoader(
   loader: LoaderFunctionArgs
 ): Promise<ChatroomLoaderData> {
@@ -86,14 +82,4 @@ export async function chatroomLoader(
     console.error({ error });
     throw redirect("/chat");
   }
-}
-
-export async function chatroomListLoader(): Promise<ChatroomListLoaderData> {
-  const { chatrooms } = (await makeHttpRequest("get", "/chat/chatrooms")) as {
-    chatrooms: ChatroomData[];
-  };
-
-  return {
-    chatrooms,
-  };
 }

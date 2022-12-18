@@ -20,6 +20,7 @@ export function ChatGameList({
 
   return (
     <List
+      id="ChatGameList"
       bordered={true}
       dataSource={sortedGames}
       header={
@@ -70,6 +71,7 @@ export function ChatGameList({
           </List.Item>
         </Link>
       )}
+      style={{ flex: 1 }}
     />
   );
 }

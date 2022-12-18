@@ -1,6 +1,5 @@
-import { Button, Card, Form, Input, Select } from "antd";
+import { Button, Form, Input, Select } from "antd";
 import { useFormFields } from "hooks";
-import { BiCoinStack } from "react-icons/bi";
 import { purchaseChipsSchema } from "schemas";
 
 interface Props {
@@ -37,21 +36,7 @@ export function PurchaseChipsForm({ onSubmit }: Props) {
   }
 
   return (
-    <Card
-      title="Purchase chips"
-      extra={<BiCoinStack />}
-      actions={[
-        <Button
-          key="purchase"
-          type="primary"
-          size="middle"
-          block={true}
-          onClick={form.submit}
-        >
-          Purchase
-        </Button>,
-      ]}
-    >
+    <>
       <Form
         form={form}
         name="basic"
@@ -75,6 +60,9 @@ export function PurchaseChipsForm({ onSubmit }: Props) {
           </Select>
         </Form.Item>
       </Form>
-    </Card>
+      <Button type="primary" size="middle" block={true} onClick={form.submit}>
+        Purchase
+      </Button>
+    </>
   );
 }

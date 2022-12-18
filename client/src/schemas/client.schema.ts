@@ -9,6 +9,7 @@ export type ClientPermissionLevel =
 
 export interface SafeClient {
   id: number;
+  avatar: string;
   username: string;
   permissionLevel: ClientPermissionLevel;
   chips: number;

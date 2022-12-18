@@ -1,18 +1,15 @@
-import { CloseOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
 import {
-  Button,
-  Divider,
-  Empty,
-  Grid,
-  Input,
-  List,
-  Space,
-  Typography,
-} from "antd";
+  CloseOutlined,
+  SearchOutlined,
+  SettingOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import { Button, Empty, Grid, Input, List, Space, Typography } from "antd";
 import { toUniversalVh } from "helpers";
 import { useChatAutoscroll, useChatSearch } from "hooks";
 import cloneDeep from "lodash.clonedeep";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import key from "weak-key";
 import { ChatroomDrawer, UserListDrawer } from "../drawers";
 import { ChatInput } from "./ChatInput";
@@ -79,7 +76,6 @@ export function ChatMessageList({
         bordered={true}
         itemLayout="vertical"
         style={{
-          transition: "height 0.2s ease-in-out",
           height: toUniversalVh(85),
           overflow: "auto",
         }}
@@ -136,30 +132,37 @@ export function ChatMessageList({
                 {onMobile && (
                   <Button
                     type="text"
-                    icon={<UserOutlined style={{ color: "#f5f5f5" }} />}
+                    icon={<UserOutlined />}
                     onClick={toggleUserListDrawer}
                   />
                 )}
+                <Link to={`/chat/${chatroom.id}/settings`}>
+                  <Button type="text" icon={<SettingOutlined />} />
+                </Link>
               </Space>
             </div>
             {search.isSearching && (
-              <Divider orientation="right">
-                <Typography.Text type="secondary">
-                  <em style={{ marginRight: "1rem" }}>
-                    Searching for messages in #{chatroom.title} containing "
-                    {search.query}"
-                  </em>
-                  {search.noResults ? (
-                    <>(No results found.)</>
-                  ) : (
-                    <>
-                      ({search.results.length}{" "}
-                      {search.results.length === 1 ? "result" : "results"}{" "}
-                      found.)
-                    </>
-                  )}
-                </Typography.Text>
-              </Divider>
+              <Typography.Text
+                type="secondary"
+                style={{
+                  display: "block",
+                  textAlign: "right",
+                  marginTop: "0.5rem",
+                }}
+              >
+                <em style={{ marginRight: "1rem" }}>
+                  Searching for messages in #{chatroom.title} containing "
+                  {search.query}"
+                </em>
+                {search.noResults ? (
+                  <>(No results found.)</>
+                ) : (
+                  <>
+                    ({search.results.length}{" "}
+                    {search.results.length === 1 ? "result" : "results"} found.)
+                  </>
+                )}
+              </Typography.Text>
             )}
           </>
         }

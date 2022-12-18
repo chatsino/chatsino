@@ -2,12 +2,14 @@ import {
   chatRedirectLoader,
   chatroomListLoader,
   chatroomLoader,
+  chatroomSettingsLoader,
   requireAdminLoader,
   requireClientLoader,
 } from "loaders";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { AdminRoute } from "./Admin.route";
 import { ChatroomRoute } from "./Chatroom.route";
+import { ChatroomSettingsRoute } from "./ChatroomSettings.route";
 import { ErrorRoute } from "./Error.route";
 import {
   BlackjackRoute,
@@ -46,6 +48,11 @@ export const router = createBrowserRouter([
             path: ":chatroomId",
             loader: chatroomLoader,
             element: <ChatroomRoute />,
+          },
+          {
+            path: ":chatroomId/settings",
+            loader: chatroomSettingsLoader,
+            element: <ChatroomSettingsRoute />,
           },
         ],
       },

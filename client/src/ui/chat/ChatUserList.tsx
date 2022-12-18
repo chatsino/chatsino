@@ -1,6 +1,5 @@
 import { SearchOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Input, List, Typography } from "antd";
-import { toUniversalVh } from "helpers";
 import { Link } from "react-router-dom";
 
 export function ChatUserList({ users }: { users: ChatUserData[] }) {
@@ -10,6 +9,7 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
 
   return (
     <List
+      id="ChatUserList"
       itemLayout="vertical"
       bordered={true}
       dataSource={sortedUsers}
@@ -50,8 +50,8 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
         </Link>
       )}
       style={{
-        height: toUniversalVh(35),
-        overflow: "auto",
+        flex: 1,
+        marginBottom: "1rem",
       }}
     />
   );

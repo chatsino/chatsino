@@ -1,2 +1,4 @@
-export * from "./chat.loader";
+export * from "./chatroom-list.loader";
+export * from "./chatroom-settings.loader";
+export * from "./chatroom.loader";
 export * from "./client.loader";

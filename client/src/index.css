@@ -15,28 +15,16 @@ body {
   min-height: stretch;
 }
 
-.ant-list-vertical {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-.ant-spin-nested-loading {
-  overflow: auto;
-}
-
-.ant-list-split .ant-list-item {
-  border-block-end: none;
-}
-
 * {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 
-*::-webkit-scrollbar { 
-  display: none;  /* Safari and Chrome */
+*::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }
+
+/* #region Antd Overrides */
 
 .ant-btn {
   text-transform: uppercase !important;
@@ -70,3 +58,19 @@ textarea.ant-input {
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
 }
+
+.ant-list-vertical {
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-spin-nested-loading {
+  overflow: auto;
+  flex: 1;
+}
+
+.ant-list-split .ant-list-item {
+  border-block-end: none;
+}
+
+/* #endregion */

@@ -1,6 +1,5 @@
 import { PlusOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
 import { Button, Input, List, Tooltip, Typography } from "antd";
-import { toUniversalVh } from "helpers";
 import { BsDoorOpen } from "react-icons/bs";
 import { Link, useParams } from "react-router-dom";
 
@@ -11,6 +10,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
 
   return (
     <List
+      id="ChatroomList"
       itemLayout="vertical"
       bordered={true}
       dataSource={chatrooms}
@@ -82,8 +82,8 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
         </Link>
       )}
       style={{
-        height: toUniversalVh(35),
-        overflow: "auto",
+        flex: 1,
+        marginBottom: "1rem",
       }}
     />
   );

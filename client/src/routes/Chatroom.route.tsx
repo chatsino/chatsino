@@ -5,9 +5,8 @@ import { useLoaderData } from "react-router-dom";
 import { ChatMessageList } from "ui";
 
 export function ChatroomRoute() {
-  const initialData = useLoaderData() as ChatroomLoaderData;
   const { chatroom, messages, sendMessage, pinMessage, deleteMessage } =
-    useChatroomRoute(initialData);
+    useChatroomRoute();
 
   return (
     <ChatMessageList
@@ -21,10 +20,16 @@ export function ChatroomRoute() {
   );
 }
 
-export function useChatroomRoute(initialData: ChatroomLoaderData) {
-  const { chatroom, sendMessage, pinMessage, deleteMessage } = initialData;
+export function useChatroomRoute() {
+  const {
+    chatroom,
+    messages: initialMessages,
+    sendMessage,
+    pinMessage,
+    deleteMessage,
+  } = useLoaderData() as ChatroomLoaderData;
   const { subscribe, unsubscribe } = useSocket();
-  const [messages, setMessages] = useState(initialData.messages);
+  const [messages, setMessages] = useState(initialMessages);
 
   // Receiving a new message.
   useEffect(() => {

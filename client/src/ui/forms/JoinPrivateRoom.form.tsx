@@ -1,5 +1,4 @@
-import { LockFilled } from "@ant-design/icons";
-import { Button, Card, Form, Input } from "antd";
+import { Button, Form, Input } from "antd";
 import { useFormFields } from "hooks";
 import { joinPrivateRoomSchema } from "schemas";
 
@@ -35,21 +34,7 @@ export function JoinPrivateRoomForm({ onSubmit }: Props) {
   }
 
   return (
-    <Card
-      title="Join private room"
-      extra={<LockFilled />}
-      actions={[
-        <Button
-          key="join"
-          type="primary"
-          size="middle"
-          block={true}
-          onClick={form.submit}
-        >
-          Join
-        </Button>,
-      ]}
-    >
+    <>
       <Form
         form={form}
         name="basic"
@@ -69,6 +54,15 @@ export function JoinPrivateRoomForm({ onSubmit }: Props) {
           <Input.Password />
         </Form.Item>
       </Form>
-    </Card>
+      <Button
+        key="join"
+        type="primary"
+        size="middle"
+        block={true}
+        onClick={form.submit}
+      >
+        Join
+      </Button>
+    </>
   );
 }

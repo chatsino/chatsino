@@ -9,7 +9,7 @@ import { Button, Divider, Layout, Menu, Space, Typography } from "antd";
 import { useEffect, useState } from "react";
 import { Link, useMatches } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-import { CurrentClientStrip } from "./CurrentClientStrip";
+import { CurrentClientStrip } from "./client";
 import { NavigationDrawer } from "./drawers";
 
 export const BUTTON_LINKS = [
