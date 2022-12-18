@@ -1,19 +1,24 @@
 import { SendOutlined, SmileOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Space } from "antd";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmojiDrawer } from "ui";
 
 export function ChatInput({
+  draftUpdate,
+  clearDraftUpdate,
   onDrawerOpen,
   onDrawerClose,
   onSend,
 }: {
+  draftUpdate: string;
+  clearDraftUpdate: () => void;
   onDrawerOpen?: () => unknown;
   onDrawerClose?: () => unknown;
   onSend: (message: string) => unknown;
 }) {
   const [form] = Form.useForm();
   const [showingEmojiDrawer, setShowingEmojiDrawer] = useState(false);
+  const inputRef = useRef<null | HTMLTextAreaElement>(null);
 
   function toggleEmojiDrawer() {
     setShowingEmojiDrawer((prev) => !prev);
@@ -36,12 +41,22 @@ export function ChatInput({
     }
   }, [showingEmojiDrawer, onDrawerOpen, onDrawerClose]);
 
+  useEffect(() => {
+    if (draftUpdate) {
+      const draft = form.getFieldValue("draft");
+      form.setFieldValue("draft", `${draft} ${draftUpdate} `);
+      clearDraftUpdate();
+      inputRef.current?.focus();
+    }
+  }, [draftUpdate, clearDraftUpdate]);
+
   return (
     <>
       <Form form={form} initialValues={{ draft: "" }} onFinish={handleFinish}>
         <Input.Group compact={true}>
           <Form.Item name="draft" noStyle={true}>
             <Input.TextArea
+              ref={inputRef}
               autoFocus={true}
               style={{ width: "calc(100% - 35px)", height: 70 }}
               onBlur={closeEmojiDrawer}

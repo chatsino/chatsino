@@ -12,7 +12,7 @@ import {
 import { toUniversalVh } from "helpers";
 import { useChatAutoscroll, useChatSearch } from "hooks";
 import cloneDeep from "lodash.clonedeep";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import key from "weak-key";
 import { ChatroomDrawer, UserListDrawer } from "../drawers";
 import { ChatInput } from "./ChatInput";
@@ -55,6 +55,8 @@ export function ChatMessageList({
   const uniqueAuthorCount = Array.from(
     new Set(groupedMessages.map((group) => group.author))
   ).length;
+  const [draftUpdate, setDraftUpdate] = useState("");
+  const clearDraftUpdate = useCallback(() => setDraftUpdate(""), []);
 
   function toggleChatroomDrawer() {
     return setShowingChatroomDrawer((prev) => !prev);
@@ -62,6 +64,10 @@ export function ChatMessageList({
 
   function toggleUserListDrawer() {
     return setShowingUsersDrawer((prev) => !prev);
+  }
+
+  function onMentionUser(username: string) {
+    setDraftUpdate(`@${username}`);
   }
 
   useChatAutoscroll(id, messages);
@@ -157,7 +163,13 @@ export function ChatMessageList({
             )}
           </>
         }
-        footer={<ChatInput onSend={onSendMessage} />}
+        footer={
+          <ChatInput
+            onSend={onSendMessage}
+            draftUpdate={draftUpdate}
+            clearDraftUpdate={clearDraftUpdate}
+          />
+        }
       >
         <div style={{ position: "relative" }}>
           <div ref={listBodyRef}>
@@ -165,6 +177,7 @@ export function ChatMessageList({
               <List.Item key={key(messageGroup)}>
                 <ChatMessageGroup
                   messageGroup={messageGroup}
+                  onMentionUser={onMentionUser}
                   onPinMessage={onPinMessage}
                   onDeleteMessage={onDeleteMessage}
                 />
