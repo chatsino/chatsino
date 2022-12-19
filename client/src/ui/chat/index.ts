@@ -1,5 +1,6 @@
 export * from "./ChatGameList";
 export * from "./ChatInput";
+export * from "./ChatMessage";
 export * from "./ChatMessageGroup";
 export * from "./ChatMessageMenu";
 export * from "./Chatroom";

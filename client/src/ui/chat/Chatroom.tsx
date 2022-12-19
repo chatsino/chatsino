@@ -1,11 +1,12 @@
 import { Empty, Grid, List } from "antd";
 import { toUniversalVh } from "helpers";
-import { useChatAutoscroll, useChatSearch } from "hooks";
+import { useChatAutoscroll, useChatSearch, useClient } from "hooks";
 import cloneDeep from "lodash.clonedeep";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import key from "weak-key";
 import { ChatroomDrawer, UserListDrawer } from "../drawers";
 import { ChatInput } from "./ChatInput";
+import { mentionsClient } from "./ChatMessage";
 import { ChatMessageGroup } from "./ChatMessageGroup";
 import { ChatroomHeader } from "./ChatroomHeader";
 import { groupMessages } from "./group-messages";
@@ -25,10 +26,16 @@ export function Chatroom({
   onPinMessage: (messageId: number) => unknown;
   onDeleteMessage: (messageId: number) => unknown;
 }) {
+  const { client } = useClient();
   const { sm } = Grid.useBreakpoint();
   const onMobile = !sm;
   const [showingChatroomDrawer, setShowingChatroomDrawer] = useState(false);
   const [showingUserListDrawer, setShowingUsersDrawer] = useState(false);
+  const [showingMentions, setShowingMentions] = useState(false);
+  const showMentions = useCallback(
+    () => setShowingMentions((prev) => !prev),
+    []
+  );
   const [showingPinned, setShowingPinned] = useState(false);
   const showPinnedMessages = useCallback(
     () => setShowingPinned((prev) => !prev),
@@ -41,7 +48,11 @@ export function Chatroom({
   const renderedMessages = useMemo(() => {
     let messagesToSort = search.isSearching ? search.results : messages;
 
-    if (showingPinned) {
+    if (showingMentions) {
+      messagesToSort = messagesToSort.filter((message) =>
+        mentionsClient(message, client)
+      );
+    } else if (showingPinned) {
       messagesToSort = messagesToSort.filter(({ pinned }) => pinned);
     }
 
@@ -49,7 +60,14 @@ export function Chatroom({
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-  }, [search.isSearching, search.results, messages, showingPinned]);
+  }, [
+    search.isSearching,
+    search.results,
+    messages,
+    showingPinned,
+    showingMentions,
+    client,
+  ]);
   const groupedMessages = useMemo(
     () => groupMessages(renderedMessages),
     [renderedMessages]
@@ -71,6 +89,26 @@ export function Chatroom({
 
   useChatAutoscroll(id, messages);
 
+  useEffect(() => {
+    if (showingMentions) {
+      setShowingPinned(false);
+
+      if (renderedMessages.length === 0) {
+        setShowingMentions(false);
+      }
+    }
+  }, [showingMentions, renderedMessages.length]);
+
+  useEffect(() => {
+    if (showingPinned) {
+      setShowingMentions(false);
+
+      if (renderedMessages.length === 0) {
+        setShowingPinned(false);
+      }
+    }
+  }, [showingPinned, renderedMessages.length]);
+
   return (
     <>
       <List
@@ -86,7 +124,9 @@ export function Chatroom({
             chatroom={chatroom}
             messages={messages}
             search={search}
+            showingMentions={showingMentions}
             showingPinned={showingPinned}
+            onShowMentions={showMentions}
             onShowPinned={showPinnedMessages}
           />
         }

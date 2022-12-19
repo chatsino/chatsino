@@ -73,4 +73,49 @@ textarea.ant-input {
   border-block-end: none;
 }
 
+.ant-badge .ant-scroll-number-only-unit {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+/* #endregion */
+
+/* #region Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 600px 0;
+  }
+}
+
+.animation__shimmer__red {
+  animation: shimmer 4s linear infinite forwards;
+  background-image: linear-gradient(
+    to right,
+    #ff000011 0%,
+    #ff000022 50%,
+    #ff000011 100%
+  );
+}
+
+.animation__shimmer__blue {
+  animation: shimmer 4s linear infinite forwards;
+  background-image: linear-gradient(
+    to right,
+    #1668dc22 0%,
+    #1668dc44 50%,
+    #1668dc22 100%
+  );
+}
+
+.animation__shimmer__purple {
+  animation: shimmer 4s linear infinite forwards;
+  background-image: linear-gradient(
+    to right,
+    #8c5ed222 0%,
+    #8c5ed244 50%,
+    #8c5ed222 100%
+  );
+}
+
 /* #endregion */

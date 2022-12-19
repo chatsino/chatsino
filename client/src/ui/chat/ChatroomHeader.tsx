@@ -6,32 +6,97 @@ import {
   UnlockOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Button, Divider, Input, Popover, Space, Typography } from "antd";
+import {
+  Badge,
+  Button,
+  Divider,
+  Input,
+  Popover,
+  Space,
+  Typography,
+} from "antd";
 import { fromDateString } from "helpers";
-import { UseChatSearch } from "hooks";
-import { useMemo } from "react";
+import { UseChatSearch, useClient } from "hooks";
+import { useMemo, ReactNode } from "react";
 import { BsPinAngle } from "react-icons/bs";
+import { GoMention } from "react-icons/go";
 import { Link } from "react-router-dom";
-import { ClientAvatarStrip } from "ui/client";
+import { ClientAvatarStrip } from "../client";
 import { ChatroomAvatarStrip } from "./ChatroomAvatarStrip";
+import { mentionsClient } from "./ChatMessage";
 
 export function ChatroomHeader({
   chatroom,
   messages,
   search,
+  showingMentions,
   showingPinned,
+  onShowMentions,
   onShowPinned,
 }: {
   chatroom: ChatroomData;
   messages: ChatMessageData[];
   search: UseChatSearch;
+  showingMentions: boolean;
   showingPinned: boolean;
+  onShowMentions(): unknown;
   onShowPinned(): unknown;
 }) {
+  const { client } = useClient();
+  const mentionedMessages = useMemo(
+    () => messages.filter((message) => mentionsClient(message, client)),
+    [messages]
+  );
   const pinnedMessages = useMemo(
     () => messages.filter(({ pinned }) => pinned),
     [messages]
   );
+
+  let flavorText = chatroom.description as ReactNode;
+
+  if (showingMentions && client) {
+    flavorText = (
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <Space>
+          <span>Showing {pinnedMessages.length} messages mentioning</span>
+          <ClientAvatarStrip client={client} link={false} size="small" />
+        </Space>
+        <Button type="link" size="small" onClick={onShowMentions}>
+          Clear
+        </Button>
+      </Typography.Text>
+    );
+  } else if (showingPinned) {
+    flavorText = (
+      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        Showing {pinnedMessages.length} pinned messages.{" "}
+        <Button type="link" size="small" onClick={onShowPinned}>
+          Clear
+        </Button>
+      </Typography.Text>
+    );
+  } else if (search.isSearching) {
+    flavorText = (
+      <>
+        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          Searching for messages in #{chatroom.title} containing "{search.query}
+          " --
+          {search.noResults ? (
+            <> no results found.</>
+          ) : (
+            <>
+              {" "}
+              {search.results.length}{" "}
+              {search.results.length === 1 ? "result" : "results"} found.{" "}
+            </>
+          )}
+        </Typography.Text>
+        <Button type="link" size="small" onClick={search.clearQuery}>
+          Clear
+        </Button>
+      </>
+    );
+  }
 
   return (
     <div
@@ -70,37 +135,7 @@ export function ChatroomHeader({
           </div>
         </Popover>
         <Divider type="vertical" />
-        {showingPinned ? (
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            Showing {pinnedMessages.length} pinned messages.{" "}
-            <Button type="link" size="small" onClick={onShowPinned}>
-              Clear
-            </Button>
-          </Typography.Text>
-        ) : (
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            {search.isSearching ? (
-              <>
-                Searching for messages in #{chatroom.title} containing "
-                {search.query}" --
-                {search.noResults ? (
-                  <> no results found.</>
-                ) : (
-                  <>
-                    {" "}
-                    {search.results.length}{" "}
-                    {search.results.length === 1 ? "result" : "results"} found.{" "}
-                  </>
-                )}
-                <Button type="link" size="small" onClick={search.clearQuery}>
-                  Clear
-                </Button>
-              </>
-            ) : (
-              chatroom.description
-            )}
-          </Typography.Text>
-        )}
+        {flavorText}
       </Space>
       <Space>
         <Input.Group compact={true}>
@@ -118,6 +153,12 @@ export function ChatroomHeader({
             <Button icon={<CloseOutlined />} onClick={search.clearQuery} />
           )}
         </Input.Group>
+        <MentionButton
+          chatroom={chatroom}
+          active={showingMentions}
+          mentions={mentionedMessages.length}
+          onShowMentions={onShowMentions}
+        />
         <PinButton
           chatroom={chatroom}
           active={showingPinned}
@@ -133,6 +174,38 @@ export function ChatroomHeader({
 }
 
 // #region Buttons
+function MentionButton({
+  chatroom,
+  active,
+  mentions,
+  onShowMentions,
+}: {
+  chatroom: ChatroomData;
+  active: boolean;
+  mentions: number;
+  onShowMentions(): unknown;
+}) {
+  return (
+    <Popover
+      content={
+        mentions === 0
+          ? `You do not have any mentions in #${chatroom.title}.`
+          : `You have ${mentions} mentions in #${chatroom.title}.`
+      }
+      placement="bottomRight"
+    >
+      <Badge color="#1668dc" count={mentions}>
+        <Button
+          type={active ? "default" : "text"}
+          disabled={mentions === 0}
+          icon={<GoMention />}
+          onClick={onShowMentions}
+        />
+      </Badge>
+    </Popover>
+  );
+}
+
 function PinButton({
   chatroom,
   active,
@@ -146,23 +219,21 @@ function PinButton({
 }) {
   return (
     <Popover
-      title={
+      content={
         pinned === 0
           ? `#${chatroom.title} does not have any pinned messages.`
           : `#${chatroom.title} has ${pinned} pinned messages.`
       }
       placement="bottomRight"
     >
-      <Button
-        type="text"
-        disabled={pinned === 0}
-        icon={
-          <Typography.Text type={active ? "warning" : undefined}>
-            <BsPinAngle />
-          </Typography.Text>
-        }
-        onClick={onShowPinned}
-      />
+      <Badge count={pinned}>
+        <Button
+          type={active ? "default" : "text"}
+          disabled={pinned === 0}
+          icon={<BsPinAngle />}
+          onClick={onShowPinned}
+        />
+      </Badge>
     </Popover>
   );
 }
@@ -170,7 +241,7 @@ function PinButton({
 function LockButton({ chatroom }: { chatroom: ChatroomData }) {
   return (
     <Popover
-      title={
+      content={
         chatroom.public
           ? `#${chatroom.title} is public.`
           : `#${chatroom.title} is not public.`
@@ -188,7 +259,7 @@ function LockButton({ chatroom }: { chatroom: ChatroomData }) {
 function SettingsButton({ chatroom }: { chatroom: ChatroomData }) {
   return (
     <Popover
-      title={`Make modifications to #${chatroom.title}.`}
+      content={`Make modifications to #${chatroom.title}.`}
       placement="bottomRight"
     >
       <Link to={`/chat/${chatroom.id}/settings`}>
@@ -201,7 +272,7 @@ function SettingsButton({ chatroom }: { chatroom: ChatroomData }) {
 function UserButton({ chatroom }: { chatroom: ChatroomData }) {
   return (
     <Popover
-      title={`0 users are currently in #${chatroom.title}.`}
+      content={`0 users are currently in #${chatroom.title}.`}
       placement="bottomRight"
     >
       <Button type="text" icon={<UserOutlined />} onClick={() => {}}>
