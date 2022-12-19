@@ -26,11 +26,6 @@ body {
 
 /* #region Antd Overrides */
 
-.ant-btn {
-  text-transform: uppercase !important;
-  letter-spacing: 2px !important;
-}
-
 .ant-card .ant-card-actions > li {
   margin: 0;
 }

@@ -3,7 +3,7 @@ import { Button, Divider, Drawer, Form, Grid, Space } from "antd";
 import { useUpdatingChatroom } from "hooks";
 import { ChatroomSettingsLoaderData } from "loaders";
 import { useEffect, useState } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { Outlet, useLoaderData, useNavigate } from "react-router-dom";
 import {
   ChatroomAvatarStrip,
   ChatroomReadonlyData,
@@ -84,6 +84,7 @@ export function ChatroomSettingsRoute() {
           onCancel={() => navigate(`/chat/${chatroom.id}`)}
         />
       </Space>
+      <Outlet />
     </Drawer>
   );
 }

@@ -1,16 +1,19 @@
 import { LockOutlined } from "@ant-design/icons";
 import {
   Alert,
+  Button,
   Col,
+  Divider,
   Form,
   FormInstance,
   Input,
   Row,
-  Space,
   Typography,
 } from "antd";
 import { useFormFields } from "hooks";
 import type { ChatroomUpdate } from "loaders";
+import { FaListAlt, FaRegListAlt } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import { updateChatroomSchema } from "schemas";
 import { AvatarUpload } from "../AvatarUpload";
 
@@ -71,41 +74,75 @@ export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
           <Form.Item label="Description" name="description">
             <Input.TextArea placeholder="Enter a description." />
           </Form.Item>
-          <Form.Item
-            label={
-              <>
-                Password{" "}
-                <Typography.Text
-                  type="secondary"
-                  style={{ marginLeft: "0.5rem" }}
-                >
-                  <small>(optional)</small>
-                </Typography.Text>
-              </>
-            }
-            name="password"
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              <Alert
-                type="warning"
+        </Col>
+      </Row>
+      <Divider orientation="left">Security</Divider>
+      <Alert
+        type="warning"
+        style={{
+          padding: "0.25rem",
+        }}
+        showIcon={true}
+        icon={
+          <LockOutlined style={{ position: "relative", top: 9, left: 16 }} />
+        }
+        description={
+          <ul style={{ margin: 0 }}>
+            <li>Chatrooms with a password are considered private.</li>
+            <li>
+              Chatrooms with anyone on a whitelist are considered private.
+            </li>
+            <li>Private chatrooms do not appear in lists.</li>
+            <li>
+              Chatrooms with users on a blacklist are still considered public.
+            </li>
+          </ul>
+        }
+      />
+      <Form.Item
+        name="password"
+        label={
+          <>
+            Password{" "}
+            <Typography.Text type="secondary" style={{ marginLeft: "0.5rem" }}>
+              <small>(optional)</small>
+            </Typography.Text>
+          </>
+        }
+      >
+        <Input type="text" placeholder="Enter a password." />
+      </Form.Item>
+      <Row gutter={24}>
+        <Col span={12}>
+          <Form.Item label="Blacklist">
+            <Link to={`/chat/${chatroom.id}/settings/whitelist`}>
+              <Button
+                block={true}
                 style={{
-                  padding: "0.25rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
-                showIcon={true}
-                icon={
-                  <LockOutlined
-                    style={{ position: "relative", top: 9, left: 16 }}
-                  />
-                }
-                description={
-                  <ul style={{ margin: 0 }}>
-                    <li>Chatrooms with a password are considered private.</li>
-                    <li>Private chatrooms do not appear in lists.</li>
-                  </ul>
-                }
-              />
-              <Input type="text" placeholder="Enter a password." />
-            </Space>
+              >
+                <FaListAlt /> Modify Blacklist
+              </Button>
+            </Link>
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.Item label="Whitelist">
+            <Link to={`/chat/${chatroom.id}/settings/whitelist`}>
+              <Button
+                block={true}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <FaRegListAlt /> Modify Whitelist
+              </Button>
+            </Link>
           </Form.Item>
         </Col>
       </Row>

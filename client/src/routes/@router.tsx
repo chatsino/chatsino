@@ -9,7 +9,9 @@ import {
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { AdminRoute } from "./Admin.route";
 import { ChatroomRoute } from "./Chatroom.route";
+import { ChatroomBlacklistRoute } from "./ChatroomBlacklist.route";
 import { ChatroomSettingsRoute } from "./ChatroomSettings.route";
+import { ChatroomWhitelistRoute } from "./ChatroomWhitelist.route";
 import { ErrorRoute } from "./Error.route";
 import {
   BlackjackRoute,
@@ -53,14 +55,19 @@ export const router = createBrowserRouter([
                 path: "settings",
                 loader: chatroomSettingsLoader,
                 element: <ChatroomSettingsRoute />,
+                children: [
+                  {
+                    path: "blacklist",
+                    element: <ChatroomBlacklistRoute />,
+                  },
+                  {
+                    path: "whitelist",
+                    element: <ChatroomWhitelistRoute />,
+                  },
+                ],
               },
             ],
           },
-          // {
-          //   path: ":chatroomId/settings",
-          //   loader: chatroomSettingsLoader,
-          //   element: <ChatroomSettingsRoute />,
-          // },
         ],
       },
       {
