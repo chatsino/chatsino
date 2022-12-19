@@ -1,6 +1,6 @@
 import { useUpdatingChatroom } from "hooks";
 import { ChatroomLoaderData } from "loaders";
-import { useLoaderData } from "react-router-dom";
+import { Outlet, useLoaderData } from "react-router-dom";
 import { Chatroom } from "ui";
 
 export function ChatroomRoute() {
@@ -9,13 +9,16 @@ export function ChatroomRoute() {
   const { chatroom, messages } = useUpdatingChatroom();
 
   return (
-    <Chatroom
-      id="chat"
-      chatroom={chatroom}
-      messages={messages}
-      onSendMessage={sendMessage}
-      onPinMessage={pinMessage}
-      onDeleteMessage={deleteMessage}
-    />
+    <div style={{ position: "relative" }}>
+      <Chatroom
+        id="chat"
+        chatroom={chatroom}
+        messages={messages}
+        onSendMessage={sendMessage}
+        onPinMessage={pinMessage}
+        onDeleteMessage={deleteMessage}
+      />
+      <Outlet />
+    </div>
   );
 }

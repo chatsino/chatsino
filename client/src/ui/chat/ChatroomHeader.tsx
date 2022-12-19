@@ -45,7 +45,7 @@ export function ChatroomHeader({
   const { client } = useClient();
   const mentionedMessages = useMemo(
     () => messages.filter((message) => mentionsClient(message, client)),
-    [messages]
+    [messages, client]
   );
   const pinnedMessages = useMemo(
     () => messages.filter(({ pinned }) => pinned),
@@ -100,6 +100,7 @@ export function ChatroomHeader({
 
   return (
     <div
+      id={`ChatroomHeader#${chatroom.id}`}
       style={{
         display: "flex",
         alignItems: "center",

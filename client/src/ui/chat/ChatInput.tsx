@@ -1,3 +1,4 @@
+import * as config from "config";
 import { SendOutlined, SmileOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Space } from "antd";
 import { useEffect, useRef, useState } from "react";
@@ -61,6 +62,7 @@ export function ChatInput({
               ref={inputRef}
               autoFocus={true}
               style={{ width: "calc(100% - 35px)", height: 70 }}
+              maxLength={config.CHAT_MESSAGE_MAX_LENGTH}
               onBlur={closeEmojiDrawer}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && !event.shiftKey) {

@@ -48,12 +48,19 @@ export const router = createBrowserRouter([
             path: ":chatroomId",
             loader: chatroomLoader,
             element: <ChatroomRoute />,
+            children: [
+              {
+                path: "settings",
+                loader: chatroomSettingsLoader,
+                element: <ChatroomSettingsRoute />,
+              },
+            ],
           },
-          {
-            path: ":chatroomId/settings",
-            loader: chatroomSettingsLoader,
-            element: <ChatroomSettingsRoute />,
-          },
+          // {
+          //   path: ":chatroomId/settings",
+          //   loader: chatroomSettingsLoader,
+          //   element: <ChatroomSettingsRoute />,
+          // },
         ],
       },
       {
