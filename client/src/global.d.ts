@@ -36,4 +36,5 @@ declare interface ChatroomData {
   updatedBy: ChatUserData;
   createdAt: string;
   updatedAt: string;
+  public: boolean;
 }

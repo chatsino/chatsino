@@ -1,4 +1,4 @@
-import { Button, Col, Divider, Form, Input, Mentions, Row, Space } from "antd";
+import { Button, Col, Form, Input, Row, Space } from "antd";
 import { useFormFields } from "hooks";
 import type { ChatroomUpdate } from "loaders";
 import { updateChatroomSchema } from "schemas";
@@ -16,11 +16,8 @@ export function UpdateChatroomForm({ chatroom, onSubmit, onCancel }: Props) {
   const [form] = Form.useForm();
   const { clearErrors, handleError } = useFormFields<UpdateChatroomFormValues>(
     form,
-    "blacklist",
     "description",
-    "password",
-    "title",
-    "whitelist"
+    "title"
   );
 
   async function onFinish(values: UpdateChatroomFormValues) {
@@ -39,20 +36,14 @@ export function UpdateChatroomForm({ chatroom, onSubmit, onCancel }: Props) {
         name="update-chatroom"
         layout="vertical"
         initialValues={{
-          blacklist: [],
           description: chatroom.description,
-          password: "",
           title: chatroom.title,
-          whitelist: [],
         }}
         onFieldsChange={clearErrors}
         onFinish={onFinish}
         autoComplete="off"
         size="middle"
       >
-        <Divider orientation="left" style={{ margin: "2rem 0" }}>
-          General
-        </Divider>
         <Row gutter={12}>
           <Col xs={24} sm={4}>
             <Form.Item label="Avatar">
@@ -68,28 +59,6 @@ export function UpdateChatroomForm({ chatroom, onSubmit, onCancel }: Props) {
             </Form.Item>
             <Form.Item label="Description" name="description">
               <Input.TextArea />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Divider orientation="left" style={{ margin: "2rem 0" }}>
-          Security
-        </Divider>
-        <Row gutter={12}>
-          <Col xs={24} sm={12}>
-            <Form.Item label="Password" name="password">
-              <Input type="text" />
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={12}>
-          <Col xs={24} sm={12}>
-            <Form.Item label="Whitelist" name="whitelist">
-              <Mentions />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item label="Blacklist" name="blacklist">
-              <Mentions />
             </Form.Item>
           </Col>
         </Row>

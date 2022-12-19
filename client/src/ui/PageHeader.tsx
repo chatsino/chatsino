@@ -10,7 +10,7 @@ export function PageHeader({
 }) {
   return (
     <Typography.Title
-      level={1}
+      level={2}
       style={{
         display: "flex",
         alignItems: "center",

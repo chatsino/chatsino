@@ -20,11 +20,7 @@ export function AvatarStrip({
 
   return (
     <Space>
-      <Avatar
-        src={<Image src={src} fallback={fallbackAvatar} />}
-        size={size}
-        style={{ marginRight: "0.5rem" }}
-      />
+      <Avatar src={<Image src={src} fallback={fallbackAvatar} />} size={size} />
       <Typography.Title
         level={sizeToTitleLevel[size] as 1 | 2 | 3 | 4 | 5}
         style={{ margin: 0 }}

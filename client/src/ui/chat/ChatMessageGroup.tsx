@@ -1,4 +1,4 @@
-import { Button, List, Typography } from "antd";
+import { List, Popover, Space, Typography } from "antd";
 import { useClient } from "hooks";
 import { BsPinAngle } from "react-icons/bs";
 import { ClientAvatarStrip } from "ui/client";
@@ -31,12 +31,31 @@ export function ChatMessageGroup({
     >
       <List.Item.Meta
         title={
-          <Button
-            type="text"
-            onClick={() => onMentionUser(messageGroup.author.username)}
+          <Popover
+            title={
+              <Space>
+                {client && (
+                  <>
+                    <Typography.Text type="secondary">Mention</Typography.Text>
+                    <ClientAvatarStrip
+                      client={client}
+                      size="small"
+                      link={false}
+                    />
+                  </>
+                )}
+              </Space>
+            }
+            placement="bottomLeft"
           >
-            <ClientAvatarStrip client={messageGroup.author} link={false} />
-          </Button>
+            <div
+              role="button"
+              style={{ cursor: "pointer", display: "inline-block" }}
+              onClick={() => onMentionUser(messageGroup.author.username)}
+            >
+              <ClientAvatarStrip client={messageGroup.author} link={false} />
+            </div>
+          </Popover>
         }
         description={
           <List bordered={false} split={false}>

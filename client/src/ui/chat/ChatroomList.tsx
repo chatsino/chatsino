@@ -1,5 +1,5 @@
 import { PlusOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Input, List, Tooltip, Typography } from "antd";
+import { Button, Input, List, Space, Tooltip, Typography } from "antd";
 import { BsDoorOpen } from "react-icons/bs";
 import { Link, useParams } from "react-router-dom";
 import { ChatroomAvatarStrip } from "./ChatroomAvatarStrip";
@@ -59,23 +59,21 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
           <List.Item
             style={{ cursor: "pointer" }}
             extra={
-              <Typography.Text>
-                {[]} <UserOutlined />
-              </Typography.Text>
+              <Space size="small">
+                <UserOutlined /> 0
+              </Space>
             }
           >
             <Tooltip title={item.description}>
               <List.Item.Meta
                 title={
-                  <Typography.Text
-                    type={
+                  <ChatroomAvatarStrip
+                    chatroom={item}
+                    size="small"
+                    active={Boolean(
                       chatroomId && parseInt(chatroomId) === item.id
-                        ? "warning"
-                        : undefined
-                    }
-                  >
-                    <ChatroomAvatarStrip chatroom={item} size="small" />
-                  </Typography.Text>
+                    )}
+                  />
                 }
               />
             </Tooltip>

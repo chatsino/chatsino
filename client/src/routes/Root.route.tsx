@@ -170,9 +170,7 @@ function Inner() {
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
             <ChatroomList chatrooms={chatrooms} />
           </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <ChatGameList games={games} />
-          </div>
+          <ChatGameList games={games} />
         </div>
       </Col>
     </Row>

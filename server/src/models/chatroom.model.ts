@@ -55,6 +55,7 @@ export type HydratedChatroom = Omit<Chatroom, "createdBy" | "updatedBy"> & {
     avatar: string;
     username: string;
   };
+  public: boolean;
 };
 
 export const CHATROOM_MODEL_LOGGER = createLogger(
@@ -226,6 +227,9 @@ export async function readHydratedChatroom(chatroomId: number) {
           avatar: updatedByAvatar,
           username: updatedByUsername,
         },
+        public:
+          !chatroom.password &&
+          Object.keys(chatroom.whitelist ?? {}).length === 0,
       } as HydratedChatroom;
 
       CHATROOM_CACHE.CHATROOM.cache(hydrated);

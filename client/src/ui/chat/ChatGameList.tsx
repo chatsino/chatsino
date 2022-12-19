@@ -70,7 +70,6 @@ export function ChatGameList({
           </List.Item>
         </Link>
       )}
-      style={{ flex: 1 }}
     />
   );
 }
