@@ -2,7 +2,8 @@ import { validateTicket } from "auth";
 import * as config from "config";
 import { Request } from "express";
 import { createLogger } from "logger";
-import { Client, ClientIdentifier, PUBLISHER, SUBSCRIBER } from "persistence";
+import { Client, ClientIdentifier } from "models";
+import { PUBLISHER, SUBSCRIBER } from "persistence";
 import {
   clientSubscriptionSchema,
   socketErrorResponseSchema,
@@ -63,7 +64,7 @@ export class SocketServer {
     return PUBLISHER.publish(kind, JSON.stringify(data));
   }
 
-  public static success(to: number, kind: string, data: unknown) {
+  public static success(to: number, kind: string, data?: unknown) {
     return PUBLISHER.publish(
       SocketResponseKind.SuccessResponse,
       JSON.stringify({
@@ -85,7 +86,7 @@ export class SocketServer {
     );
   }
 
-  public static broadcastToSubscription(subscription: string, data: unknown) {
+  public static broadcastToSubscription(subscription: string, data?: unknown) {
     SOCKETS_LOGGER.info(
       { subscription, data },
       "Broadcasting to subscription."
@@ -223,12 +224,6 @@ export class SocketServer {
       .filter((entry) => {
         const [_, client] = entry;
 
-        SOCKETS_LOGGER.info({
-          id: client.id,
-          username: client.username,
-          clientIdentifier,
-        });
-
         return typeof clientIdentifier === "number"
           ? client.id === clientIdentifier
           : client.username === clientIdentifier;
@@ -251,9 +246,11 @@ export class SocketServer {
     try {
       SOCKETS_LOGGER.info({ response }, "Sending success response.");
 
-      const { to, kind, data } = await socketSuccessResponseSchema.validate(
-        response
-      );
+      const {
+        to,
+        kind,
+        data = {},
+      } = await socketSuccessResponseSchema.validate(response);
       const withMessage = data as unknown as { message: string };
 
       if (withMessage.message) {
@@ -382,7 +379,7 @@ export class SocketServer {
       to: from.id,
       kind: SocketResponseKind.ClientUnsubscribed,
       data: {
-        message: `${from.username} is no longer subscribed to ${subscription}.`,
+        message: `${from.id} is no longer subscribed to ${subscription}.`,
       },
     });
   }

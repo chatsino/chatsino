@@ -1,4 +1,8 @@
 import * as config from "config";
+import {
+  parseSourcedSocketMessage,
+  PreparsedSourcedSocketMessage,
+} from "helpers";
 import { createLogger } from "logger";
 import {
   canClientMessageChatroom,
@@ -10,7 +14,7 @@ import {
   readChatMessageList,
   readChatroomList,
 } from "models";
-import { SUBSCRIBER } from "persistence";
+import { CHATROOM_SUBSCRIPTIONS, SUBSCRIBER } from "persistence";
 import {
   chatMessageDeletedSchema,
   chatMessageUpdatedSchema,
@@ -128,29 +132,15 @@ export async function handleListChatroomMessages(messageString: string) {
 }
 
 export async function handleChatroomUpdated(
-  sourcedSocketMessage: SourcedSocketMessage
-): Promise<number | undefined>;
-export async function handleChatroomUpdated(
-  sourcedSocketMessage: string
-): Promise<number | undefined>;
-export async function handleChatroomUpdated(
-  sourcedSocketMessage: string | SourcedSocketMessage
+  sourcedSocketMessage: PreparsedSourcedSocketMessage
 ) {
-  let socketMessage: SourcedSocketMessage;
-
-  if (typeof sourcedSocketMessage === "string") {
-    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
-  } else {
-    socketMessage = sourcedSocketMessage;
-  }
-
-  const { from, kind, args } = socketMessage;
+  const { from, kind, args } = parseSourcedSocketMessage(sourcedSocketMessage);
 
   try {
     const { chatroom } = await chatroomUpdatedSchema.validate(args);
 
     await SocketServer.broadcastToSubscription(
-      `Chatrooms/${chatroom.id}/Updated`,
+      CHATROOM_SUBSCRIPTIONS.chatroomUpdated(chatroom.id),
       {
         chatroom,
       }
@@ -214,29 +204,15 @@ export async function handleSendChatMessage(messageString: string) {
 }
 
 export async function handleNewChatMessage(
-  sourcedSocketMessage: string
-): Promise<number | undefined>;
-export async function handleNewChatMessage(
-  sourcedSocketMessage: SourcedSocketMessage
-): Promise<number | undefined>;
-export async function handleNewChatMessage(
-  sourcedSocketMessage: string | SourcedSocketMessage
+  sourcedSocketMessage: PreparsedSourcedSocketMessage
 ) {
-  let socketMessage: SourcedSocketMessage;
-
-  if (typeof sourcedSocketMessage === "string") {
-    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
-  } else {
-    socketMessage = sourcedSocketMessage;
-  }
-
-  const { from, kind, args } = socketMessage;
+  const { from, kind, args } = parseSourcedSocketMessage(sourcedSocketMessage);
 
   try {
     const { message } = await newChatMessageSchema.validate(args);
 
     await SocketServer.broadcastToSubscription(
-      `Chatrooms/${message.chatroomId}/NewMessage`,
+      CHATROOM_SUBSCRIPTIONS.newChatMessage(message.chatroomId),
       {
         message,
       }
@@ -261,29 +237,15 @@ export async function handleNewChatMessage(
 }
 
 export async function handleChatMessageUpdated(
-  sourcedSocketMessage: SourcedSocketMessage
-): Promise<number | undefined>;
-export async function handleChatMessageUpdated(
-  sourcedSocketMessage: string
-): Promise<number | undefined>;
-export async function handleChatMessageUpdated(
-  sourcedSocketMessage: string | SourcedSocketMessage
+  sourcedSocketMessage: PreparsedSourcedSocketMessage
 ) {
-  let socketMessage: SourcedSocketMessage;
-
-  if (typeof sourcedSocketMessage === "string") {
-    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
-  } else {
-    socketMessage = sourcedSocketMessage;
-  }
-
-  const { from, kind, args } = socketMessage;
+  const { from, kind, args } = parseSourcedSocketMessage(sourcedSocketMessage);
 
   try {
     const { message } = await chatMessageUpdatedSchema.validate(args);
 
     await SocketServer.broadcastToSubscription(
-      `Chatrooms/${message.chatroomId}/MessageUpdated`,
+      CHATROOM_SUBSCRIPTIONS.chatMessageUpdated(message.chatroomId),
       {
         message,
       }
@@ -308,23 +270,9 @@ export async function handleChatMessageUpdated(
 }
 
 export async function handleChatMessageDeleted(
-  sourcedSocketMessage: SourcedSocketMessage
-): Promise<number | undefined>;
-export async function handleChatMessageDeleted(
-  sourcedSocketMessage: string
-): Promise<number | undefined>;
-export async function handleChatMessageDeleted(
-  sourcedSocketMessage: SourcedSocketMessage | string
+  sourcedSocketMessage: PreparsedSourcedSocketMessage
 ) {
-  let socketMessage: SourcedSocketMessage;
-
-  if (typeof sourcedSocketMessage === "string") {
-    socketMessage = JSON.parse(sourcedSocketMessage) as SourcedSocketMessage;
-  } else {
-    socketMessage = sourcedSocketMessage;
-  }
-
-  const { from, kind, args } = socketMessage;
+  const { from, kind, args } = parseSourcedSocketMessage(sourcedSocketMessage);
 
   try {
     const { chatroomId, messageId } = await chatMessageDeletedSchema.validate(
@@ -332,7 +280,7 @@ export async function handleChatMessageDeleted(
     );
 
     await SocketServer.broadcastToSubscription(
-      `Chatrooms/${chatroomId}/MessageDeleted`,
+      CHATROOM_SUBSCRIPTIONS.chatMessageDeleted(chatroomId),
       {
         messageId,
       }

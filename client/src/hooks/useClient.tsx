@@ -15,7 +15,11 @@ export interface ClientContextType {
   setChips: Dispatch<React.SetStateAction<number>>;
 }
 
-const ClientContext = createContext<ClientContextType>({
+export enum ClientSocketRequests {
+  ClientTokenExpired = "client-token-expired",
+}
+
+export const ClientContext = createContext<ClientContextType>({
   client: null,
   chips: 0,
   setClient() {},

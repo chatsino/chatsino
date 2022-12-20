@@ -1,59 +1,75 @@
 import { useCallback, useMemo } from "react";
 import { makeHttpRequest } from "helpers";
 import { SafeClient } from "schemas";
+import { useClient } from "./useClient";
+import { useNavigate } from "react-router-dom";
 
 export function useAuthentication() {
+  const { setClient } = useClient();
+  const navigate = useNavigate();
+
   const validate = useCallback(async () => {
     try {
-      const { client } = await makeHttpRequest<{
-        client: SafeClient;
-      }>("get", "/auth/validate");
+      const { client } = (await makeHttpRequest("get", "/auth/validate")) as {
+        client: null | SafeClient;
+      };
 
-      return client;
+      setClient(client);
     } catch (error) {
       console.error({ error }, "Unable to validate.");
       throw error;
     }
-  }, []);
+  }, [setClient]);
 
-  const signin = useCallback(async (username: string, password: string) => {
-    try {
-      await makeHttpRequest<void>("post", "/auth/signin", {
-        username,
-        password,
-      });
-    } catch (error) {
-      console.error({ error }, "Unable to sign in.");
-      throw error;
-    }
-  }, []);
+  const signin = useCallback(
+    async (username: string, password: string) => {
+      try {
+        const { client } = (await makeHttpRequest("post", "/auth/signin", {
+          username,
+          password,
+        })) as {
+          client: null | SafeClient;
+        };
+
+        setClient(client);
+      } catch (error) {
+        console.error({ error }, "Unable to sign in.");
+        throw error;
+      }
+    },
+    [setClient]
+  );
 
   const signout = useCallback(async () => {
     try {
       await makeHttpRequest<void>("post", "/auth/signout");
-      window.location.reload();
+
+      setClient(null);
+      navigate("/signin");
     } catch (error) {
       console.error({ error }, "Unable to sign out.");
       throw error;
     }
-  }, []);
+  }, [setClient, navigate]);
 
   const signup = useCallback(
     async (username: string, password: string, passwordAgain: string) => {
       try {
-        await makeHttpRequest<void>("post", "/auth/signup", {
+        const { client } = (await makeHttpRequest("post", "/auth/signup", {
           username,
           password,
           passwordAgain,
-        });
+        })) as {
+          client: null | SafeClient;
+        };
 
-        window.location.reload();
+        setClient(client);
       } catch (error) {
         console.error({ error }, "Unable to sign up.");
         throw error;
       }
     },
-    []
+    [setClient]
   );
 
   const requestTicket = useCallback(async () => {

@@ -5,6 +5,7 @@ import {
   PropsWithChildren,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -26,6 +27,7 @@ export interface SocketContextType {
   socket: null | WebSocket;
   initialized: boolean;
   initialize: () => void;
+  shutdown: () => void;
   makeRequest: (kind: string, args?: Record<string, unknown>) => void;
   oneTimeRequest: (
     kind: string,
@@ -45,6 +47,7 @@ const SocketContext = createContext<SocketContextType>({
   socket: null,
   initialized: false,
   initialize() {},
+  shutdown() {},
   makeRequest() {},
   oneTimeRequest: Promise.resolve,
   subscribe() {},
@@ -56,11 +59,14 @@ export function SocketProvider({ children }: PropsWithChildren) {
   const { client } = useClient();
   const socket = useRef<null | WebSocket>(null);
   const [initialized, setInitialized] = useState(false);
+  const shouldAttemptReconnect = useRef(false);
   const attemptingToReconnect = useRef<null | NodeJS.Timeout>(null);
   const subscriberLookup = useRef<SubscriberLookup>({});
 
   const initialize = useCallback(async () => {
     try {
+      shouldAttemptReconnect.current = true;
+
       if (attemptingToReconnect.current) {
         clearTimeout(attemptingToReconnect.current);
       }
@@ -92,10 +98,12 @@ export function SocketProvider({ children }: PropsWithChildren) {
       socket.current.onclose = function handleSocketClose(event) {
         console.info("Closed connection.", event);
 
-        attemptingToReconnect.current = setTimeout(
-          initialize,
-          config.SOCKET_RECONNECT_ATTEMPT_RATE
-        );
+        if (shouldAttemptReconnect.current) {
+          attemptingToReconnect.current = setTimeout(
+            initialize,
+            config.SOCKET_RECONNECT_ATTEMPT_RATE
+          );
+        }
       };
 
       socket.current.onerror = function handleSocketError(event) {
@@ -115,6 +123,17 @@ export function SocketProvider({ children }: PropsWithChildren) {
       console.error("Unable to connect -- retrying soon.", error);
     }
   }, [requestTicket]);
+
+  const shutdown = useCallback(() => {
+    console.log("Shutting down socket connection.");
+
+    shouldAttemptReconnect.current = false;
+
+    if (socket.current) {
+      socket.current.close();
+      socket.current = null;
+    }
+  }, []);
 
   const makeRequest = useCallback(
     (kind: string, args: Record<string, unknown> = {}) => {
@@ -149,6 +168,10 @@ export function SocketProvider({ children }: PropsWithChildren) {
     if (kind) {
       if (subscriberLookup.current[name]) {
         delete subscriberLookup.current[name][kind];
+
+        if (Object.keys(subscriberLookup.current[name]).length === 0) {
+          delete subscriberLookup.current[name];
+        }
       }
     } else {
       delete subscriberLookup.current[name];
@@ -157,7 +180,7 @@ export function SocketProvider({ children }: PropsWithChildren) {
 
   const oneTimeRequest = useCallback(
     async (kind: string, args: Record<string, unknown> = {}) => {
-      const subscriberName = CHANCE.name();
+      const subscriberName = CHANCE.guid();
       const response = (await new Promise((resolve) => {
         makeRequest(kind, args);
         subscribe(subscriberName, kind, resolve);
@@ -170,11 +193,21 @@ export function SocketProvider({ children }: PropsWithChildren) {
     [makeRequest, subscribe, unsubscribe]
   );
 
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      const windowWithSubscriberLookup = window as unknown as Window & {
+        SUBSCRIBER_LOOKUP: SubscriberLookup;
+      };
+      windowWithSubscriberLookup.SUBSCRIBER_LOOKUP = subscriberLookup.current;
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       socket: socket.current,
       initialized,
       initialize,
+      shutdown,
       makeRequest,
       oneTimeRequest,
       subscribe,
@@ -183,6 +216,7 @@ export function SocketProvider({ children }: PropsWithChildren) {
     [
       initialized,
       initialize,
+      shutdown,
       makeRequest,
       oneTimeRequest,
       subscribe,

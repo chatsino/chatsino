@@ -28,6 +28,7 @@ export const REDIS_CONNECTION_STRING =
   process.env.REDIS_CONNECTION_STRING ?? "";
 
 // Caching
+export const TOKEN_CACHE_KEY = "jwt_label:Tokens/Access";
 export const TICKET_CACHE_KEY = "Ticket";
 export const TICKET_CACHE_TTL_SECONDS = 10;
 
@@ -71,6 +72,7 @@ export const LOGGER_NAMES = {
   CACHE: "Persistence/Cache",
   SERVER: "Server",
   SOCKET_SERVER: "Socket Server",
+  CLIENT_MANAGER: "Managers/Client",
 };
 
 // File Uploads

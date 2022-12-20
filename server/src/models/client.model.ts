@@ -1,7 +1,7 @@
 import * as config from "config";
 import { generatePasswordHash, generatePasswordSaltHash } from "helpers";
 import { createLogger } from "logger";
-import { getCachedValue, postgres, setCachedValue } from "persistence";
+import { CLIENT_CACHE, postgres } from "persistence";
 import { clientSigninSchema, PERMISSION_RANKING } from "schemas";
 import { createTransaction } from "./transaction.model";
 
@@ -175,19 +175,9 @@ export async function verifyClientPassword(
 }
 
 export function cacheClient(client: Client) {
-  const clientString = JSON.stringify(client);
-
   return Promise.all([
-    setCachedValue(
-      `Client/ById/${client.id}`,
-      clientString,
-      config.CLIENT_CACHE_TTL_SECONDS
-    ),
-    setCachedValue(
-      `Client/ByUsername/${client.username}`,
-      clientString,
-      config.CLIENT_CACHE_TTL_SECONDS
-    ),
+    CLIENT_CACHE.CLIENT.cache(client),
+    CLIENT_CACHE.CLIENT_BY_USERNAME.cache(client),
   ]);
 }
 
@@ -197,7 +187,7 @@ export function safetifyClient(client: FullClient): Client {
 }
 
 export async function getClientById(clientId: number, breakCache = false) {
-  const cached = await getCachedValue(`Client/ById/${clientId}`);
+  const cached = await CLIENT_CACHE.CLIENT.read(clientId);
 
   if (cached && !breakCache) {
     return cached as Client;
@@ -222,7 +212,7 @@ export async function getClientByUsername(
   username: string,
   breakCache = false
 ) {
-  const cached = await getCachedValue(`Client/ByUsername/${username}`);
+  const cached = await CLIENT_CACHE.CLIENT_BY_USERNAME.read(username);
 
   if (cached && !breakCache) {
     return cached as Client;
@@ -330,6 +320,7 @@ export async function changeClientPermissionLevel(
   }
 }
 
+// #region Errors
 export class IncorrectPasswordError extends Error {}
 export class ClientWithUsernameExistsError extends Error {
   constructor(username: string) {
@@ -338,3 +329,4 @@ export class ClientWithUsernameExistsError extends Error {
   }
 }
 export class ClientNotFoundError extends Error {}
+// #endregion

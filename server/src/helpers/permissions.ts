@@ -1,4 +1,4 @@
-import { ClientPermissionLevel } from "persistence";
+import type { ClientPermissionLevel } from "models";
 
 export const PERMISSION_RANKING: ClientPermissionLevel[] = [
   "visitor",

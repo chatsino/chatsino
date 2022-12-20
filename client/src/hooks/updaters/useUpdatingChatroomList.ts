@@ -19,7 +19,7 @@ export function useUpdatingChatroomList() {
       const subscription = `Chatrooms/${chatroom.id}/Updated`;
 
       // eslint-disable-next-line no-loop-func
-      subscribe(relevantIdentifier, subscription, async (response) => {
+      subscribe(relevantIdentifier, subscription, (response) => {
         const { chatroom: updatedChatroom } = response.data as {
           chatroom: ChatroomData;
         };

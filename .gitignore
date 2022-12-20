@@ -15,7 +15,7 @@
 database
 
 # cache
-cache
+/cache/
 
 # caddy
 caddy

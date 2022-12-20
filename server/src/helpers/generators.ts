@@ -1,5 +1,5 @@
 import Chance from "chance";
-import type { FullClient, Client } from "persistence";
+import type { FullClient, Client } from "models";
 
 const CHANCE = new Chance();
 

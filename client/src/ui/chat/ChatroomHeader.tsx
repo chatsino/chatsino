@@ -17,13 +17,13 @@ import {
 } from "antd";
 import { fromDateString } from "helpers";
 import { UseChatSearch, useClient } from "hooks";
-import { useMemo, ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { BsPinAngle } from "react-icons/bs";
 import { GoMention } from "react-icons/go";
 import { Link } from "react-router-dom";
 import { ClientAvatarStrip } from "../client";
-import { ChatroomAvatarStrip } from "./ChatroomAvatarStrip";
 import { mentionsClient } from "./ChatMessage";
+import { ChatroomAvatarStrip } from "./ChatroomAvatarStrip";
 
 export function ChatroomHeader({
   chatroom,

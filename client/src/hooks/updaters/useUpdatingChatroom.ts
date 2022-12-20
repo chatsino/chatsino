@@ -17,7 +17,7 @@ export function useUpdatingChatroom() {
     const relevantIdentifier = identifier.current;
     const subscription = `Chatrooms/${chatroom.id}/Updated`;
 
-    subscribe(relevantIdentifier, subscription, async (response) => {
+    subscribe(relevantIdentifier, subscription, (response) => {
       const { chatroom: updatedChatroom } = response.data as {
         chatroom: ChatroomData;
       };
@@ -35,7 +35,7 @@ export function useUpdatingChatroom() {
     const relevantIdentifier = identifier.current;
     const subscription = `Chatrooms/${chatroom.id}/NewMessage`;
 
-    subscribe(relevantIdentifier, subscription, async (response) => {
+    subscribe(relevantIdentifier, subscription, (response) => {
       const { message } = response.data as {
         message: ChatMessageData;
       };
@@ -53,7 +53,7 @@ export function useUpdatingChatroom() {
     const relevantIdentifier = identifier.current;
     const subscription = `Chatrooms/${chatroom.id}/MessageUpdated`;
 
-    subscribe(relevantIdentifier, subscription, async (response) => {
+    subscribe(relevantIdentifier, subscription, (response) => {
       const { message } = response.data as {
         message: ChatMessageData;
       };
@@ -75,7 +75,7 @@ export function useUpdatingChatroom() {
     const relevantIdentifier = identifier.current;
     const subscription = `Chatrooms/${chatroom.id}/MessageDeleted`;
 
-    subscribe(relevantIdentifier, subscription, async (response) => {
+    subscribe(relevantIdentifier, subscription, (response) => {
       const { messageId } = response.data as {
         messageId: number;
       };

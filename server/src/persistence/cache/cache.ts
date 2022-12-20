@@ -2,6 +2,7 @@ import * as config from "config";
 import { now } from "helpers";
 import JWTRedis from "jwt-redis";
 import { createLogger } from "logger";
+import { ClientSocketRequests, handleClientTokenExpired } from "managers";
 import { createClient } from "redis";
 
 export type CacheConnectionStatus =
@@ -29,6 +30,7 @@ export async function initializeCache() {
     REDIS.on("connect", handleRedisConnection);
     REDIS.on("reconnecting", handleRedisReconnecting);
     REDIS.on("error", handleRedisError);
+    REDIS.on("ready", handleRedisReady);
 
     // Pub/Sub are duplicates so their errors will be handled from `redis`
     PUBLISHER.on("error", ignoreError);
@@ -79,8 +81,8 @@ export function ensureCacheConnected() {
 
 export function handleRedisConnection() {
   if (CACHE_CONNECTION_STATUS !== "connected") {
-    CACHE_CONNECTION_STATUS = "connected";
     CACHE_LOGGER.info("Connected.");
+    CACHE_CONNECTION_STATUS = "connected";
   }
 }
 
@@ -98,10 +100,38 @@ export function handleRedisError(error: unknown) {
   }
 }
 
+export function handleRedisReady() {
+  CACHE_LOGGER.info("Ready -- subscribing to expired keys.");
+  REDIS.configSet("notify-keyspace-events", "Ex");
+  SUBSCRIBER.subscribe("__keyevent@0__:expired", handleKeyExpired);
+}
+
 export function ignoreError() {}
 
 export function isCacheHealthy() {
   return !["off", "error", "reconnecting"].includes(CACHE_CONNECTION_STATUS);
+}
+
+export async function handleKeyExpired(key: string) {
+  const split = key.split("/");
+
+  if (key.startsWith(config.TOKEN_CACHE_KEY) && split.length === 3) {
+    const [_, __, username] = split;
+
+    if (username) {
+      CACHE_LOGGER.info({ username }, "Token expired.");
+
+      handleClientTokenExpired({
+        from: {
+          id: 0,
+        },
+        kind: ClientSocketRequests.ClientTokenExpired,
+        args: {
+          username,
+        },
+      });
+    }
+  }
 }
 
 export class CacheNotConnectedError extends Error {}

@@ -11,11 +11,8 @@ export function SigninRoute() {
 
   async function handleSignin(username: string, password: string) {
     await signin(username, password);
-    navigate(redirectRoute);
 
-    setTimeout(() => {
-      window.location.reload(); // TODO: Remove this.
-    }, 250);
+    navigate(redirectRoute);
   }
 
   return (

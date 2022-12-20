@@ -1,12 +1,7 @@
 import * as config from "config";
 import { createLogger } from "logger";
 import { getClientById } from "models";
-import {
-  clearCachedValue,
-  getCachedValue,
-  postgres,
-  setCachedValue,
-} from "persistence";
+import { CHAT_MESSAGE_CACHE, postgres } from "persistence";
 
 export interface ChatMessage {
   id: number;
@@ -389,38 +384,3 @@ export async function clientVotedInPoll(
     return null;
   }
 }
-
-// #region Caching
-export const CHAT_MESSAGE_CACHE = {
-  CHAT_MESSAGE: {
-    key: (messageId: number) =>
-      [config.CHAT_MESSAGE_CACHE_KEY, messageId].join("/"),
-    cache: (message: ChatMessage) =>
-      setCachedValue(
-        CHAT_MESSAGE_CACHE.CHAT_MESSAGE.key(message.id),
-        JSON.stringify(message),
-        config.CHAT_MESSAGE_CACHE_TTL_SECONDS
-      ),
-    read: (messageId: number) =>
-      getCachedValue(
-        CHAT_MESSAGE_CACHE.CHAT_MESSAGE.key(messageId)
-      ) as Promise<null | ChatMessage>,
-    clear: (messageId: number) =>
-      clearCachedValue(CHAT_MESSAGE_CACHE.CHAT_MESSAGE.key(messageId)),
-  },
-  CHAT_MESSAGE_LIST: {
-    key: (chatroomId: number) =>
-      [config.CHAT_MESSAGE_LIST_CACHE_KEY, chatroomId].join("/"),
-    cache: (chatroomId: number, chatMessageList: HydratedChatMessage[]) =>
-      setCachedValue(
-        CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.key(chatroomId),
-        JSON.stringify(chatMessageList),
-        config.CHAT_MESSAGE_CACHE_TTL_SECONDS
-      ),
-    read: (chatroomId: number) =>
-      getCachedValue(CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.key(chatroomId)),
-    clear: (chatroomId: number) =>
-      clearCachedValue(CHAT_MESSAGE_CACHE.CHAT_MESSAGE_LIST.key(chatroomId)),
-  },
-};
-// #endregion

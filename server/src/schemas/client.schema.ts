@@ -53,3 +53,9 @@ export const clientChatUserSchema = yup
     username: yup.string().required(),
   })
   .required();
+
+export const clientTokenExpiredSchema = yup
+  .object({
+    username: yup.string().required(),
+  })
+  .required();

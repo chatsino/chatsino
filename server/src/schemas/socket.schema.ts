@@ -1,4 +1,4 @@
-import { Client } from "persistence";
+import type { Client } from "models";
 import * as yup from "yup";
 import { clientSchema } from "./client.schema";
 
@@ -8,7 +8,7 @@ export interface SocketMessage {
 }
 
 export interface SourcedSocketMessage extends SocketMessage {
-  from: Client;
+  from: { id: number };
 }
 
 // #region Incoming
@@ -33,7 +33,7 @@ export const socketResponseSchema = yup.object({
 });
 
 export const socketSuccessResponseSchema = socketResponseSchema.shape({
-  data: yup.object().nullable(),
+  data: yup.object().nullable().default(undefined),
 });
 
 export const socketErrorResponseSchema = socketResponseSchema.shape({

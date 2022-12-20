@@ -9,6 +9,7 @@ import {
   useChatrooms,
   useClient,
   useSocket,
+  useTokenExpiration,
   useUniversalVhUnit,
   useUpdatingChatroomList,
 } from "hooks";
@@ -50,12 +51,13 @@ function Inner() {
   const { chatrooms } = useUpdatingChatroomList();
   const { validate } = useAuthentication();
   const { client, setClient } = useClient();
-  const { initialize } = useSocket();
+  const { initialize, shutdown } = useSocket();
   const {
     data: { users },
   } = useChatrooms();
   const data = useLoaderData() as { client: SafeClient };
   const initiallyValidated = useRef(false);
+  const initializedSocket = useRef(false);
   const games = [
     {
       title: "Blackjack",
@@ -96,6 +98,7 @@ function Inner() {
   ];
 
   useUniversalVhUnit();
+  useTokenExpiration();
 
   useEffect(() => {
     if (data?.client && !client) {
@@ -106,21 +109,19 @@ function Inner() {
   useEffect(() => {
     if (!initiallyValidated.current) {
       initiallyValidated.current = true;
-
-      const handleValidate = async () => {
-        try {
-          const client = await validate();
-
-          if (client) {
-            setClient(client);
-            initialize();
-          }
-        } catch (error) {}
-      };
-
-      handleValidate();
+      validate();
     }
-  }, [validate, setClient, initialize]);
+  }, [validate]);
+
+  useEffect(() => {
+    if (!initializedSocket.current && client) {
+      initializedSocket.current = true;
+      initialize();
+    } else if (!client && initializedSocket.current) {
+      initializedSocket.current = false;
+      shutdown();
+    }
+  }, [client, initialize, shutdown]);
 
   return (
     <Row gutter={20}>
