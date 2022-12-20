@@ -58,10 +58,12 @@ export const router = createBrowserRouter([
                 children: [
                   {
                     path: "blacklist",
+                    loader: chatroomSettingsLoader,
                     element: <ChatroomBlacklistRoute />,
                   },
                   {
                     path: "whitelist",
+                    loader: chatroomSettingsLoader,
                     element: <ChatroomWhitelistRoute />,
                   },
                 ],

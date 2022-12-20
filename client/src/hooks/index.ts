@@ -2,6 +2,7 @@ export * from "./updaters";
 export * from "./useAuthentication";
 export * from "./useBlackjack";
 export * from "./useChatAutoscroll";
+export * from "./useChatroomHeaderHeight";
 export * from "./useChatrooms";
 export * from "./useChatSearch";
 export * from "./useClient";
