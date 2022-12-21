@@ -2,6 +2,7 @@ import { useSocket } from "hooks";
 import { ChatroomLoaderData } from "loaders";
 import { useEffect, useRef, useState } from "react";
 import { useLoaderData } from "react-router-dom";
+import { CHATROOM_SUBSCRIPTIONS } from "subscriptions";
 import uuid from "uuid4";
 
 export function useUpdatingChatroom() {
@@ -15,7 +16,7 @@ export function useUpdatingChatroom() {
   // Updating chatroom.
   useEffect(() => {
     const relevantIdentifier = identifier.current;
-    const subscription = `Chatrooms/${chatroom.id}/Updated`;
+    const subscription = CHATROOM_SUBSCRIPTIONS.chatroomUpdated(chatroom.id);
 
     subscribe(relevantIdentifier, subscription, (response) => {
       const { chatroom: updatedChatroom } = response.data as {
@@ -33,7 +34,7 @@ export function useUpdatingChatroom() {
   // Receiving a new message.
   useEffect(() => {
     const relevantIdentifier = identifier.current;
-    const subscription = `Chatrooms/${chatroom.id}/NewMessage`;
+    const subscription = CHATROOM_SUBSCRIPTIONS.newChatMessage(chatroom.id);
 
     subscribe(relevantIdentifier, subscription, (response) => {
       const { message } = response.data as {
@@ -51,7 +52,7 @@ export function useUpdatingChatroom() {
   // Updating a message.
   useEffect(() => {
     const relevantIdentifier = identifier.current;
-    const subscription = `Chatrooms/${chatroom.id}/MessageUpdated`;
+    const subscription = CHATROOM_SUBSCRIPTIONS.chatMessageUpdated(chatroom.id);
 
     subscribe(relevantIdentifier, subscription, (response) => {
       const { message } = response.data as {
@@ -73,7 +74,7 @@ export function useUpdatingChatroom() {
   // Deleting a message.
   useEffect(() => {
     const relevantIdentifier = identifier.current;
-    const subscription = `Chatrooms/${chatroom.id}/MessageDeleted`;
+    const subscription = CHATROOM_SUBSCRIPTIONS.chatMessageDeleted(chatroom.id);
 
     subscribe(relevantIdentifier, subscription, (response) => {
       const { messageId } = response.data as {

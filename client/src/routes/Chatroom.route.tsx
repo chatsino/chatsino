@@ -1,4 +1,4 @@
-import { useUpdatingChatroom } from "hooks";
+import { useChatroomEntranceExit, useUpdatingChatroom } from "hooks";
 import { ChatroomLoaderData } from "loaders";
 import { Outlet, useLoaderData } from "react-router-dom";
 import { Chatroom } from "ui";
@@ -7,6 +7,8 @@ export function ChatroomRoute() {
   const { sendMessage, pinMessage, deleteMessage } =
     useLoaderData() as ChatroomLoaderData;
   const { chatroom, messages } = useUpdatingChatroom();
+
+  useChatroomEntranceExit(chatroom.id);
 
   return (
     <div style={{ position: "relative" }}>

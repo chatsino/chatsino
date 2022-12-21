@@ -1,7 +1,7 @@
-import { message as showMessage } from "ui";
 import { makeHttpRequest } from "helpers";
 import { LoaderFunctionArgs, redirect } from "react-router-dom";
 import { SafeClient } from "schemas";
+import { message as showMessage } from "ui";
 import { requireClientLoader } from "./client.loader";
 
 export type ChatroomUpdate = Pick<ChatroomData, "title" | "description"> & {

@@ -1,8 +1,8 @@
-import { useCallback, useMemo } from "react";
 import { makeHttpRequest } from "helpers";
+import { useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { SafeClient } from "schemas";
 import { useClient } from "./useClient";
-import { useNavigate } from "react-router-dom";
 
 export function useAuthenticationRequests() {
   const { setClient } = useClient();

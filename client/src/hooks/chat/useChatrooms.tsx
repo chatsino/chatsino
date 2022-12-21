@@ -1,3 +1,4 @@
+import { ChatroomSocketRequests } from "enums";
 import {
   createContext,
   ReactNode,
@@ -9,14 +10,6 @@ import {
   useState,
 } from "react";
 import { useSocket } from "../useSocket";
-
-export enum ChatroomSocketRequests {
-  ListChatrooms = "list-chatrooms",
-  ListChatroomMessages = "list-chatroom-messages",
-  SendChatMessage = "send-chat-message",
-  VoteInPoll = "vote-in-poll",
-  NewChatMessage = "new-chat-message",
-}
 
 export const ChatroomContext = createContext<{
   data: {

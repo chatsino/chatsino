@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useClient, useSocket } from "hooks";
+import { BlackjackSocketRequests } from "enums";
 
 export type FinishedBlackjackStatus = "pushed" | "won" | "lost" | "blackjack";
 
@@ -33,12 +34,6 @@ export interface Blackjack {
 }
 
 export const BLACKJACK_SUBSCRIBER_NAME = "blackjack";
-
-export enum BlackjackSocketRequests {
-  GetActiveBlackjackGame = "get-active-blackjack-game",
-  StartBlackjackGame = "start-blackjack-game",
-  TakeBlackjackAction = "take-blackjack-action",
-}
 
 export function useBlackjack() {
   const { client } = useClient();

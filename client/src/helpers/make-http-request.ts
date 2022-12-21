@@ -1,6 +1,12 @@
 import axiosLib from "axios";
 import * as config from "config";
-import { ServerResponse } from "shared";
+
+export interface ServerResponse<T> {
+  error: boolean;
+  result: "OK" | "Error";
+  message: string;
+  data: T;
+}
 
 export const axios = axiosLib.create({
   baseURL: config.API_BASE_URL,

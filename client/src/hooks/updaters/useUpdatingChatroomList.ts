@@ -2,6 +2,7 @@ import { useSocket } from "hooks";
 import { ChatroomListLoaderData } from "loaders";
 import { useEffect, useRef, useState } from "react";
 import { useLoaderData } from "react-router-dom";
+import { CHATROOM_SUBSCRIPTIONS } from "subscriptions";
 import uuid from "uuid4";
 
 export function useUpdatingChatroomList() {
@@ -16,7 +17,7 @@ export function useUpdatingChatroomList() {
     const subscriptions = [] as string[];
 
     for (const chatroom of chatrooms) {
-      const subscription = `Chatrooms/${chatroom.id}/Updated`;
+      const subscription = CHATROOM_SUBSCRIPTIONS.chatroomUpdated(chatroom.id);
 
       // eslint-disable-next-line no-loop-func
       subscribe(relevantIdentifier, subscription, (response) => {
