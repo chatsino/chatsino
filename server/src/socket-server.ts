@@ -3,7 +3,12 @@ import * as config from "config";
 import { Request } from "express";
 import { createLogger } from "logger";
 import { Client, ClientIdentifier } from "models";
-import { PUBLISHER, SUBSCRIBER } from "persistence";
+import {
+  CHATROOM_CACHE,
+  CLIENT_CACHE,
+  PUBLISHER,
+  SUBSCRIBER,
+} from "persistence";
 import {
   clientSubscriptionSchema,
   socketErrorResponseSchema,
@@ -171,13 +176,29 @@ export class SocketServer {
     websocket.on("close", () => this.terminate(websocket));
   }
 
-  private terminate(websocket: WebSocket) {
+  private async terminate(websocket: WebSocket) {
+    const client = this.clients.get(websocket);
+
     SOCKETS_LOGGER.info(
       {
-        client: this.clients.get(websocket),
+        client,
       },
       "A client disconnected."
     );
+
+    if (client) {
+      const currentChatroom = await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.read(
+        client.id
+      );
+
+      if (currentChatroom != null) {
+        await CHATROOM_CACHE.CHATROOM_USERS.removeClient(
+          currentChatroom,
+          client.id
+        );
+        await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.clear(client.id);
+      }
+    }
 
     this.clients.delete(websocket);
     this.clearSubscriptions(websocket);

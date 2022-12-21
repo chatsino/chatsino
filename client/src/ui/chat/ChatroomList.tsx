@@ -59,9 +59,9 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
           <List.Item
             style={{ cursor: "pointer" }}
             extra={
-              <Space size="small">
-                <UserOutlined /> 0
-              </Space>
+              <>
+                <UserOutlined /> {item.users.length}
+              </>
             }
           >
             <Tooltip title={item.description}>

@@ -6,13 +6,13 @@ export enum BlackjackSocketRequests {
 
 export enum ClientSocketRequests {
   ClientTokenExpired = "client-token-expired",
-  ClientEnteredChatroom = "client-entered-chatroom",
-  ClientExitedChatroom = "client-exited-chatroom",
 }
 
 export enum ChatroomSocketRequests {
   ListChatrooms = "list-chatrooms",
   ChatroomUpdated = "chatroom-updated",
+  ClientEnteredChatroom = "client-entered-chatroom",
+  ClientExitedChatroom = "client-exited-chatroom",
 }
 
 export enum ChatMessageSocketRequests {

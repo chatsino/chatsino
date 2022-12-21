@@ -14,14 +14,20 @@ export const chatroomSchema = yup
   })
   .required();
 
-export const listChatroomMessagesSchema = yup
+export const chatroomUpdatedSchema = yup
+  .object({
+    chatroom: chatroomSchema,
+  })
+  .required();
+
+export const clientEnteredChatroomSchema = yup
   .object({
     chatroomId: yup.number().required(),
   })
   .required();
 
-export const chatroomUpdatedSchema = yup
+export const clientExitedChatroomSchema = yup
   .object({
-    chatroom: chatroomSchema,
+    chatroomId: yup.number().required(),
   })
   .required();

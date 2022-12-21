@@ -1,4 +1,3 @@
-import type { Client } from "models";
 import * as yup from "yup";
 import { clientSchema } from "./client.schema";
 

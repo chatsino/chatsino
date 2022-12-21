@@ -54,9 +54,6 @@ function Inner() {
   const { validate } = useAuthenticationRequests();
   const { client, setClient } = useClient();
   const { initialize, shutdown } = useSocket();
-  const {
-    data: { users },
-  } = useChatrooms();
   const data = useLoaderData() as { client: SafeClient };
   const initiallyValidated = useRef(false);
   const initializedSocket = useRef(false);
@@ -132,7 +129,7 @@ function Inner() {
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <ChatUserList users={users} />
+            <ChatUserList users={[]} />
           </div>
           <div style={{ flex: 1 }}>
             <Collapse accordion={true} ghost={true}>

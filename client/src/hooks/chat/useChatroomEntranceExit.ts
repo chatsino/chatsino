@@ -1,15 +1,19 @@
-import { ClientSocketRequests } from "enums";
+import { ChatroomSocketRequests } from "enums";
 import { useSocket } from "hooks";
 import { useEffect } from "react";
 
 export function useChatroomEntranceExit(chatroomId: number) {
-  const { makeRequest } = useSocket();
+  const { makeRequest, initialized } = useSocket();
 
   useEffect(() => {
-    makeRequest(ClientSocketRequests.ClientEnteredChatroom);
+    makeRequest(ChatroomSocketRequests.ClientEnteredChatroom, {
+      chatroomId,
+    });
 
     return () => {
-      makeRequest(ClientSocketRequests.ClientExitedChatroom);
+      makeRequest(ChatroomSocketRequests.ClientExitedChatroom, {
+        chatroomId,
+      });
     };
-  }, [chatroomId]);
+  }, [chatroomId, initialized]);
 }

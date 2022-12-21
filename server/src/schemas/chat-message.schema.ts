@@ -1,6 +1,12 @@
 import * as yup from "yup";
 import { clientChatUserSchema } from "./client.schema";
 
+export const listChatroomMessagesSchema = yup
+  .object({
+    chatroomId: yup.number().required(),
+  })
+  .required();
+
 export const chatMessagePollAnswerSchema = yup.object({
   text: yup.string().required(),
   respondents: yup.array(yup.number().required()).required(),

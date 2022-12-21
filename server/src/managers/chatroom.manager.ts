@@ -6,8 +6,12 @@ import {
 } from "helpers";
 import { createLogger } from "logger";
 import { Chatroom, getClientById, readChatroomList } from "models";
-import { SUBSCRIBER } from "persistence";
-import { chatroomUpdatedSchema, SourcedSocketMessage } from "schemas";
+import { CHATROOM_CACHE, CLIENT_CACHE, SUBSCRIBER } from "persistence";
+import {
+  chatroomUpdatedSchema,
+  clientEnteredChatroomSchema,
+  clientExitedChatroomSchema,
+} from "schemas";
 import { SocketServer } from "socket-server";
 import { CHATROOM_SUBSCRIPTIONS } from "subscriptions";
 
@@ -24,11 +28,20 @@ export function initializeChatroomManager() {
     ChatroomSocketRequests.ChatroomUpdated,
     handleChatroomUpdated
   );
+  SUBSCRIBER.subscribe(
+    ChatroomSocketRequests.ClientEnteredChatroom,
+    handleClientEnteredChatroom
+  );
+  SUBSCRIBER.subscribe(
+    ChatroomSocketRequests.ClientExitedChatroom,
+    handleClientExitedChatroom
+  );
 }
 
-// #region Chatrooms
-export async function handleListChatrooms(messageString: string) {
-  const { kind, from } = JSON.parse(messageString) as SourcedSocketMessage;
+export async function handleListChatrooms(
+  sourcedSocketMessage: PreparsedSourcedSocketMessage
+) {
+  const { from, kind } = parseSourcedSocketMessage(sourcedSocketMessage);
 
   try {
     const chatrooms = (await readChatroomList()) as unknown as Chatroom[];
@@ -85,11 +98,71 @@ export async function handleChatroomUpdated(
       from.id,
       kind,
       error,
-      `Failed to alert clients to an updated chatroom.`
+      "Failed to alert clients to an updated chatroom."
     );
   }
 }
-// #endregion
+
+export async function handleClientEnteredChatroom(
+  sourcedSocketMessage: PreparsedSourcedSocketMessage
+) {
+  const { from, kind, args } = parseSourcedSocketMessage(sourcedSocketMessage);
+
+  try {
+    const { chatroomId } = await clientEnteredChatroomSchema.validate(args);
+
+    await CHATROOM_CACHE.CHATROOM_USERS.addClient(chatroomId, from.id);
+    await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.cache(from.id, chatroomId);
+
+    return SocketServer.success(
+      from.id,
+      ChatroomSocketRequests.ClientEnteredChatroom
+    );
+  } catch (error) {
+    CHATROOM_MANAGER_LOGGER.error(
+      { error },
+      "Failed to handle client entering chatroom."
+    );
+
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      "Failed to handle client entering chatroom."
+    );
+  }
+}
+
+export async function handleClientExitedChatroom(
+  sourcedSocketMessage: PreparsedSourcedSocketMessage
+) {
+  const { from, kind, args } = parseSourcedSocketMessage(sourcedSocketMessage);
+
+  try {
+    // TODO: When should this actually be cleared?
+    // const { chatroomId } = await clientExitedChatroomSchema.validate(args);
+
+    // await CHATROOM_CACHE.CHATROOM_USERS.removeClient(chatroomId, from.id);
+    // await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.clear(from.id);
+
+    return SocketServer.success(
+      from.id,
+      ChatroomSocketRequests.ClientExitedChatroom
+    );
+  } catch (error) {
+    CHATROOM_MANAGER_LOGGER.error(
+      { error },
+      "Failed to handle client exiting chatroom."
+    );
+
+    return handleChatroomErrors(
+      from.id,
+      kind,
+      error,
+      "Failed to handle client exiting chatroom."
+    );
+  }
+}
 
 export function handleChatroomErrors(
   to: number,

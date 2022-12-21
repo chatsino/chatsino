@@ -2,7 +2,7 @@ import * as config from "config";
 import { meetsPermissionRequirement } from "helpers";
 import { createLogger } from "logger";
 import { CHATROOM_CACHE, postgres } from "persistence";
-import { getClientById } from "./client.model";
+import { Client, getClientById } from "./client.model";
 
 export interface Chatroom {
   id: number;
@@ -51,6 +51,7 @@ export type HydratedChatroom = Omit<Chatroom, "createdBy" | "updatedBy"> & {
     username: string;
   };
   public: boolean;
+  users: Client[];
 };
 
 export const CHATROOM_MODEL_LOGGER = createLogger(
@@ -225,6 +226,7 @@ export async function readHydratedChatroom(chatroomId: number) {
         public:
           !chatroom.password &&
           Object.keys(chatroom.whitelist ?? {}).length === 0,
+        users: await CHATROOM_CACHE.CHATROOM_USERS.hydrated(chatroomId),
       } as HydratedChatroom;
 
       CHATROOM_CACHE.CHATROOM.cache(hydrated);
@@ -262,29 +264,35 @@ export async function readChatroomList() {
       )) as {
         rows: HydratedChatroomQuery[];
       };
-      const chatrooms = rows.map(
-        ({
-          createdById,
-          createdByAvatar,
-          createdByUsername,
-          updatedById,
-          updatedByAvatar,
-          updatedByUsername,
-          ...chatroom
-        }) => ({
-          ...chatroom,
-          createdBy: {
-            id: createdById,
-            avatar: createdByAvatar,
-            username: createdByUsername,
-          },
-          updatedBy: {
-            id: updatedById,
-            avatar: updatedByAvatar,
-            username: updatedByUsername,
-          },
-        })
-      ) as HydratedChatroom[];
+      const chatrooms = (await Promise.all(
+        rows.map(
+          async ({
+            createdById,
+            createdByAvatar,
+            createdByUsername,
+            updatedById,
+            updatedByAvatar,
+            updatedByUsername,
+            ...chatroom
+          }) => ({
+            ...chatroom,
+            createdBy: {
+              id: createdById,
+              avatar: createdByAvatar,
+              username: createdByUsername,
+            },
+            updatedBy: {
+              id: updatedById,
+              avatar: updatedByAvatar,
+              username: updatedByUsername,
+            },
+            public:
+              !chatroom.password &&
+              Object.keys(chatroom.whitelist ?? {}).length === 0,
+            users: await CHATROOM_CACHE.CHATROOM_USERS.hydrated(chatroom.id),
+          })
+        )
+      )) as HydratedChatroom[];
 
       CHATROOM_CACHE.CHATROOM_LIST.cache(chatrooms);
 

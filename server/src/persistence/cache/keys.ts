@@ -6,12 +6,16 @@ export const CLIENT_KEYS = {
     buildCacheKey(config.CLIENT_CACHE_KEY, clientId),
   clientByUsername: (username: string) =>
     buildCacheKey(config.CLIENT_CACHE_KEY, "ByUsername", username),
+  clientCurrentChatroom: (clientId: number) =>
+    buildCacheKey(config.CLIENT_CACHE_KEY, clientId, "CurrentChatroom"),
 };
 
 export const CHATROOM_KEYS = {
   chatroom: (chatroomId: number) =>
     buildCacheKey(config.CHATROOM_CACHE_KEY, chatroomId),
   chatroomList: () => config.CHATROOM_LIST_CACHE_KEY,
+  chatroomUsers: (chatroomId: number) =>
+    buildCacheKey(config.CHATROOM_CACHE_KEY, chatroomId, "Users"),
   canClientMessageChatroom: (clientId: number, chatroomId: number) =>
     buildCacheKey(
       config.CAN_CLIENT_MESSAGE_CHATROOM_CACHE_KEY,

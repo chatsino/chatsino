@@ -117,16 +117,19 @@ export async function getChatroomRoute(
       }
     }
 
-    const { messages, cached: messagesCached } =
-      (await chatMessageModel.readChatMessageList(chatroomId)) ?? {
-        messages: [],
-      };
-    const users = await Promise.resolve([]);
+    const chatMessageData = await chatMessageModel.readChatMessageList(
+      chatroomId
+    );
+
+    if (!chatMessageData) {
+      throw new Error();
+    }
+
+    const { messages, cached: messagesCached } = chatMessageData;
 
     return successResponse(res, "Chatroom retrieved.", {
       chatroom: chatroomModel.safetifyChatroom(chatroom),
       messages,
-      users,
       cached: {
         chatroom: chatroomCached,
         messages: messagesCached,

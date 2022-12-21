@@ -1,12 +1,18 @@
+export enum BlackjackSocketRequests {
+  GetActiveBlackjackGame = "get-active-blackjack-game",
+  StartBlackjackGame = "start-blackjack-game",
+  TakeBlackjackAction = "take-blackjack-action",
+}
+
 export enum ClientSocketRequests {
   ClientTokenExpired = "client-token-expired",
-  ClientEnteredChatroom = "client-entered-chatroom",
-  ClientExitedChatroom = "client-exited-chatroom",
 }
 
 export enum ChatroomSocketRequests {
   ListChatrooms = "list-chatrooms",
   ChatroomUpdated = "chatroom-updated",
+  ClientEnteredChatroom = "client-entered-chatroom",
+  ClientExitedChatroom = "client-exited-chatroom",
 }
 
 export enum ChatMessageSocketRequests {
@@ -21,10 +27,4 @@ export enum ChatMessageSocketRequests {
 export enum ServerMessageSocketRequests {
   ClientSuccessMessage = "client-success-message",
   ClientErrorMessage = "client-error-message",
-}
-
-export enum BlackjackSocketRequests {
-  GetActiveBlackjackGame = "get-active-blackjack-game",
-  StartBlackjackGame = "start-blackjack-game",
-  TakeBlackjackAction = "take-blackjack-action",
 }
