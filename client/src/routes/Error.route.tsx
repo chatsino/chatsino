@@ -1,4 +1,4 @@
-import { Empty } from "antd";
+import { Empty } from "ui";
 import { SiteLayout } from "ui";
 import { useRouteError } from "react-router-dom";
 

@@ -1,4 +1,4 @@
-import { message } from "antd";
+import { message } from "ui";
 import { useEffect } from "react";
 import { useSocket } from "./useSocket";
 

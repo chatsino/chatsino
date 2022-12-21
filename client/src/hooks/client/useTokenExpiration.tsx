@@ -1,5 +1,4 @@
-import { LogoutOutlined } from "@ant-design/icons";
-import { notification as showNotification } from "antd";
+import { notification as showNotification, LogoutOutlined } from "ui";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClientSocketRequests, useClient } from "./useClient";

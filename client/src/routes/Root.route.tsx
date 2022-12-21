@@ -1,5 +1,3 @@
-import { LockFilled } from "@ant-design/icons";
-import { Col, Collapse, Row } from "antd";
 import { toUniversalVh } from "helpers";
 import {
   ChatroomProvider,
@@ -28,8 +26,12 @@ import {
   ChatGameList,
   ChatroomList,
   ChatUserList,
+  Col,
+  Collapse,
   JoinPrivateRoomForm,
+  LockFilled,
   PurchaseChipsForm,
+  Row,
   SiteLayout,
 } from "ui";
 

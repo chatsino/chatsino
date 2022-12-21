@@ -1,5 +1,5 @@
 import { LogoutOutlined } from "@ant-design/icons";
-import { Button } from "antd";
+import { Button } from "ui";
 import { Link } from "react-router-dom";
 
 export function MeRoute() {

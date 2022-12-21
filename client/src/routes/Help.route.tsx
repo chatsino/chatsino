@@ -1,5 +1,4 @@
-import { QuestionCircleOutlined } from "@ant-design/icons";
-import { PageHeader } from "ui";
+import { PageHeader, QuestionCircleOutlined } from "ui";
 
 export function HelpRoute() {
   return (

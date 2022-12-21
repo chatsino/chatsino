@@ -1,11 +1,16 @@
-import { CloseOutlined } from "@ant-design/icons";
-import { Button, Divider, Drawer, Form, Grid, Space } from "antd";
 import { useChatroomHeaderHeight, useUpdatingChatroom } from "hooks";
 import { ChatroomSettingsLoaderData } from "loaders";
 import { Outlet, useLoaderData, useNavigate } from "react-router-dom";
 import {
+  Button,
   ChatroomAvatarStrip,
   ChatroomReadonlyData,
+  CloseOutlined,
+  Divider,
+  Drawer,
+  Form,
+  Grid,
+  Space,
   UpdateChatroomForm,
 } from "ui";
 

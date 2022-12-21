@@ -1,5 +1,4 @@
-import { SettingOutlined } from "@ant-design/icons";
-import { PageHeader } from "ui";
+import { PageHeader, SettingOutlined } from "ui";
 
 export function AdminRoute() {
   return (

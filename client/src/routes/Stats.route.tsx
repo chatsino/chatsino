@@ -1,5 +1,4 @@
-import { BarChartOutlined } from "@ant-design/icons";
-import { PageHeader } from "ui";
+import { BarChartOutlined, PageHeader } from "ui";
 
 export function StatsRoute() {
   return (

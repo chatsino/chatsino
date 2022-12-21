@@ -1,4 +1,4 @@
-import { Drawer } from "antd";
+import { Drawer } from "ui";
 
 export function ChatroomBlacklistRoute() {
   return (

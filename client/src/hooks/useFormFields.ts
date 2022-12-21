@@ -1,4 +1,4 @@
-import { FormInstance } from "antd";
+import { FormInstance } from "ui";
 import { ValidationError } from "yup";
 
 export function useFormFields<T extends object>(

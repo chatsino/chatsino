@@ -1,9 +1,14 @@
-import { CloseOutlined } from "@ant-design/icons";
-import { Button, Divider, Drawer, Space } from "antd";
 import { useChatroomHeaderHeight, useUpdatingChatroom } from "hooks";
 import { ChatroomSettingsLoaderData } from "loaders";
 import { useLoaderData, useNavigate } from "react-router-dom";
-import { ChatroomAvatarStrip } from "ui";
+import {
+  Button,
+  ChatroomAvatarStrip,
+  CloseOutlined,
+  Divider,
+  Drawer,
+  Space,
+} from "ui";
 
 export function ChatroomWhitelistRoute() {
   const { updateChatroom } = useLoaderData() as ChatroomSettingsLoaderData;

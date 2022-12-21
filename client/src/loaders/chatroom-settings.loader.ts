@@ -1,4 +1,4 @@
-import { message as showMessage } from "antd";
+import { message as showMessage } from "ui";
 import { makeHttpRequest } from "helpers";
 import { LoaderFunctionArgs, redirect } from "react-router-dom";
 import { SafeClient } from "schemas";

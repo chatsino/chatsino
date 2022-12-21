@@ -1,4 +1,4 @@
-import { Col, Row, Typography } from "antd";
+import { Col, Row, Typography } from "ui";
 import { useAuthenticationRequests } from "hooks";
 import { Link } from "react-router-dom";
 import { SignupForm } from "ui";
