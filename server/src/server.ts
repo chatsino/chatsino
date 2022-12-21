@@ -79,6 +79,7 @@ function applyRoutes(app: Express) {
   api.use("/admin", routes.createAdminRouter());
   api.use("/auth", routes.createAuthRouter());
   api.use("/chat", routes.createChatRouter());
+  api.use("/users", routes.createUserRouter());
 
   return app.use("/api", api);
 }

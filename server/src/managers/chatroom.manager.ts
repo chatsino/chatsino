@@ -5,7 +5,12 @@ import {
   PreparsedSourcedSocketMessage,
 } from "helpers";
 import { createLogger } from "logger";
-import { Chatroom, getClientById, readChatroomList } from "models";
+import {
+  Chatroom,
+  getClientById,
+  readChatroomList,
+  readHydratedChatroom,
+} from "models";
 import { CHATROOM_CACHE, CLIENT_CACHE, SUBSCRIBER } from "persistence";
 import {
   chatroomUpdatedSchema,
@@ -114,6 +119,18 @@ export async function handleClientEnteredChatroom(
     await CHATROOM_CACHE.CHATROOM_USERS.addClient(chatroomId, from.id);
     await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.cache(from.id, chatroomId);
 
+    const chatroomData = await readHydratedChatroom(chatroomId);
+
+    if (chatroomData) {
+      await handleChatroomUpdated({
+        from,
+        kind: ChatroomSocketRequests.ChatroomUpdated,
+        args: {
+          chatroom: chatroomData.chatroom,
+        },
+      });
+    }
+
     return SocketServer.success(
       from.id,
       ChatroomSocketRequests.ClientEnteredChatroom
@@ -140,10 +157,22 @@ export async function handleClientExitedChatroom(
 
   try {
     // TODO: When should this actually be cleared?
-    // const { chatroomId } = await clientExitedChatroomSchema.validate(args);
+    const { chatroomId } = await clientExitedChatroomSchema.validate(args);
 
-    // await CHATROOM_CACHE.CHATROOM_USERS.removeClient(chatroomId, from.id);
-    // await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.clear(from.id);
+    await CHATROOM_CACHE.CHATROOM_USERS.removeClient(chatroomId, from.id);
+    await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.clear(from.id);
+
+    const chatroomData = await readHydratedChatroom(chatroomId);
+
+    if (chatroomData) {
+      await handleChatroomUpdated({
+        from,
+        kind: ChatroomSocketRequests.ChatroomUpdated,
+        args: {
+          chatroom: chatroomData.chatroom,
+        },
+      });
+    }
 
     return SocketServer.success(
       from.id,

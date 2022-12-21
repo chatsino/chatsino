@@ -1,8 +1,9 @@
 import { validateTicket } from "auth";
 import * as config from "config";
+import { ChatMessageSocketRequests, ClientSocketRequests } from "enums";
 import { Request } from "express";
 import { createLogger } from "logger";
-import { Client, ClientIdentifier } from "models";
+import { Client, ClientIdentifier, readHydratedChatroom } from "models";
 import {
   CHATROOM_CACHE,
   CLIENT_CACHE,
@@ -17,6 +18,7 @@ import {
   sourcedSocketRequestSchema,
 } from "schemas";
 import { Duplex } from "stream";
+import { CHATROOM_SUBSCRIPTIONS } from "subscriptions";
 import { RawData, WebSocket, WebSocketServer } from "ws";
 
 export interface SocketRequest {
@@ -161,10 +163,12 @@ export class SocketServer {
     return this.server.emit("connection", websocket);
   }
 
-  private handleConnection(websocket: WebSocket) {
+  private async handleConnection(websocket: WebSocket) {
+    const client = this.clients.get(websocket);
+
     SOCKETS_LOGGER.info(
       {
-        client: this.clients.get(websocket),
+        client,
       },
       "A client connected."
     );
@@ -174,6 +178,18 @@ export class SocketServer {
     );
     websocket.on("pong", () => this.heartbeart(websocket));
     websocket.on("close", () => this.terminate(websocket));
+
+    if (client) {
+      await CLIENT_CACHE.ACTIVE_CLIENTS.addClient(client.id);
+
+      SocketServer.broadcastToSubscription(
+        ClientSocketRequests.UserListUpdated,
+        {
+          active: await CLIENT_CACHE.ACTIVE_CLIENTS.hydrated(),
+          inactive: await CLIENT_CACHE.INACTIVE_CLIENTS.hydrated(),
+        }
+      );
+    }
   }
 
   private async terminate(websocket: WebSocket) {
@@ -187,16 +203,40 @@ export class SocketServer {
     );
 
     if (client) {
-      const currentChatroom = await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.read(
+      const currentChatroomId = await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.read(
         client.id
       );
 
-      if (currentChatroom != null) {
+      if (currentChatroomId != null) {
         await CHATROOM_CACHE.CHATROOM_USERS.removeClient(
-          currentChatroom,
+          currentChatroomId,
           client.id
         );
         await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.clear(client.id);
+        await CLIENT_CACHE.INACTIVE_CLIENTS.addClient(client.id);
+
+        SocketServer.broadcastToSubscription(
+          ClientSocketRequests.UserListUpdated,
+          {
+            active: await CLIENT_CACHE.ACTIVE_CLIENTS.hydrated(),
+            inactive: await CLIENT_CACHE.INACTIVE_CLIENTS.hydrated(),
+          }
+        );
+
+        const hydratedCurrentChatroom = await readHydratedChatroom(
+          currentChatroomId
+        );
+
+        if (hydratedCurrentChatroom) {
+          const { chatroom } = hydratedCurrentChatroom;
+
+          SocketServer.broadcastToSubscription(
+            CHATROOM_SUBSCRIPTIONS.chatroomUpdated(chatroom.id),
+            {
+              chatroom,
+            }
+          );
+        }
       }
     }
 

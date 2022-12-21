@@ -15,7 +15,7 @@ export function UserListDrawer({
       onClose={onClose}
       getContainer={false}
     >
-      <ChatUserList users={users} />
+      <ChatUserList active={[]} inactive={[]} />
     </Drawer>
   );
 }

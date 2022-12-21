@@ -1,18 +1,35 @@
 import { SearchOutlined, UserOutlined } from "@ant-design/icons";
-import { Avatar, Input, List, Typography } from "antd";
+import { Avatar, Divider, Input, List, Typography } from "antd";
 import { Link } from "react-router-dom";
 
-export function ChatUserList({ users }: { users: ChatUserData[] }) {
-  const sortedUsers = users.sort((a, b) =>
-    a.username.localeCompare(b.username)
-  );
+export function ChatUserList({
+  active,
+  inactive,
+}: {
+  active: ChatUserData[];
+  inactive: ChatUserData[];
+}) {
+  const sortedActive = active
+    .sort((a, b) => a.username.localeCompare(b.username))
+    .map((each) => ({
+      ...each,
+      active: true,
+    }));
+  const sortedInactive = inactive
+    .sort((a, b) => a.username.localeCompare(b.username))
+    .map((each) => ({
+      ...each,
+      active: false,
+    }));
+  const all = sortedActive.concat(sortedInactive);
+  const firstInactiveIndex = all.findIndex((each) => !each.active);
 
   return (
     <List
       id="ChatUserList"
       itemLayout="vertical"
       bordered={true}
-      dataSource={sortedUsers}
+      dataSource={all}
       size="small"
       header={
         <Typography.Title
@@ -27,7 +44,7 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
           <span>
             <UserOutlined style={{ marginRight: "0.5rem" }} /> Users
           </span>
-          <small>{users.length} online</small>
+          <small>{active.length} online</small>
         </Typography.Title>
       }
       footer={
@@ -39,15 +56,19 @@ export function ChatUserList({ users }: { users: ChatUserData[] }) {
           onChange={(event) => {}}
         />
       }
-      renderItem={(item) => (
-        <Link to={`/u/${item.id}`}>
-          <List.Item style={{ cursor: "pointer" }}>
-            <List.Item.Meta
-              avatar={<Avatar src={item.avatar} />}
-              title={item.username}
-            />
-          </List.Item>
-        </Link>
+      renderItem={(item, index) => (
+        <>
+          {index === 0 && <Divider>Active</Divider>}
+          {index === firstInactiveIndex && <Divider>Inactive</Divider>}
+          <Link to={`/u/${item.id}`}>
+            <List.Item style={{ cursor: "pointer" }}>
+              <List.Item.Meta
+                avatar={<Avatar src={item.avatar} />}
+                title={item.username}
+              />
+            </List.Item>
+          </Link>
+        </>
       )}
       style={{
         flex: 1,

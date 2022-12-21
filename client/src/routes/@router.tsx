@@ -5,6 +5,7 @@ import {
   chatroomSettingsLoader,
   requireAdminLoader,
   requireClientLoader,
+  userListLoader,
 } from "loaders";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { AdminRoute } from "./Admin.route";
@@ -35,7 +36,15 @@ export const router = createBrowserRouter([
     path: "/",
     element: <RootRoute />,
     errorElement: <ErrorRoute />,
-    loader: chatroomListLoader,
+    loader: async () => {
+      const { chatrooms } = await chatroomListLoader();
+      const users = await userListLoader();
+
+      return {
+        chatrooms,
+        users,
+      };
+    },
     children: [
       {
         path: "/admin",

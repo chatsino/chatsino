@@ -169,8 +169,13 @@ export async function readHydratedChatroom(chatroomId: number) {
     const cached = await CHATROOM_CACHE.CHATROOM.read(chatroomId);
 
     if (cached) {
+      const users = await CHATROOM_CACHE.CHATROOM_USERS.hydrated(chatroomId);
+
       return {
-        chatroom: cached,
+        chatroom: {
+          ...cached,
+          users,
+        },
         cached: true,
       };
     } else {
@@ -247,8 +252,15 @@ export async function readChatroomList() {
     const cached = await CHATROOM_CACHE.CHATROOM_LIST.read();
 
     if (cached) {
+      const chatrooms = await Promise.all(
+        cached.map(async (chatroom) => ({
+          ...chatroom,
+          users: await CHATROOM_CACHE.CHATROOM_USERS.hydrated(chatroom.id),
+        }))
+      );
+
       return {
-        chatrooms: cached,
+        chatrooms,
         cached: true,
       };
     } else {

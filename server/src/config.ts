@@ -70,6 +70,7 @@ export const LOGGER_NAMES = {
   // Router
   AUTH_ROUTER: "Router/Auth",
   CHAT_ROUTER: "Router/Chat",
+  USER_ROUTER: "Router/User",
 
   // Models
   BLACKJACK_MODEL: "Models/Blackjack",

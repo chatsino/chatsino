@@ -8,6 +8,9 @@ export const CLIENT_KEYS = {
     buildCacheKey(config.CLIENT_CACHE_KEY, "ByUsername", username),
   clientCurrentChatroom: (clientId: number) =>
     buildCacheKey(config.CLIENT_CACHE_KEY, clientId, "CurrentChatroom"),
+  activeClients: () => buildCacheKey(config.CLIENT_CACHE_KEY, "ActiveClients"),
+  inactiveClients: () =>
+    buildCacheKey(config.CLIENT_CACHE_KEY, "InactiveClients"),
 };
 
 export const CHATROOM_KEYS = {

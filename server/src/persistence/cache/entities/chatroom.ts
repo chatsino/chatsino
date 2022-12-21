@@ -1,57 +1,8 @@
 import * as config from "config";
-import type {
-  ChatMessage,
-  Client,
-  HydratedChatroom,
-  HydratedChatMessage,
-} from "models";
-import { clearCachedValue, getCachedValue, setCachedValue } from "./cache";
-import * as keys from "./keys";
-
-export const CLIENT_CACHE = {
-  CLIENT: {
-    cache: (client: Client) =>
-      setCachedValue(
-        keys.CLIENT_KEYS.client(client.id),
-        JSON.stringify(client),
-        config.CLIENT_CACHE_TTL_SECONDS
-      ),
-    read: (clientId: number) =>
-      getCachedValue(
-        keys.CLIENT_KEYS.client(clientId)
-      ) as Promise<null | Client>,
-    clear: (clientId: number) =>
-      clearCachedValue(keys.CLIENT_KEYS.client(clientId)),
-  },
-  CLIENT_BY_USERNAME: {
-    cache: (client: Client) =>
-      setCachedValue(
-        keys.CLIENT_KEYS.clientByUsername(client.username),
-        JSON.stringify(client),
-        config.CLIENT_CACHE_TTL_SECONDS
-      ),
-    read: (username: string) =>
-      getCachedValue(
-        keys.CLIENT_KEYS.clientByUsername(username)
-      ) as Promise<null | Client>,
-    clear: (username: string) =>
-      clearCachedValue(keys.CLIENT_KEYS.clientByUsername(username)),
-  },
-  CLIENT_CURRENT_CHATROOM: {
-    cache: (clientId: number, chatroomId: number) =>
-      setCachedValue(
-        keys.CLIENT_KEYS.clientCurrentChatroom(clientId),
-        JSON.stringify(chatroomId),
-        config.CLIENT_CACHE_TTL_SECONDS
-      ),
-    read: (clientId: number) =>
-      getCachedValue(
-        keys.CLIENT_KEYS.clientCurrentChatroom(clientId)
-      ) as Promise<null | number>,
-    clear: (clientId: number) =>
-      clearCachedValue(keys.CLIENT_KEYS.clientCurrentChatroom(clientId)),
-  },
-};
+import type { Client, HydratedChatroom } from "models";
+import { clearCachedValue, getCachedValue, setCachedValue } from "../cache";
+import * as keys from "../keys";
+import { CLIENT_CACHE } from "./client";
 
 export const CHATROOM_CACHE = {
   CHATROOM: {
@@ -238,34 +189,5 @@ export const CHATROOM_CACHE = {
         }
       }
     },
-  },
-};
-
-export const CHAT_MESSAGE_CACHE = {
-  CHAT_MESSAGE: {
-    cache: (message: ChatMessage) =>
-      setCachedValue(
-        keys.CHAT_MESSAGE_KEYS.chatMessage(message.id),
-        JSON.stringify(message),
-        config.CHAT_MESSAGE_CACHE_TTL_SECONDS
-      ),
-    read: (messageId: number) =>
-      getCachedValue(
-        keys.CHAT_MESSAGE_KEYS.chatMessage(messageId)
-      ) as Promise<null | ChatMessage>,
-    clear: (messageId: number) =>
-      clearCachedValue(keys.CHAT_MESSAGE_KEYS.chatMessage(messageId)),
-  },
-  CHAT_MESSAGE_LIST: {
-    cache: (chatroomId: number, chatMessageList: HydratedChatMessage[]) =>
-      setCachedValue(
-        keys.CHAT_MESSAGE_KEYS.chatMessageList(chatroomId),
-        JSON.stringify(chatMessageList),
-        config.CHAT_MESSAGE_CACHE_TTL_SECONDS
-      ),
-    read: (chatroomId: number) =>
-      getCachedValue(keys.CHAT_MESSAGE_KEYS.chatMessageList(chatroomId)),
-    clear: (chatroomId: number) =>
-      clearCachedValue(keys.CHAT_MESSAGE_KEYS.chatMessageList(chatroomId)),
   },
 };

@@ -4,9 +4,7 @@ import {
   ReactNode,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { useSocket } from "../useSocket";
@@ -42,12 +40,11 @@ export const ChatroomContext = createContext<{
 });
 
 export function ChatroomProvider({ children }: { children?: ReactNode }) {
-  const { oneTimeRequest, initialized } = useSocket();
+  const { oneTimeRequest } = useSocket();
   const [chatrooms, setChatrooms] = useState([] as Array<ChatroomData>);
   const [chatroomMessages, setChatroomMessages] = useState(
     {} as Record<number, ChatMessageData[]>
   );
-  const initiallyFetched = useRef(false);
 
   const fetchChatrooms = useCallback(async () => {
     const response = await oneTimeRequest(ChatroomSocketRequests.ListChatrooms);
@@ -152,13 +149,6 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
       voteInPoll,
     ]
   );
-
-  useEffect(() => {
-    if (initialized && !initiallyFetched.current) {
-      initiallyFetched.current = true;
-      fetchChatrooms();
-    }
-  });
 
   return (
     <ChatroomContext.Provider value={value}>

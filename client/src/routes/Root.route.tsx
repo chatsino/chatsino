@@ -4,12 +4,12 @@ import {
   ClientProvider,
   SocketProvider,
   useAuthenticationRequests,
-  useChatrooms,
   useClient,
   useSocket,
   useTokenExpiration,
   useUniversalVhUnit,
   useUpdatingChatroomList,
+  useUpdatingUserList,
 } from "hooks";
 import { useEffect, useRef } from "react";
 import { BiCoinStack } from "react-icons/bi";
@@ -50,6 +50,7 @@ export function RootRoute() {
 }
 
 function Inner() {
+  const users = useUpdatingUserList();
   const { chatrooms } = useUpdatingChatroomList();
   const { validate } = useAuthenticationRequests();
   const { client, setClient } = useClient();
@@ -129,7 +130,7 @@ function Inner() {
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <ChatUserList users={[]} />
+            <ChatUserList active={users.active} inactive={users.inactive} />
           </div>
           <div style={{ flex: 1 }}>
             <Collapse accordion={true} ghost={true}>
