@@ -1,8 +1,7 @@
 import { Empty, Grid, List } from "antd";
 import { toUniversalVh } from "helpers";
-import { useChatAutoscroll, useChatSearch, useClient } from "hooks";
+import { useChatroomAutoscroll, useChatroomSearch, useClient } from "hooks";
 import cloneDeep from "lodash.clonedeep";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import key from "weak-key";
 import { ChatroomDrawer, UserListDrawer } from "../drawers";
@@ -45,7 +44,7 @@ export function Chatroom({
   const [draftUpdate, setDraftUpdate] = useState("");
   const clearDraftUpdate = useCallback(() => setDraftUpdate(""), []);
   const listBodyRef = useRef<null | HTMLDivElement>(null);
-  const search = useChatSearch(messages);
+  const search = useChatroomSearch(messages);
   const renderedMessages = useMemo(() => {
     let messagesToSort = search.isSearching ? search.results : messages;
 
@@ -88,7 +87,7 @@ export function Chatroom({
     setDraftUpdate(`@${username}`);
   }
 
-  useChatAutoscroll(id, messages);
+  useChatroomAutoscroll(id, messages);
 
   useEffect(() => {
     if (showingMentions) {

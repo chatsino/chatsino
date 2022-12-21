@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useSocket } from "./useSocket";
+import { useSocket } from "../useSocket";
 
 export enum ChatroomSocketRequests {
   ListChatrooms = "list-chatrooms",

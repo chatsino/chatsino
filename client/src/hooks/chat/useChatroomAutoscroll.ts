@@ -17,7 +17,7 @@ export function scrollToBottom(id: string) {
   return false;
 }
 
-export function useChatAutoscroll(id: string, messages: unknown[]) {
+export function useChatroomAutoscroll(id: string, messages: unknown[]) {
   const initiallyScrolledDown = useRef(false);
 
   // When messages first load, scroll to the bottom of the container.
