@@ -1,4 +1,5 @@
 import * as config from "config";
+import { ClientSocketRequests } from "enums";
 import {
   parseSourcedSocketMessage,
   PreparsedSourcedSocketMessage,
@@ -7,10 +8,6 @@ import { createLogger } from "logger";
 import { getClientByUsername } from "models";
 import { clientTokenExpiredSchema } from "schemas";
 import { SocketServer } from "socket-server";
-
-export enum ClientSocketRequests {
-  ClientTokenExpired = "client-token-expired",
-}
 
 export const CLIENT_MANAGER_LOGGER = createLogger(
   config.LOGGER_NAMES.CLIENT_MANAGER

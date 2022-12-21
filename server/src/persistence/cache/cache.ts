@@ -1,8 +1,9 @@
 import * as config from "config";
+import { ClientSocketRequests } from "enums";
 import { now } from "helpers";
 import JWTRedis from "jwt-redis";
 import { createLogger } from "logger";
-import { ClientSocketRequests, handleClientTokenExpired } from "managers";
+import { handleClientTokenExpired } from "managers";
 import { createClient } from "redis";
 
 export type CacheConnectionStatus =

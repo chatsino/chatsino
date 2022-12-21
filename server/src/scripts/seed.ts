@@ -11,7 +11,7 @@ import {
   createTransactionTable,
   dropTransactionTable,
   createChatroom,
-} from "persistence";
+} from "models";
 import { initializeCache } from "persistence";
 
 const DEFAULT_PASSWORD = "password";

@@ -1,4 +1,4 @@
-import { ChatroomSocketRequests } from "enums";
+import { ChatMessageSocketRequests, ChatroomSocketRequests } from "enums";
 import {
   createContext,
   ReactNode,
@@ -66,7 +66,7 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
   const fetchChatroomMessages = useCallback(
     async (chatroomId: number) => {
       const response = await oneTimeRequest(
-        ChatroomSocketRequests.ListChatroomMessages,
+        ChatMessageSocketRequests.ListChatroomMessages,
         { chatroomId }
       );
 
@@ -89,7 +89,7 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
   const sendChatMessage = useCallback(
     async (chatroomId: number, message: string, poll: ChatMessagePollData) => {
       const response = await oneTimeRequest(
-        ChatroomSocketRequests.SendChatMessage,
+        ChatMessageSocketRequests.SendChatMessage,
         {
           chatroomId,
           message,
@@ -108,10 +108,13 @@ export function ChatroomProvider({ children }: { children?: ReactNode }) {
 
   const voteInPoll = useCallback(
     async (messageId: number, pollResponse: string) => {
-      const response = await oneTimeRequest(ChatroomSocketRequests.VoteInPoll, {
-        messageId,
-        response: pollResponse,
-      });
+      const response = await oneTimeRequest(
+        ChatMessageSocketRequests.VoteInPoll,
+        {
+          messageId,
+          response: pollResponse,
+        }
+      );
 
       if (response.error) {
         // TODO

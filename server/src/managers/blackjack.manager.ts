@@ -1,3 +1,4 @@
+import { BlackjackSocketRequests } from "enums";
 import { GameInProgressError, NoGameInProgressError } from "games";
 import { createLogger } from "logger";
 import {
@@ -15,12 +16,6 @@ import { SocketServer } from "socket-server";
 import * as yup from "yup";
 
 export const BLACKJACK_LOGGER = createLogger("Blackjack");
-
-export enum BlackjackSocketRequests {
-  GetActiveBlackjackGame = "get-active-blackjack-game",
-  StartBlackjackGame = "start-blackjack-game",
-  TakeBlackjackAction = "take-blackjack-action",
-}
 
 export function initializeBlackjackManager() {
   SUBSCRIBER.subscribe(

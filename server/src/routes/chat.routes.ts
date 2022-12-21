@@ -8,6 +8,7 @@ import {
 } from "helpers";
 import { createLogger } from "logger";
 import * as chatroomManager from "managers/chatroom.manager";
+import * as chatMessageManager from "managers/chat-message.manager";
 import { AuthenticatedRequest, authenticatedRouteMiddleware } from "middleware";
 import * as chatMessageModel from "models/chat-message.model";
 import * as chatroomModel from "models/chatroom.model";
@@ -20,6 +21,7 @@ import {
   voteInPollSchema,
 } from "schemas";
 import uuid from "uuid4";
+import { ChatMessageSocketRequests, ChatroomSocketRequests } from "enums";
 
 export const CHAT_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.CHAT_ROUTER);
 
@@ -187,7 +189,9 @@ export async function changeChatroomAvatarRoute(
 
     // Move the new avatar to /uploads
     await new Promise((resolve, reject) =>
-      avatar.mv(uploadPath, (err) => (err ? reject(err) : resolve(undefined)))
+      avatar.mv(uploadPath, (err: unknown) =>
+        err ? reject(err) : resolve(undefined)
+      )
     );
 
     // Remove the previous avatar from /uploads
@@ -210,7 +214,7 @@ export async function changeChatroomAvatarRoute(
 
     await chatroomManager.handleChatroomUpdated({
       from: client,
-      kind: chatroomManager.ChatroomSocketRequests.ChatroomUpdated,
+      kind: ChatroomSocketRequests.ChatroomUpdated,
       args: {
         chatroom: updatedChatroom,
       },
@@ -270,9 +274,9 @@ export async function sendChatMessageRoute(
       },
     } as chatMessageModel.HydratedChatMessage;
 
-    await chatroomManager.handleNewChatMessage({
+    await chatMessageManager.handleNewChatMessage({
       from: author,
-      kind: chatroomManager.ChatroomSocketRequests.NewChatMessage,
+      kind: ChatMessageSocketRequests.NewChatMessage,
       args: {
         message: hydratedChatMessage,
       },
@@ -322,9 +326,9 @@ export async function editChatMessageRoute(
       throw new Error();
     }
 
-    await chatroomManager.handleChatMessageUpdated({
+    await chatMessageManager.handleChatMessageUpdated({
       from: author,
-      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      kind: ChatMessageSocketRequests.ChatMessageUpdated,
       args: {
         message: editedMessage,
       },
@@ -379,9 +383,9 @@ export async function reactToChatMessageRoute(
       throw new Error();
     }
 
-    await chatroomManager.handleChatMessageUpdated({
+    await chatMessageManager.handleChatMessageUpdated({
       from: author,
-      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      kind: ChatMessageSocketRequests.ChatMessageUpdated,
       args: {
         message,
       },
@@ -412,9 +416,9 @@ export async function pinChatMessageRoute(
       throw new Error();
     }
 
-    await chatroomManager.handleChatMessageUpdated({
+    await chatMessageManager.handleChatMessageUpdated({
       from: pinner,
-      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      kind: ChatMessageSocketRequests.ChatMessageUpdated,
       args: {
         message: pinnedMessage,
       },
@@ -478,9 +482,9 @@ export async function voteInPollRoute(
       throw new Error();
     }
 
-    await chatroomManager.handleChatMessageUpdated({
+    await chatMessageManager.handleChatMessageUpdated({
       from: voter,
-      kind: chatroomManager.ChatroomSocketRequests.ChatMessageUpdated,
+      kind: ChatMessageSocketRequests.ChatMessageUpdated,
       args: {
         message: votedMessage,
       },
@@ -531,9 +535,9 @@ export async function deleteChatMessageRoute(
       throw new Error("Message not found post-deletion.");
     }
 
-    await chatroomManager.handleChatMessageDeleted({
+    await chatMessageManager.handleChatMessageDeleted({
       from: (await clientModel.getClientById(clientId)) as clientModel.Client,
-      kind: chatroomManager.ChatroomSocketRequests.ChatMessageDeleted,
+      kind: ChatMessageSocketRequests.ChatMessageDeleted,
       args: {
         chatroomId: deletedMessage.chatroomId,
         messageId: deletedMessage.id,

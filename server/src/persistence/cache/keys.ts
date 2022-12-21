@@ -1,6 +1,5 @@
 import * as config from "config";
-
-const buildCacheKey = (...args: (string | number)[]) => args.join("/");
+import { buildCacheKey } from "helpers";
 
 export const CLIENT_KEYS = {
   client: (clientId: number) =>
@@ -25,17 +24,6 @@ export const CHATROOM_KEYS = {
       clientId,
       chatroomId
     ),
-};
-
-export const CHATROOM_SUBSCRIPTIONS = {
-  chatroomUpdated: (chatroomId: number) =>
-    buildCacheKey(config.CHATROOM_CACHE_KEY, chatroomId, "Updated"),
-  newChatMessage: (chatroomId: number) =>
-    buildCacheKey(config.CHATROOM_CACHE_KEY, chatroomId, "NewMessage"),
-  chatMessageUpdated: (chatroomId: number) =>
-    buildCacheKey(config.CHATROOM_CACHE_KEY, chatroomId, "MessageUpdated"),
-  chatMessageDeleted: (chatroomId: number) =>
-    buildCacheKey(config.CHATROOM_CACHE_KEY, chatroomId, "MessageDeleted"),
 };
 
 export const CHAT_MESSAGE_KEYS = {
