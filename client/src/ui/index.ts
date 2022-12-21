@@ -1,3 +1,4 @@
+export * from "antd";
 export * from "./chat";
 export * from "./client";
 export * from "./drawers";

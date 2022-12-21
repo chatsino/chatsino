@@ -1,10 +1,10 @@
 import { Col, Row, Typography } from "antd";
-import { useAuthentication } from "hooks";
+import { useAuthenticationRequests } from "hooks";
 import { Link } from "react-router-dom";
 import { SignupForm } from "ui";
 
 export function SignupRoute() {
-  const { signup } = useAuthentication();
+  const { signup } = useAuthenticationRequests();
 
   return (
     <Row>

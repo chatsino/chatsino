@@ -1,10 +1,10 @@
 import { Col, Row, Typography } from "antd";
-import { useAuthentication } from "hooks";
+import { useAuthenticationRequests } from "hooks";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SigninForm } from "ui";
 
 export function SigninRoute() {
-  const { signin } = useAuthentication();
+  const { signin } = useAuthenticationRequests();
   const { search } = useLocation();
   const navigate = useNavigate();
   const redirectRoute = new URLSearchParams(search).get("redirect") ?? "/me";

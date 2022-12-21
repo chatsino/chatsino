@@ -3,7 +3,7 @@ import { notification as showNotification } from "antd";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClientSocketRequests, useClient } from "./useClient";
-import { useSocket } from "./useSocket";
+import { useSocket } from "../useSocket";
 
 export function useTokenExpiration() {
   const { client, setClient } = useClient();

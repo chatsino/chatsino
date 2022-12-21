@@ -1,8 +1,8 @@
-import { useAuthentication } from "hooks";
+import { useAuthenticationRequests } from "hooks";
 import { useEffect } from "react";
 
 export function SignoutRoute() {
-  const { signout } = useAuthentication();
+  const { signout } = useAuthenticationRequests();
 
   useEffect(() => {
     signout();

@@ -1,5 +1,5 @@
 import { SafeClient } from "schemas";
-import { useClient } from "./useClient";
+import { useClient } from "./client";
 
 export function useNavigation() {
   const { client } = useClient() as { client: SafeClient };

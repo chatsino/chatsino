@@ -5,7 +5,7 @@ import {
   ChatroomProvider,
   ClientProvider,
   SocketProvider,
-  useAuthentication,
+  useAuthenticationRequests,
   useChatrooms,
   useClient,
   useSocket,
@@ -49,7 +49,7 @@ export function RootRoute() {
 
 function Inner() {
   const { chatrooms } = useUpdatingChatroomList();
-  const { validate } = useAuthentication();
+  const { validate } = useAuthenticationRequests();
   const { client, setClient } = useClient();
   const { initialize, shutdown } = useSocket();
   const {

@@ -4,7 +4,7 @@ import { SafeClient } from "schemas";
 import { useClient } from "./useClient";
 import { useNavigate } from "react-router-dom";
 
-export function useAuthentication() {
+export function useAuthenticationRequests() {
   const { setClient } = useClient();
   const navigate = useNavigate();
 

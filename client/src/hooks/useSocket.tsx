@@ -10,8 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useAuthentication } from "./useAuthentication";
-import { useClient } from "./useClient";
+import { useAuthenticationRequests, useClient } from "./client";
 
 type Response = {
   data?: unknown;
@@ -55,7 +54,7 @@ const SocketContext = createContext<SocketContextType>({
 });
 
 export function SocketProvider({ children }: PropsWithChildren) {
-  const { requestTicket } = useAuthentication();
+  const { requestTicket } = useAuthenticationRequests();
   const { client } = useClient();
   const socket = useRef<null | WebSocket>(null);
   const [initialized, setInitialized] = useState(false);
