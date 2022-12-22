@@ -1,6 +1,21 @@
 import * as config from "config";
 import type { Client } from "models";
-import { clearCachedValue, getCachedValue, setCachedValue } from "../cache";
+import {
+  clearCachedValue,
+  decrement,
+  entryExists,
+  getCachedValue,
+  hashDecrementBy,
+  hashIncrementBy,
+  hashmapGet,
+  hashmapGetAll,
+  hashmapSet,
+  hashmapSetObject,
+  increment,
+  setAdd,
+  setCachedValue,
+  setRemove,
+} from "../cache";
 import * as keys from "../keys";
 
 export const CLIENT_CACHE = {
@@ -149,6 +164,41 @@ export const CLIENT_CACHE = {
           currentlyCached.map((clientId) => CLIENT_CACHE.CLIENT.read(clientId))
         )
       ).filter(Boolean) as Client[];
+    },
+  },
+  CLIENT_SESSION: {
+    begin: async (client: Client) => {
+      const sessionKey = `client:session:${client.id}`;
+      const activeClientsKey = "clients:active";
+      const now = new Date().toString();
+      const existingEntry = await entryExists(sessionKey);
+
+      if (existingEntry) {
+        await hashIncrementBy(sessionKey, "active", 1);
+        await hashmapSet(sessionKey, "lastActive", now);
+      } else {
+        await setAdd(activeClientsKey, client.id.toString());
+        await hashmapSetObject(sessionKey, {
+          ...client,
+          sessionStarted: now,
+          lastActive: now,
+          active: 1,
+        });
+      }
+    },
+    end: async (client: Client) => {
+      const sessionKey = `client:session:${client.id}`;
+      const roomsKey = `client:rooms:${client.id}`;
+      const activeClientsKey = "clients:active";
+      const now = new Date().toString();
+      const remainingSessions = await hashDecrementBy(sessionKey, "active", 1);
+
+      if (remainingSessions === 0) {
+        await setRemove(activeClientsKey, client.id.toString());
+        await clearCachedValue(roomsKey);
+      }
+
+      await hashmapSet(sessionKey, "lastActive", now);
     },
   },
 };

@@ -13,6 +13,7 @@ import {
   waitForDatabaseAndCache,
 } from "persistence";
 import * as routes from "routes";
+import { CacheServer } from "cache/cache-server";
 import { SocketServer } from "socket-server";
 
 const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
@@ -55,6 +56,8 @@ export async function startServer() {
     SERVER_LOGGER.info("Handling uncaught exceptions and rejections.");
     handleUncaughtExceptionsAndRejections();
   }
+
+  const cache = new CacheServer();
 
   server.listen(config.PORT, () =>
     SERVER_LOGGER.info(`Server listening on port ${config.PORT}.`)

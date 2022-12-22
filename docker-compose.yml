@@ -16,9 +16,8 @@ services:
 
   cache:
     container_name: cache
-    image: redis
+    image: redis/redis-stack:6.2.6-rc1
     restart: always
-    command: ["redis-server", "--port", "6379", "--appendonly", "yes"]
     ports:
       - 6379:6379
     volumes:
@@ -59,11 +58,11 @@ services:
     ports:
       - 8080:8080
 
-  redisinsight:
-    container_name: redisinsight
-    image: redislabs/redisinsight
-    restart: unless-stopped
-    depends_on:
-      - cache
-    ports:
-      - 8001:8001
+  # redisinsight:
+  #   container_name: redisinsight
+  #   image: redislabs/redisinsight
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - cache
+  #   ports:
+  #     - 8001:8001

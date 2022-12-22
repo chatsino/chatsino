@@ -181,6 +181,7 @@ export class SocketServer {
 
     if (client) {
       await CLIENT_CACHE.ACTIVE_CLIENTS.addClient(client.id);
+      await CLIENT_CACHE.CLIENT_SESSION.begin(client);
 
       SocketServer.broadcastToSubscription(
         ClientSocketRequests.UserListUpdated,
@@ -214,6 +215,8 @@ export class SocketServer {
         );
         await CLIENT_CACHE.CLIENT_CURRENT_CHATROOM.clear(client.id);
         await CLIENT_CACHE.INACTIVE_CLIENTS.addClient(client.id);
+
+        await CLIENT_CACHE.CLIENT_SESSION.end(client);
 
         SocketServer.broadcastToSubscription(
           ClientSocketRequests.UserListUpdated,

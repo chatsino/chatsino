@@ -63,10 +63,11 @@ export async function getCachedValue(key: string): Promise<unknown> {
 export async function setCachedValue(
   key: string,
   value: number | string,
-  ttl: number
+  ttl?: number
 ) {
   ensureCacheConnected();
-  return REDIS.set(key, value, { EXAT: now() + ttl });
+  const options = ttl ? { EXAT: now() + ttl } : {};
+  return REDIS.set(key, value, options);
 }
 
 export async function clearCachedValue(key: string) {
@@ -133,6 +134,68 @@ export async function handleKeyExpired(key: string) {
       });
     }
   }
+}
+
+export function hashmapGet(...args: Parameters<typeof REDIS.hGet>) {
+  ensureCacheConnected();
+  return REDIS.hGet(...args);
+}
+
+export function hashmapGetAll(...args: Parameters<typeof REDIS.hGetAll>) {
+  ensureCacheConnected();
+  return REDIS.hGetAll(...args);
+}
+
+export function hashmapSet(...args: Parameters<typeof REDIS.hSet>) {
+  ensureCacheConnected();
+  return REDIS.hSet(...args);
+}
+
+export function hashmapSetObject(
+  key: string,
+  object: Record<string, string | number>
+) {
+  return hashmapSet(key, Object.entries(object).flat());
+}
+
+export function entryExists(key: string) {
+  ensureCacheConnected();
+  return REDIS.exists(key);
+}
+
+export function increment(key: string) {
+  ensureCacheConnected();
+  return REDIS.incr(key);
+}
+
+export function hashIncrementBy(...args: Parameters<typeof REDIS.hIncrBy>) {
+  ensureCacheConnected();
+  return REDIS.hIncrBy(...args);
+}
+
+export function decrement(key: string) {
+  ensureCacheConnected();
+  return REDIS.decr(key);
+}
+
+export function hashDecrementBy(...args: Parameters<typeof REDIS.hIncrBy>) {
+  args[2] = -args[2];
+  return hashIncrementBy(...args);
+}
+
+export function setAdd(...args: Parameters<typeof REDIS.sAdd>) {
+  ensureCacheConnected();
+  return REDIS.sAdd(...args);
+}
+
+export function setRemove(...args: Parameters<typeof REDIS.sRem>) {
+  ensureCacheConnected();
+  return REDIS.sRem(...args);
+}
+
+export function getSetMembers(...args: Parameters<typeof REDIS.sMembers>) {
+  ensureCacheConnected();
+  return REDIS.sMembers(...args);
 }
 
 export class CacheNotConnectedError extends Error {}
