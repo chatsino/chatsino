@@ -1,7 +1,17 @@
 import { createLogger } from "logger";
 import { REDIS } from "persistence";
 import * as yup from "yup";
-import { Room, RoomCreate, User, UserCreate } from "./types";
+import {
+  Message,
+  MessageCreate,
+  MessageID,
+  Room,
+  RoomCreate,
+  RoomID,
+  User,
+  UserCreate,
+  UserID,
+} from "./types";
 
 export const CACHE_SERVER_LOGGER = createLogger("Cache Server");
 
@@ -10,21 +20,20 @@ const JSON = REDIS.json;
 export class CacheServer {
   public static keys = {
     // User
-    user: (id: number) => `user:${id}`,
-    userRooms: (id: number) => `user:${id}:rooms`,
+    user: (id: UserID) => `user:${id}`,
+    userRooms: (id: UserID) => `user:${id}:rooms`,
     userCount: () => "user:count",
     userList: () => "user:list",
     username: (username: string) => `user:username:${username}`,
 
     // Room
-    room: (id: number) => `room:${id}`,
-    roomMessages: (id: number) => `room:${id}:messages`,
-    roomUsers: (id: number) => `room:${id}:users`,
+    room: (id: RoomID) => `room:${id}`,
     roomCount: () => "room:count",
     roomList: () => "room:list",
     roomTitle: (title: string) => `room:title:${title}`,
 
     // Message
+    message: (id: MessageID) => `message:${id}`,
     messageCount: () => "message:count",
   };
 
@@ -39,23 +48,37 @@ export class CacheServer {
     // Room
     roomCreateSchema: yup
       .object({
+        ownerId: yup.number().required(),
         avatar: yup.string().required(),
         title: yup.string().required(),
         description: yup.string().required(),
         password: yup.string().optional().default(""),
       })
       .required(),
+    // Message
+    messageCreateSchema: yup
+      .object({
+        authorId: yup.number().required(),
+        roomId: yup.number().required(),
+        content: yup.string().min(1).required(),
+      })
+      .required(),
   };
 
   public static errors = {
-    ConflictError: class extends Error {},
+    BadRequestError: class extends Error {
+      statusCode = 400;
+    },
+    ConflictError: class extends Error {
+      statusCode = 409;
+    },
     ValidationError: yup.ValidationError,
   };
 
   private redis = REDIS;
   private json = this.redis.json;
 
-  // #region Mutations
+  // #region API
   public async createUser(data: UserCreate) {
     await CacheServer.schemas.userCreateSchema.validate(data);
 
@@ -68,20 +91,31 @@ export class CacheServer {
     const user: User = {
       ...data,
       id: await this.redis.incr(CacheServer.keys.userCount()),
-      chips: 0,
-      rooms: [],
       createdAt: new Date().toString(),
       changedAt: new Date().toString(),
+      chips: 0,
+      rooms: [],
+      messages: [],
     };
 
-    await this.json.set(CacheServer.keys.user(user.id), ".", user);
-    await this.redis.set(CacheServer.keys.username(user.username), user.id);
+    await Promise.all([
+      this.storeUser(user),
+      this.storeUsername(user),
+      this.updateUserList(user),
+    ]);
 
     return user;
   }
 
-  public async createRoom(ownerId: number, data: RoomCreate) {
-    await CacheServer.schemas.roomCreateSchema.validate(data);
+  public async createRoom(data: RoomCreate) {
+    const { ownerId } = await CacheServer.schemas.roomCreateSchema.validate(
+      data
+    );
+    const owner = await this.queryUser(ownerId);
+
+    if (!owner) {
+      throw new CacheServer.errors.BadRequestError("User does not exist.");
+    }
 
     const existingRoomWithTitle = await this.queryRoomTitle(data.title);
 
@@ -94,31 +128,208 @@ export class CacheServer {
     const room: Room = {
       ...data,
       id: await this.redis.incr(CacheServer.keys.roomCount()),
-      ownerId,
       createdAt: new Date().toString(),
       changedAt: new Date().toString(),
       permissions: {
-        [ownerId]: ["owner"],
+        [data.ownerId]: ["owner"],
       },
+      users: [],
+      messages: [],
     };
 
-    await this.json.set(CacheServer.keys.room(room.id), ".", room);
-    await this.redis.set(CacheServer.keys.roomTitle(room.title), room.id);
+    await Promise.all([
+      this.storeRoom(room),
+      this.storeRoomTitle(room),
+      this.updateRoomList(room),
+    ]);
 
     return room;
+  }
+
+  public async sendMessage(data: MessageCreate) {
+    const { authorId, roomId } =
+      await CacheServer.schemas.messageCreateSchema.validate(data);
+    const author = await this.queryUser(authorId);
+
+    if (!author) {
+      throw new CacheServer.errors.BadRequestError("User does not exist.");
+    }
+
+    const room = await this.queryRoom(roomId);
+
+    if (!room) {
+      throw new CacheServer.errors.BadRequestError("Room does not exist.");
+    }
+
+    const message: Message = {
+      ...data,
+      id: await this.redis.incr(CacheServer.keys.messageCount()),
+      createdAt: new Date().toString(),
+      changedAt: new Date().toString(),
+      reactions: {},
+    };
+
+    await this.json.set(CacheServer.keys.message(message.id), ".", message);
+
+    await Promise.all([
+      this.storeMessage(message),
+      this.updateUserMessages(author, message),
+      this.updateRoomMessages(room, message),
+    ]);
+
+    return message;
+  }
+  // #endregion
+
+  // #region Mutations
+  // -- User
+  private storeUser(user: User) {
+    return this.json.set(CacheServer.keys.user(user.id), ".", user);
+  }
+
+  private storeUsername(user: User) {
+    return this.redis.set(CacheServer.keys.username(user.username), user.id);
+  }
+
+  private storeUserList(list: UserID[]) {
+    return this.json.set(CacheServer.keys.userList(), ".", list);
+  }
+
+  private async updateUserList(user: User) {
+    const userList = await this.queryUserList();
+
+    if (!userList) {
+      return this.storeUserList([user.id]);
+    }
+
+    if (!userList.includes(user.id)) {
+      return this.json.ARRAPPEND(CacheServer.keys.userList(), ".", user);
+    }
+  }
+
+  private async updateUserRooms(user: User, room: Room) {
+    return this.json.ARRAPPEND(
+      CacheServer.keys.user(user.id),
+      "rooms",
+      room.id
+    );
+  }
+
+  private async updateUserMessages(user: User, message: Message) {
+    return this.json.ARRAPPEND(
+      CacheServer.keys.user(user.id),
+      "messages",
+      message.id
+    );
+  }
+
+  // -- Room
+  private storeRoom(room: Room) {
+    return this.json.set(CacheServer.keys.room(room.id), ".", room);
+  }
+
+  private storeRoomTitle(room: Room) {
+    return this.redis.set(CacheServer.keys.roomTitle(room.title), room.id);
+  }
+
+  private storeRoomList(list: RoomID[]) {
+    return this.json.set(CacheServer.keys.roomList(), ".", list);
+  }
+
+  private async updateRoomList(room: Room) {
+    const roomList = await this.queryRoomList();
+
+    if (!roomList) {
+      return this.storeRoomList([room.id]);
+    }
+
+    if (!roomList.includes(room.id)) {
+      return this.json.ARRAPPEND(CacheServer.keys.roomList(), ".", room.id);
+    }
+  }
+
+  private async updateRoomUsers(room: Room, user: User) {
+    return this.json.ARRAPPEND(
+      CacheServer.keys.room(room.id),
+      "users",
+      user.id
+    );
+  }
+
+  private async updateRoomMessages(room: Room, message: Message) {
+    return this.json.ARRAPPEND(
+      CacheServer.keys.room(room.id),
+      "messages",
+      message.id
+    );
+  }
+
+  // -- Message
+  private storeMessage(message: Message) {
+    return this.json.set(CacheServer.keys.message(message.id), ".", message);
   }
   // #endregion
 
   // #region Queries
+  public queryUser(id: UserID) {
+    return this.json.get(CacheServer.keys.user(id)) as Promise<null | User>;
+  }
+
+  public queryUserRooms(id: UserID) {
+    return this.json.get(CacheServer.keys.user(id), {
+      path: "rooms",
+    }) as Promise<null | RoomID[]>;
+  }
+
+  public queryUserMessages(id: UserID) {
+    return this.json.get(CacheServer.keys.user(id), {
+      path: "messages",
+    }) as Promise<null | MessageID[]>;
+  }
+
   public async queryUserCount() {
     return parseInt(
       (await this.redis.get(CacheServer.keys.userCount())) ?? "0"
     );
   }
 
+  public queryUserList() {
+    return this.json.get(CacheServer.keys.userList()) as Promise<
+      null | UserID[]
+    >;
+  }
+
+  public queryRoom(id: RoomID) {
+    return this.json.get(CacheServer.keys.room(id)) as Promise<null | Room>;
+  }
+
+  public queryRoomUsers(id: RoomID) {
+    return this.json.get(CacheServer.keys.room(id), {
+      path: "users",
+    }) as Promise<null | UserID[]>;
+  }
+
+  public queryRoomMessages(id: RoomID) {
+    return this.json.get(CacheServer.keys.room(id), {
+      path: "messages",
+    }) as Promise<null | MessageID[]>;
+  }
+
   public async queryRoomCount() {
     return parseInt(
       (await this.redis.get(CacheServer.keys.roomCount())) ?? "0"
+    );
+  }
+
+  public queryRoomList() {
+    return this.json.get(CacheServer.keys.roomList()) as Promise<
+      null | RoomID[]
+    >;
+  }
+
+  public async queryRoomTitle(title: string) {
+    return parseInt(
+      (await this.redis.get(CacheServer.keys.roomTitle(title))) ?? "0"
     );
   }
 
@@ -131,12 +342,6 @@ export class CacheServer {
   public async queryUsername(username: string) {
     return parseInt(
       (await this.redis.get(CacheServer.keys.username(username))) ?? "0"
-    );
-  }
-
-  public async queryRoomTitle(title: string) {
-    return parseInt(
-      (await this.redis.get(CacheServer.keys.roomTitle(title))) ?? "0"
     );
   }
   // #endregion

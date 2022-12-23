@@ -1,5 +1,12 @@
 import { Chance } from "chance";
-import { RoomCreate, User, UserCreate } from "./types";
+import {
+  Message,
+  MessageCreate,
+  Room,
+  RoomCreate,
+  User,
+  UserCreate,
+} from "./types";
 
 const CHANCE = new Chance();
 
@@ -18,9 +25,10 @@ export class CacheGenerator {
       ...CacheGenerator.makeUserCreate(),
       id,
       chips: CHANCE.integer({ min: 0, max: 9999 }),
-      rooms: [],
       createdAt: new Date().toString(),
       changedAt: new Date().toString(),
+      rooms: [],
+      messages: [],
     };
   }
 
@@ -30,8 +38,9 @@ export class CacheGenerator {
     );
   }
 
-  public static makeRoomCreate(): RoomCreate {
+  public static makeRoomCreate(ownerId: number): RoomCreate {
     return {
+      ownerId,
       avatar: CHANCE.avatar({ fileExtension: "png" }),
       title: CHANCE.capitalize(
         CHANCE.name({ nationality: "en" }).replace(" ", "").toLowerCase()
@@ -41,19 +50,24 @@ export class CacheGenerator {
     };
   }
 
-  public static makeRoom(id: number, ownerId: number) {
+  public static makeRoom(id: number, ownerId: number): Room {
     return {
-      ...CacheGenerator.makeRoomCreate(),
+      ...CacheGenerator.makeRoomCreate(ownerId),
       id,
+      createdAt: new Date().toString(),
+      changedAt: new Date().toString(),
       permissions: {
         [ownerId]: ["owner"],
       },
+      users: [],
+      messages: [],
     };
   }
 
-  public static makeRooms(ownerId: number, amount: number) {
+  public static makeRooms(ownerId: number, amount: number): Room[] {
     const lobby = {
       id: 1,
+      ownerId: 0,
       avatar: CHANCE.avatar({ fileExtension: "png" }),
       title: "Lobby",
       description: "An entrance hall sort of place.",
@@ -61,7 +75,11 @@ export class CacheGenerator {
       permissions: {
         [ownerId]: ["owner"],
       },
-    };
+      users: [],
+      messages: [],
+      createdAt: new Date().toString(),
+      changedAt: new Date().toString(),
+    } as Room;
 
     return [
       lobby,
@@ -69,5 +87,30 @@ export class CacheGenerator {
         CacheGenerator.makeRoom(index + 2, ownerId)
       ),
     ];
+  }
+
+  public static makeMessageCreate(
+    authorId: number,
+    roomId: number
+  ): MessageCreate {
+    return {
+      authorId,
+      roomId,
+      content: CHANCE.sentence(),
+    };
+  }
+
+  public static makeMessage(
+    id: number,
+    authorId: number,
+    roomId: number
+  ): Message {
+    return {
+      ...this.makeMessageCreate(authorId, roomId),
+      id,
+      reactions: {},
+      createdAt: new Date().toString(),
+      changedAt: new Date().toString(),
+    };
   }
 }
