@@ -134,6 +134,18 @@ describe(CacheServer.name, () => {
       expect(await server.queryUserMessages(user.id)).toEqual([message.id]);
       expect(await server.queryRoomMessages(room.id)).toEqual([message.id]);
     });
+    it("should fail to send the same message twice in a row", async () => {
+      const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
+      await server.sendMessage(messageData);
+
+      expect.hasAssertions();
+
+      try {
+        await server.sendMessage(messageData);
+      } catch (error) {
+        expect(error).toBeInstanceOf(CacheServer.errors.ConflictError);
+      }
+    });
     it("should fail to send a message when invalid data is passed", async () => {
       const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
       delete (messageData as any).content;

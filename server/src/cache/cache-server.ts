@@ -1,3 +1,4 @@
+import { rightNow } from "helpers";
 import { createLogger } from "logger";
 import { REDIS } from "persistence";
 import * as yup from "yup";
@@ -15,13 +16,12 @@ import {
 
 export const CACHE_SERVER_LOGGER = createLogger("Cache Server");
 
-const JSON = REDIS.json;
-
 export class CacheServer {
   public static keys = {
     // User
     user: (id: UserID) => `user:${id}`,
     userRooms: (id: UserID) => `user:${id}:rooms`,
+    userLastMessageContent: (id: UserID) => `user:${id}:last-message-content`,
     userCount: () => "user:count",
     userList: () => "user:list",
     username: (username: string) => `user:username:${username}`,
@@ -91,8 +91,8 @@ export class CacheServer {
     const user: User = {
       ...data,
       id: await this.redis.incr(CacheServer.keys.userCount()),
-      createdAt: new Date().toString(),
-      changedAt: new Date().toString(),
+      createdAt: rightNow(),
+      changedAt: rightNow(),
       chips: 0,
       rooms: [],
       messages: [],
@@ -128,8 +128,8 @@ export class CacheServer {
     const room: Room = {
       ...data,
       id: await this.redis.incr(CacheServer.keys.roomCount()),
-      createdAt: new Date().toString(),
-      changedAt: new Date().toString(),
+      createdAt: rightNow(),
+      changedAt: rightNow(),
       permissions: {
         [data.ownerId]: ["owner"],
       },
@@ -161,20 +161,25 @@ export class CacheServer {
       throw new CacheServer.errors.BadRequestError("Room does not exist.");
     }
 
+    const lastMessageContent = await this.queryUserLastMessageContent(authorId);
+
+    if (data.content === lastMessageContent) {
+      throw new CacheServer.errors.ConflictError("Message was already sent.");
+    }
+
     const message: Message = {
       ...data,
       id: await this.redis.incr(CacheServer.keys.messageCount()),
-      createdAt: new Date().toString(),
-      changedAt: new Date().toString(),
+      createdAt: rightNow(),
+      changedAt: rightNow(),
       reactions: {},
     };
-
-    await this.json.set(CacheServer.keys.message(message.id), ".", message);
 
     await Promise.all([
       this.storeMessage(message),
       this.updateUserMessages(author, message),
       this.updateRoomMessages(room, message),
+      this.storeUserLastMessageContent(author, message.content),
     ]);
 
     return message;
@@ -193,6 +198,13 @@ export class CacheServer {
 
   private storeUserList(list: UserID[]) {
     return this.json.set(CacheServer.keys.userList(), ".", list);
+  }
+
+  private storeUserLastMessageContent(user: User, content: string) {
+    return this.redis.set(
+      CacheServer.keys.userLastMessageContent(user.id),
+      content
+    );
   }
 
   private async updateUserList(user: User) {
@@ -285,6 +297,12 @@ export class CacheServer {
     return this.json.get(CacheServer.keys.user(id), {
       path: "messages",
     }) as Promise<null | MessageID[]>;
+  }
+
+  public queryUserLastMessageContent(id: UserID) {
+    return this.redis.get(
+      CacheServer.keys.userLastMessageContent(id)
+    ) as Promise<null | string>;
   }
 
   public async queryUserCount() {

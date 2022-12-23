@@ -1,4 +1,5 @@
 import { Chance } from "chance";
+import { rightNow } from "helpers";
 import {
   Message,
   MessageCreate,
@@ -25,8 +26,8 @@ export class CacheGenerator {
       ...CacheGenerator.makeUserCreate(),
       id,
       chips: CHANCE.integer({ min: 0, max: 9999 }),
-      createdAt: new Date().toString(),
-      changedAt: new Date().toString(),
+      createdAt: rightNow(),
+      changedAt: rightNow(),
       rooms: [],
       messages: [],
     };
@@ -54,8 +55,8 @@ export class CacheGenerator {
     return {
       ...CacheGenerator.makeRoomCreate(ownerId),
       id,
-      createdAt: new Date().toString(),
-      changedAt: new Date().toString(),
+      createdAt: rightNow(),
+      changedAt: rightNow(),
       permissions: {
         [ownerId]: ["owner"],
       },
@@ -77,8 +78,8 @@ export class CacheGenerator {
       },
       users: [],
       messages: [],
-      createdAt: new Date().toString(),
-      changedAt: new Date().toString(),
+      createdAt: rightNow(),
+      changedAt: rightNow(),
     } as Room;
 
     return [
@@ -109,8 +110,8 @@ export class CacheGenerator {
       ...this.makeMessageCreate(authorId, roomId),
       id,
       reactions: {},
-      createdAt: new Date().toString(),
-      changedAt: new Date().toString(),
+      createdAt: rightNow(),
+      changedAt: rightNow(),
     };
   }
 }
