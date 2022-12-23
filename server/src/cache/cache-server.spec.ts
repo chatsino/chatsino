@@ -214,5 +214,44 @@ describe(CacheServer.name, () => {
         }
       });
     });
+    describe("(deleting a message)", () => {
+      it("should allow a user to delete their own message", async () => {
+        const message = await server.sendMessage(
+          CacheGenerator.makeMessageCreate(user.id, room.id)
+        );
+
+        expect(await server.queryUserMessages(user.id)).toEqual([message.id]);
+        expect(await server.queryRoomMessages(room.id)).toEqual([message.id]);
+
+        const deleted = await server.deleteMessage(message.id, user.id);
+
+        expect(deleted).toBe(true);
+        expect(await server.queryMessage(message.id)).toBeNull();
+        expect(await server.queryUserMessages(user.id)).toEqual([]);
+        expect(await server.queryRoomMessages(room.id)).toEqual([]);
+      });
+      it("should prevent a user from deleting a message that does not exist", async () => {
+        expect.hasAssertions();
+
+        try {
+          await server.deleteMessage(-500, user.id);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.NotFoundError);
+        }
+      });
+      it("should prevent a user from deleting another user's message", async () => {
+        const message = await server.sendMessage(
+          CacheGenerator.makeMessageCreate(user.id, room.id)
+        );
+
+        expect.hasAssertions();
+
+        try {
+          await server.deleteMessage(message.id, anotherUser.id);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.ForbiddenError);
+        }
+      });
+    });
   });
 });

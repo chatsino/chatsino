@@ -49,3 +49,21 @@ export type Message = Metadata<MessageID> &
   MessageCreate & {
     reactions: Record<string, UserID[]>;
   };
+
+export type Potentially<T> = T | undefined;
+
+export type EntityRetrievalRequest = {
+  userId?: Potentially<UserID>;
+  roomId?: Potentially<RoomID>;
+  messageId?: Potentially<MessageID>;
+};
+
+export type EntityRetrievalResult<
+  U extends Potentially<UserID>,
+  R extends Potentially<RoomID>,
+  M extends Potentially<MessageID>
+> = {
+  user: U extends UserID ? User : null;
+  room: R extends RoomID ? Room : null;
+  message: M extends MessageID ? Message : null;
+};

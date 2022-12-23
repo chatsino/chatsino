@@ -3,6 +3,8 @@ import { createLogger } from "logger";
 import { REDIS } from "persistence";
 import * as yup from "yup";
 import {
+  EntityRetrievalRequest,
+  EntityRetrievalResult,
   Message,
   MessageCreate,
   MessageID,
@@ -92,6 +94,47 @@ export class CacheServer {
   private redis = REDIS;
   private json = this.redis.json;
 
+  // #region Utilities
+  private async retrieve(entities: EntityRetrievalRequest) {
+    const { userId, roomId, messageId } = entities;
+    const result: EntityRetrievalResult<
+      typeof entities["userId"],
+      typeof entities["roomId"],
+      typeof entities["messageId"]
+    > = {
+      user: null,
+      room: null,
+      message: null,
+    };
+
+    if (userId != null) {
+      result.user = await this.queryUser(userId);
+
+      if (!result.user) {
+        throw new CacheServer.errors.NotFoundError("User does not exist.");
+      }
+    }
+
+    if (roomId != null) {
+      result.room = await this.queryRoom(roomId);
+
+      if (!result.room) {
+        throw new CacheServer.errors.NotFoundError("Room does not exist.");
+      }
+    }
+
+    if (messageId != null) {
+      result.message = await this.queryMessage(messageId);
+
+      if (!result.message) {
+        throw new CacheServer.errors.NotFoundError("Message does not exist.");
+      }
+    }
+
+    return result;
+  }
+  // #endregion
+
   // #region API
   public async createUser(data: UserCreate) {
     await CacheServer.schemas.userCreateSchema.validate(data);
@@ -125,12 +168,9 @@ export class CacheServer {
     const { ownerId } = await CacheServer.schemas.roomCreateSchema.validate(
       data
     );
-    const owner = await this.queryUser(ownerId);
-
-    if (!owner) {
-      throw new CacheServer.errors.BadRequestError("User does not exist.");
-    }
-
+    const { user: owner } = (await this.retrieve({ userId: ownerId })) as {
+      user: User;
+    };
     const existingRoomWithTitle = await this.queryRoomTitle(data.title);
 
     if (existingRoomWithTitle) {
@@ -145,7 +185,7 @@ export class CacheServer {
       createdAt: rightNow(),
       changedAt: rightNow(),
       permissions: {
-        [data.ownerId]: ["owner"],
+        [owner.id]: ["owner"],
       },
       users: [],
       messages: [],
@@ -163,17 +203,13 @@ export class CacheServer {
   public async sendMessage(data: MessageCreate) {
     const { authorId, roomId } =
       await CacheServer.schemas.messageCreateSchema.validate(data);
-    const author = await this.queryUser(authorId);
-
-    if (!author) {
-      throw new CacheServer.errors.NotFoundError("User does not exist.");
-    }
-
-    const room = await this.queryRoom(roomId);
-
-    if (!room) {
-      throw new CacheServer.errors.NotFoundError("Room does not exist.");
-    }
+    const { user: author, room } = (await this.retrieve({
+      userId: authorId,
+      roomId: roomId,
+    })) as {
+      user: User;
+      room: Room;
+    };
 
     const lastMessageContent = await this.queryUserLastMessageContent(authorId);
 
@@ -206,15 +242,13 @@ export class CacheServer {
   ) {
     await CacheServer.schemas.messageEditSchema.validate({ content });
 
-    const message = await this.queryMessage(messageId);
-
-    if (!message) {
-      throw new CacheServer.errors.NotFoundError("Message does not exist.");
-    }
+    const { message } = (await this.retrieve({ messageId })) as {
+      message: Message;
+    };
 
     if (editorId !== message.authorId) {
       throw new CacheServer.errors.ForbiddenError(
-        "Editor cannot edit that message."
+        "User cannot edit that message."
       );
     }
 
@@ -230,6 +264,33 @@ export class CacheServer {
     const editedMessage = (await this.queryMessage(messageId)) as Message;
 
     return editedMessage;
+  }
+
+  public async deleteMessage(messageId: MessageID, userId: UserID) {
+    const { message, user } = (await this.retrieve({
+      messageId,
+      userId,
+    })) as {
+      message: Message;
+      user: User;
+    };
+    const { room } = (await this.retrieve({ roomId: message?.roomId })) as {
+      room: Room;
+    };
+
+    if (userId !== message?.authorId) {
+      throw new CacheServer.errors.ForbiddenError(
+        "User cannot delete that message."
+      );
+    }
+
+    await Promise.all([
+      this.forgetMessage(message),
+      this.removeUserMessage(user, message),
+      this.removeRoomMessage(room, message),
+    ]);
+
+    return true;
   }
   // #endregion
 
@@ -274,6 +335,26 @@ export class CacheServer {
     );
   }
 
+  private async removeUserRoom(user: User, room: Room) {
+    const userRooms = (await this.queryUserRooms(user.id)) as RoomID[];
+
+    return this.json.set(
+      CacheServer.keys.user(user.id),
+      "rooms",
+      userRooms.filter((id) => id !== room.id)
+    );
+  }
+
+  private async removeUserMessage(user: User, message: Message) {
+    const userMessages = (await this.queryUserMessages(user.id)) as MessageID[];
+
+    return this.json.set(
+      CacheServer.keys.user(user.id),
+      "messages",
+      userMessages.filter((id) => id !== message.id)
+    );
+  }
+
   private async updateUserMessages(user: User, message: Message) {
     return this.json.ARRAPPEND(
       CacheServer.keys.user(user.id),
@@ -315,6 +396,16 @@ export class CacheServer {
     );
   }
 
+  private async removeRoomUser(room: Room, user: User) {
+    const roomUsers = (await this.queryRoomUsers(room.id)) as UserID[];
+
+    return this.json.set(
+      CacheServer.keys.room(room.id),
+      "users",
+      roomUsers.filter((id) => id !== user.id)
+    );
+  }
+
   private async updateRoomMessages(room: Room, message: Message) {
     return this.json.ARRAPPEND(
       CacheServer.keys.room(room.id),
@@ -323,9 +414,23 @@ export class CacheServer {
     );
   }
 
+  private async removeRoomMessage(room: Room, message: Message) {
+    const roomMessages = (await this.queryRoomMessages(room.id)) as MessageID[];
+
+    return this.json.set(
+      CacheServer.keys.room(room.id),
+      "messages",
+      roomMessages.filter((id) => id !== message.id)
+    );
+  }
+
   // -- Message
   private storeMessage(message: Message) {
     return this.json.set(CacheServer.keys.message(message.id), ".", message);
+  }
+
+  private forgetMessage(message: Message) {
+    return this.json.forget(CacheServer.keys.message(message.id));
   }
 
   private storeMessageContent(message: Message, content: string) {
