@@ -62,25 +62,14 @@ export class CacheGenerator {
       },
       users: [],
       messages: [],
+      pins: [],
     };
   }
 
   public static makeRooms(ownerId: number, amount: number): Room[] {
-    const lobby = {
-      id: 1,
-      ownerId: 0,
-      avatar: CHANCE.avatar({ fileExtension: "png" }),
-      title: "Lobby",
-      description: "An entrance hall sort of place.",
-      password: "",
-      permissions: {
-        [ownerId]: ["owner"],
-      },
-      users: [],
-      messages: [],
-      createdAt: rightNow(),
-      changedAt: rightNow(),
-    } as Room;
+    const lobby = CacheGenerator.makeRoom(1, 0);
+    lobby.title = "Lobby";
+    lobby.description = "An entrance hall sort of place.";
 
     return [
       lobby,

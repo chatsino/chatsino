@@ -189,6 +189,7 @@ export class CacheServer {
       },
       users: [],
       messages: [],
+      pins: [],
     };
 
     await Promise.all([
@@ -291,6 +292,31 @@ export class CacheServer {
     ]);
 
     return true;
+  }
+
+  public async toggleMessagePinned(messageId: MessageID) {
+    const { message } = (await this.retrieve({
+      messageId,
+    })) as {
+      message: Message;
+    };
+    const { room } = (await this.retrieve({
+      roomId: message.roomId,
+    })) as {
+      room: Room;
+    };
+    const wasPinned = message.pinned;
+    const pinned = !message.pinned;
+
+    await Promise.all([
+      this.storeMessagePinned(message, pinned),
+      wasPinned
+        ? this.removeRoomPin(room, message)
+        : this.updateRoomPins(room, message),
+      this.updateMessageTimestamp(message),
+    ]);
+
+    return !message.pinned;
   }
   // #endregion
 
@@ -424,6 +450,23 @@ export class CacheServer {
     );
   }
 
+  private async updateRoomPins(room: Room, pinned: Message) {
+    return this.json.ARRAPPEND(
+      CacheServer.keys.room(room.id),
+      "pins",
+      pinned.id
+    );
+  }
+
+  private async removeRoomPin(room: Room, unpinned: Message) {
+    const roomPins = (await this.queryRoomPins(room.id)) as MessageID[];
+
+    return this.json.set(
+      CacheServer.keys.room(room.id),
+      "pins",
+      roomPins.filter((id) => id !== unpinned.id)
+    );
+  }
   // -- Message
   private storeMessage(message: Message) {
     return this.json.set(CacheServer.keys.message(message.id), ".", message);
@@ -438,6 +481,14 @@ export class CacheServer {
       CacheServer.keys.message(message.id),
       "content",
       content
+    );
+  }
+
+  private storeMessagePinned(message: Message, pinned: boolean) {
+    return this.json.set(
+      CacheServer.keys.message(message.id),
+      "pinned",
+      pinned
     );
   }
 
@@ -505,6 +556,12 @@ export class CacheServer {
   public queryRoomMessages(id: RoomID) {
     return this.json.get(CacheServer.keys.room(id), {
       path: "messages",
+    }) as Promise<null | MessageID[]>;
+  }
+
+  public queryRoomPins(id: RoomID) {
+    return this.json.get(CacheServer.keys.room(id), {
+      path: "pins",
     }) as Promise<null | MessageID[]>;
   }
 

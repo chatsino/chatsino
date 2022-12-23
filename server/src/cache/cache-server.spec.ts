@@ -78,6 +78,7 @@ describe(CacheServer.name, () => {
         },
         users: [],
         messages: [],
+        pins: [],
       });
       expect(await server.queryRoomTitle(room.title)).toBe(room.id);
       expect(await server.queryRoomCount()).toBe(1);
@@ -251,6 +252,24 @@ describe(CacheServer.name, () => {
         } catch (error) {
           expect(error).toBeInstanceOf(CacheServer.errors.ForbiddenError);
         }
+      });
+    });
+    describe("(pinning a message)", () => {
+      it("should allow for a message to be pinned and unpinned", async () => {
+        expect(await server.queryRoomPins(room.id)).toEqual([]);
+
+        const message = await server.sendMessage(
+          CacheGenerator.makeMessageCreate(user.id, room.id)
+        );
+        let pinned = await server.toggleMessagePinned(message.id);
+
+        expect(pinned).toBe(true);
+        expect(await server.queryRoomPins(room.id)).toEqual([message.id]);
+
+        pinned = await server.toggleMessagePinned(message.id);
+
+        expect(pinned).toBe(false);
+        expect(await server.queryRoomPins(room.id)).toEqual([]);
       });
     });
   });

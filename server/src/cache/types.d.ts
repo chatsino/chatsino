@@ -37,6 +37,7 @@ export type Room = Metadata<RoomID> &
     permissions: Record<UserID, RoomPermission[]>;
     users: UserID[];
     messages: MessageID[];
+    pins: MessageID[];
   };
 
 export type MessageCreate = {
@@ -48,6 +49,7 @@ export type MessageCreate = {
 export type Message = Metadata<MessageID> &
   MessageCreate & {
     reactions: Record<string, UserID[]>;
+    pinned?: boolean;
   };
 
 export type Potentially<T> = T | undefined;
