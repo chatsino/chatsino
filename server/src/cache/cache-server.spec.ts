@@ -1,7 +1,7 @@
 import { initializeCache, initializeDatabase, REDIS } from "persistence";
-import { CacheServer } from "./cache-server";
 import { CacheGenerator } from "./cache-generator";
-import { ValidationError } from "yup";
+import { CacheServer } from "./cache-server";
+import { User } from "./types";
 
 describe(CacheServer.name, () => {
   let server: CacheServer;
@@ -50,7 +50,56 @@ describe(CacheServer.name, () => {
       try {
         await server.createUser(userData);
       } catch (error) {
-        expect(error).toBeInstanceOf(ValidationError);
+        expect(error).toBeInstanceOf(CacheServer.errors.ValidationError);
+      }
+    });
+  });
+  describe("Rooms", () => {
+    let user: User;
+
+    beforeEach(async () => {
+      user = await server.createUser(CacheGenerator.makeUserCreate());
+    });
+
+    it("should allow a user to create a room", async () => {
+      const roomData = CacheGenerator.makeRoomCreate();
+      const room = await server.createRoom(user.id, roomData);
+
+      expect(room).toEqual({
+        ...roomData,
+        id: expect.any(Number),
+        ownerId: user.id,
+        createdAt: expect.any(String),
+        changedAt: expect.any(String),
+        permissions: {
+          [user.id]: ["owner"],
+        },
+      });
+      expect(await server.queryRoomTitle(room.title)).toBe(room.id);
+      expect(await server.queryRoomCount()).toBe(1);
+    });
+    it("should fail to create a room with a duplicated title", async () => {
+      const roomData = CacheGenerator.makeRoomCreate();
+      await server.createRoom(user.id, roomData);
+
+      expect.hasAssertions();
+
+      try {
+        await server.createRoom(user.id, roomData);
+      } catch (error) {
+        expect(error).toBeInstanceOf(CacheServer.errors.ConflictError);
+      }
+    });
+    it("should fail to create a room when invalid data is passed", async () => {
+      const roomData = CacheGenerator.makeRoomCreate();
+      delete (roomData as any).avatar;
+
+      expect.hasAssertions();
+
+      try {
+        await server.createRoom(user.id, roomData);
+      } catch (error) {
+        expect(error).toBeInstanceOf(CacheServer.errors.ValidationError);
       }
     });
   });

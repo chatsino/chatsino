@@ -1,5 +1,5 @@
 import { Chance } from "chance";
-import { User, UserCreate } from "./types";
+import { RoomCreate, User, UserCreate } from "./types";
 
 const CHANCE = new Chance();
 
@@ -30,15 +30,21 @@ export class CacheGenerator {
     );
   }
 
-  public static makeRoom(id: number, ownerId: number) {
+  public static makeRoomCreate(): RoomCreate {
     return {
-      id,
       avatar: CHANCE.avatar({ fileExtension: "png" }),
       title: CHANCE.capitalize(
         CHANCE.name({ nationality: "en" }).replace(" ", "").toLowerCase()
       ),
       description: CHANCE.sentence(),
       password: CHANCE.bool({ likelihood: 20 }) ? CHANCE.word() : "",
+    };
+  }
+
+  public static makeRoom(id: number, ownerId: number) {
+    return {
+      ...CacheGenerator.makeRoomCreate(),
+      id,
       permissions: {
         [ownerId]: ["owner"],
       },

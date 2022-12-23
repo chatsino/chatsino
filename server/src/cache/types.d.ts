@@ -26,9 +26,11 @@ export type RoomCreate = {
   password: string;
 };
 
-export type Room = Metadata & {
-  permissions: Record<number, RoomPermission[]>;
-};
+export type Room = Metadata &
+  RoomCreate & {
+    ownerId: number;
+    permissions: Record<number, RoomPermission[]>;
+  };
 
 export type MessageCreate = {
   content: string;

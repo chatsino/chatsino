@@ -1,7 +1,7 @@
 import { createLogger } from "logger";
 import { REDIS } from "persistence";
 import * as yup from "yup";
-import { User, UserCreate } from "./types";
+import { Room, RoomCreate, User, UserCreate } from "./types";
 
 export const CACHE_SERVER_LOGGER = createLogger("Cache Server");
 
@@ -12,16 +12,17 @@ export class CacheServer {
     // User
     user: (id: number) => `user:${id}`,
     userRooms: (id: number) => `user:${id}:rooms`,
-    username: (username: string) => `username:${username}`,
     userCount: () => "user:count",
     userList: () => "user:list",
+    username: (username: string) => `user:username:${username}`,
 
     // Room
     room: (id: number) => `room:${id}`,
     roomMessages: (id: number) => `room:${id}:messages`,
     roomUsers: (id: number) => `room:${id}:users`,
-    roomList: () => "room:list",
     roomCount: () => "room:count",
+    roomList: () => "room:list",
+    roomTitle: (title: string) => `room:title:${title}`,
 
     // Message
     messageCount: () => "message:count",
@@ -35,10 +36,20 @@ export class CacheServer {
         username: yup.string().required(),
       })
       .required(),
+    // Room
+    roomCreateSchema: yup
+      .object({
+        avatar: yup.string().required(),
+        title: yup.string().required(),
+        description: yup.string().required(),
+        password: yup.string().optional().default(""),
+      })
+      .required(),
   };
 
   public static errors = {
     ConflictError: class extends Error {},
+    ValidationError: yup.ValidationError,
   };
 
   private redis = REDIS;
@@ -51,7 +62,7 @@ export class CacheServer {
     const existingUserWithUsername = await this.queryUsername(data.username);
 
     if (existingUserWithUsername) {
-      throw new CacheServer.errors.ConflictError();
+      throw new CacheServer.errors.ConflictError("Username already exists.");
     }
 
     const user: User = {
@@ -67,6 +78,34 @@ export class CacheServer {
     await this.redis.set(CacheServer.keys.username(user.username), user.id);
 
     return user;
+  }
+
+  public async createRoom(ownerId: number, data: RoomCreate) {
+    await CacheServer.schemas.roomCreateSchema.validate(data);
+
+    const existingRoomWithTitle = await this.queryRoomTitle(data.title);
+
+    if (existingRoomWithTitle) {
+      throw new CacheServer.errors.ConflictError(
+        "Room with title already exists."
+      );
+    }
+
+    const room: Room = {
+      ...data,
+      id: await this.redis.incr(CacheServer.keys.roomCount()),
+      ownerId,
+      createdAt: new Date().toString(),
+      changedAt: new Date().toString(),
+      permissions: {
+        [ownerId]: ["owner"],
+      },
+    };
+
+    await this.json.set(CacheServer.keys.room(room.id), ".", room);
+    await this.redis.set(CacheServer.keys.roomTitle(room.title), room.id);
+
+    return room;
   }
   // #endregion
 
@@ -92,6 +131,12 @@ export class CacheServer {
   public async queryUsername(username: string) {
     return parseInt(
       (await this.redis.get(CacheServer.keys.username(username))) ?? "0"
+    );
+  }
+
+  public async queryRoomTitle(title: string) {
+    return parseInt(
+      (await this.redis.get(CacheServer.keys.roomTitle(title))) ?? "0"
     );
   }
   // #endregion
