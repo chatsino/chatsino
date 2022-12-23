@@ -30,6 +30,7 @@ export class CacheGenerator {
       changedAt: rightNow(),
       rooms: [],
       messages: [],
+      lastActive: rightNow(),
     };
   }
 
@@ -39,7 +40,10 @@ export class CacheGenerator {
     );
   }
 
-  public static makeRoomCreate(ownerId: number): RoomCreate {
+  public static makeRoomCreate(
+    ownerId: number,
+    withPassword = false
+  ): RoomCreate {
     return {
       ownerId,
       avatar: CHANCE.avatar({ fileExtension: "png" }),
@@ -47,7 +51,7 @@ export class CacheGenerator {
         CHANCE.name({ nationality: "en" }).replace(" ", "").toLowerCase()
       ),
       description: CHANCE.sentence(),
-      password: CHANCE.bool({ likelihood: 20 }) ? CHANCE.word() : "",
+      password: withPassword ? CHANCE.word() : "",
     };
   }
 

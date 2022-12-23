@@ -20,6 +20,7 @@ export type User = Metadata<UserID> &
     chips: number;
     rooms: RoomID[];
     messages: MessageID[];
+    lastActive: string;
   };
 
 export type RoomPermission = "owner" | "blacklisted" | "whitelisted";

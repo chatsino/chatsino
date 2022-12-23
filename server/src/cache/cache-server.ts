@@ -134,9 +134,38 @@ export class CacheServer {
 
     return result;
   }
+
+  private async enforceRoomSecurity(
+    roomId: RoomID,
+    userId: UserID,
+    password?: string
+  ) {
+    const { room } = (await this.retrieve({ roomId })) as {
+      room: Room;
+    };
+    const { blacklist, whitelist, whitelistActive } =
+      await this.queryRoomSecurity(room.id);
+
+    if (blacklist[userId]) {
+      throw new CacheServer.errors.ForbiddenError("User is on blacklist.");
+    }
+
+    if (whitelistActive && !whitelist[userId]) {
+      throw new CacheServer.errors.ForbiddenError("User is not on whitelist.");
+    }
+
+    if (room.password && !password) {
+      throw new CacheServer.errors.ForbiddenError(
+        "User supplied incorrect password."
+      );
+    }
+
+    return room;
+  }
   // #endregion
 
   // #region API
+  // -- User
   public async createUser(data: UserCreate) {
     await CacheServer.schemas.userCreateSchema.validate(data);
 
@@ -154,17 +183,17 @@ export class CacheServer {
       chips: 0,
       rooms: [],
       messages: [],
+      lastActive: rightNow(),
     };
 
-    await Promise.all([
-      this.storeUser(user),
-      this.storeUsername(user),
-      this.updateUserList(user),
-    ]);
+    await this.storeUser(user);
+    await this.storeUsername(user);
+    await this.updateUserList(user);
 
     return user;
   }
 
+  // -- Room
   public async createRoom(data: RoomCreate) {
     const { ownerId } = await CacheServer.schemas.roomCreateSchema.validate(
       data
@@ -193,15 +222,46 @@ export class CacheServer {
       pins: [],
     };
 
-    await Promise.all([
-      this.storeRoom(room),
-      this.storeRoomTitle(room),
-      this.updateRoomList(room),
-    ]);
+    await this.storeRoom(room);
+    await this.storeRoomTitle(room);
+    await this.updateRoomList(room);
 
     return room;
   }
 
+  public async joinRoom(userId: UserID, roomId: RoomID, password?: string) {
+    await this.enforceRoomSecurity(roomId, userId, password);
+
+    const { user, room } = (await this.retrieve({ userId, roomId })) as {
+      user: User;
+      room: Room;
+    };
+
+    if (user.rooms.includes(room.id)) {
+      return this.leaveRoom(userId, roomId);
+    }
+
+    await this.updateUserRooms(user, room);
+    await this.updateRoomUsers(room, user);
+    await this.updateUserLastActive(user);
+
+    return true;
+  }
+
+  public async leaveRoom(userId: UserID, roomId: RoomID) {
+    const { user, room } = (await this.retrieve({ userId, roomId })) as {
+      user: User;
+      room: Room;
+    };
+
+    await this.removeUserRoom(user, room);
+    await this.removeRoomUser(room, user);
+    await this.updateUserLastActive(user);
+
+    return false;
+  }
+
+  // -- Message
   public async sendMessage(data: MessageCreate) {
     const { authorId, roomId } =
       await CacheServer.schemas.messageCreateSchema.validate(data);
@@ -227,12 +287,10 @@ export class CacheServer {
       reactions: {},
     };
 
-    await Promise.all([
-      this.storeMessage(message),
-      this.updateUserMessages(author, message),
-      this.updateRoomMessages(room, message),
-      this.storeUserLastMessageContent(author, message.content),
-    ]);
+    await this.storeMessage(message);
+    await this.updateUserMessages(author, message);
+    await this.updateRoomMessages(room, message);
+    await this.storeUserLastMessageContent(author, message.content);
 
     return message;
   }
@@ -258,10 +316,8 @@ export class CacheServer {
       throw new CacheServer.errors.BadRequestError("No changes were made.");
     }
 
-    await Promise.all([
-      this.storeMessageContent(message, content),
-      this.updateMessageTimestamp(message),
-    ]);
+    await this.storeMessageContent(message, content);
+    await this.updateMessageTimestamp(message);
 
     const editedMessage = (await this.queryMessage(messageId)) as Message;
 
@@ -286,11 +342,9 @@ export class CacheServer {
       );
     }
 
-    await Promise.all([
-      this.forgetMessage(message),
-      this.removeUserMessage(user, message),
-      this.removeRoomMessage(room, message),
-    ]);
+    await this.forgetMessage(message);
+    await this.removeUserMessage(user, message);
+    await this.removeRoomMessage(room, message);
 
     return true;
   }
@@ -309,13 +363,11 @@ export class CacheServer {
     const wasPinned = message.pinned;
     const pinned = !message.pinned;
 
-    await Promise.all([
-      this.storeMessagePinned(message, pinned),
-      wasPinned
-        ? this.removeRoomPin(room, message)
-        : this.updateRoomPins(room, message),
-      this.updateMessageTimestamp(message),
-    ]);
+    await this.storeMessagePinned(message, pinned);
+    await (wasPinned
+      ? this.removeRoomPin(room, message)
+      : this.updateRoomPins(room, message));
+    await this.updateMessageTimestamp(message);
 
     return !message.pinned;
   }
@@ -337,10 +389,8 @@ export class CacheServer {
       ? previousUserIds.filter((id) => id !== user.id)
       : previousUserIds.concat(user.id);
 
-    await Promise.all([
-      this.storeMessageReactions(message, reaction, userIds),
-      this.updateMessageTimestamp(message),
-    ]);
+    await this.storeMessageReactions(message, reaction, userIds);
+    await this.updateMessageTimestamp(message);
 
     return userIds.includes(userId);
   }
@@ -408,10 +458,18 @@ export class CacheServer {
   }
 
   private async updateUserMessages(user: User, message: Message) {
-    return this.json.ARRAPPEND(
+    return this.json.arrAppend(
       CacheServer.keys.user(user.id),
       "messages",
       message.id
+    );
+  }
+
+  private updateUserLastActive(user: User) {
+    return this.json.set(
+      CacheServer.keys.user(user.id),
+      "lastActive",
+      rightNow()
     );
   }
 
@@ -622,6 +680,37 @@ export class CacheServer {
     );
   }
 
+  public async queryRoomSecurity(id: RoomID) {
+    const { room } = (await this.retrieve({ roomId: id })) as {
+      room: Room;
+    };
+    const security = Object.entries(room.permissions).reduce(
+      (prev, next) => {
+        const [userIdString, permissions] = next;
+        const userId = parseInt(userIdString);
+
+        prev.blacklist[userId] = permissions.includes("blacklisted");
+        prev.whitelist[userId] = permissions.includes("whitelisted");
+
+        if (prev.whitelist[userId]) {
+          prev.whitelistActive = true;
+        }
+
+        return prev;
+      },
+      {
+        blacklist: {},
+        whitelist: {},
+        whitelistActive: false,
+      } as {
+        blacklist: Record<UserID, boolean>;
+        whitelist: Record<UserID, boolean>;
+        whitelistActive: boolean;
+      }
+    );
+
+    return security;
+  }
   // -- Message
   public async queryMessage(id: MessageID) {
     return this.json.get(

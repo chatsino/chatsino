@@ -26,6 +26,7 @@ describe(CacheServer.name, () => {
         chips: 0,
         rooms: [],
         messages: [],
+        lastActive: expect.any(String),
       });
       expect(await server.queryUsername(userData.username)).toBe(user.id);
       expect(await server.queryUserCount()).toBe(1);
@@ -63,50 +64,69 @@ describe(CacheServer.name, () => {
       user = await server.createUser(CacheGenerator.makeUserCreate());
     });
 
-    it("should allow a user to create a room", async () => {
-      const roomData = CacheGenerator.makeRoomCreate(user.id);
-      const room = await server.createRoom(roomData);
+    describe("(creating a room)", () => {
+      it("should allow a user to create a room", async () => {
+        const roomData = CacheGenerator.makeRoomCreate(user.id);
+        const room = await server.createRoom(roomData);
 
-      expect(room).toEqual({
-        ...roomData,
-        id: expect.any(Number),
-        ownerId: user.id,
-        createdAt: expect.any(String),
-        changedAt: expect.any(String),
-        permissions: {
-          [user.id]: ["owner"],
-        },
-        users: [],
-        messages: [],
-        pins: [],
+        expect(room).toEqual({
+          ...roomData,
+          id: expect.any(Number),
+          ownerId: user.id,
+          createdAt: expect.any(String),
+          changedAt: expect.any(String),
+          permissions: {
+            [user.id]: ["owner"],
+          },
+          users: [],
+          messages: [],
+          pins: [],
+        });
+        expect(await server.queryRoomTitle(room.title)).toBe(room.id);
+        expect(await server.queryRoomCount()).toBe(1);
+        expect(await server.queryRoomList()).toEqual([room.id]);
       });
-      expect(await server.queryRoomTitle(room.title)).toBe(room.id);
-      expect(await server.queryRoomCount()).toBe(1);
-      expect(await server.queryRoomList()).toEqual([room.id]);
-    });
-    it("should fail to create a room with a duplicated title", async () => {
-      const roomData = CacheGenerator.makeRoomCreate(user.id);
-      await server.createRoom(roomData);
-
-      expect.hasAssertions();
-
-      try {
+      it("should fail to create a room with a duplicated title", async () => {
+        const roomData = CacheGenerator.makeRoomCreate(user.id);
         await server.createRoom(roomData);
-      } catch (error) {
-        expect(error).toBeInstanceOf(CacheServer.errors.ConflictError);
-      }
+
+        expect.hasAssertions();
+
+        try {
+          await server.createRoom(roomData);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.ConflictError);
+        }
+      });
+      it("should fail to create a room when invalid data is passed", async () => {
+        const roomData = CacheGenerator.makeRoomCreate(user.id);
+        delete (roomData as any).avatar;
+
+        expect.hasAssertions();
+
+        try {
+          await server.createRoom(roomData);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.ValidationError);
+        }
+      });
     });
-    it("should fail to create a room when invalid data is passed", async () => {
-      const roomData = CacheGenerator.makeRoomCreate(user.id);
-      delete (roomData as any).avatar;
+    describe("(joining and leaving a room)", () => {
+      it("should allow a user to join and leave a room", async () => {
+        const roomData = CacheGenerator.makeRoomCreate(user.id);
+        const room = await server.createRoom(roomData);
+        const inRoom = await server.joinRoom(user.id, room.id);
 
-      expect.hasAssertions();
+        expect(inRoom).toBe(true);
+        expect(await server.queryUserRooms(user.id)).toEqual([room.id]);
+        expect(await server.queryRoomUsers(room.id)).toEqual([user.id]);
 
-      try {
-        await server.createRoom(roomData);
-      } catch (error) {
-        expect(error).toBeInstanceOf(CacheServer.errors.ValidationError);
-      }
+        const inRoomNow = await server.joinRoom(user.id, room.id);
+
+        expect(inRoomNow).toBe(false);
+        expect(await server.queryUserRooms(user.id)).toEqual([]);
+        expect(await server.queryRoomUsers(room.id)).toEqual([]);
+      });
     });
   });
   describe("Messages", () => {
