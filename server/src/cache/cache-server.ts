@@ -12,6 +12,7 @@ import {
   Room,
   RoomCreate,
   RoomID,
+  RoomPermission,
   User,
   UserCreate,
   UserID,
@@ -162,6 +163,25 @@ export class CacheServer {
 
     return room;
   }
+
+  private async enforcePermissionRequirement(
+    roomId: RoomID,
+    userId: UserID,
+    requirement: RoomPermission = "owner"
+  ) {
+    const { room } = (await this.retrieve({ roomId })) as {
+      room: Room;
+    };
+    const userPermissions = room.permissions[userId] ?? [];
+
+    if (!userPermissions.includes(requirement)) {
+      throw new CacheServer.errors.ForbiddenError(
+        "User does not have permission to do that."
+      );
+    }
+
+    return room;
+  }
   // #endregion
 
   // #region API
@@ -242,6 +262,7 @@ export class CacheServer {
     }
 
     await this.updateUserRooms(user, room);
+    await this.updateUserTimestamp(user);
     await this.updateRoomUsers(room, user);
     await this.updateUserLastActive(user);
 
@@ -255,12 +276,33 @@ export class CacheServer {
     };
 
     await this.removeUserRoom(user, room);
+    await this.updateUserTimestamp(user);
     await this.removeRoomUser(room, user);
     await this.updateUserLastActive(user);
 
     return false;
   }
 
+  public async modifyRoomSecurity(
+    roomId: RoomID,
+    userId: UserID,
+    modifiedUserId: UserID,
+    permission: RoomPermission
+  ) {
+    const room = await this.enforcePermissionRequirement(roomId, userId);
+    const userPermissions = room.permissions[modifiedUserId] ?? [];
+    const nextPermissions = userPermissions.includes(permission)
+      ? userPermissions.filter((each) => each !== permission)
+      : userPermissions.concat(permission);
+
+    await this.updateRoomPermissions(room, {
+      ...room.permissions,
+      [modifiedUserId]: nextPermissions,
+    });
+    await this.updateRoomTimestamp(room);
+
+    return true;
+  }
   // -- Message
   public async sendMessage(data: MessageCreate) {
     const { authorId, roomId } =
@@ -473,9 +515,24 @@ export class CacheServer {
     );
   }
 
+  private updateUserTimestamp(user: User) {
+    return this.json.set(
+      CacheServer.keys.room(user.id),
+      "changedAt",
+      rightNow()
+    );
+  }
   // -- Room
   private storeRoom(room: Room) {
     return this.json.set(CacheServer.keys.room(room.id), ".", room);
+  }
+
+  private updateRoomPermissions(room: Room, permissions: Room["permissions"]) {
+    return this.json.set(
+      CacheServer.keys.room(room.id),
+      "permissions",
+      permissions
+    );
   }
 
   private storeRoomTitle(room: Room) {
@@ -549,6 +606,14 @@ export class CacheServer {
       CacheServer.keys.room(room.id),
       "pins",
       roomPins.filter((id) => id !== unpinned.id)
+    );
+  }
+
+  private updateRoomTimestamp(room: Room) {
+    return this.json.set(
+      CacheServer.keys.room(room.id),
+      "changedAt",
+      rightNow()
     );
   }
   // -- Message

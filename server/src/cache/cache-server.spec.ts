@@ -59,9 +59,11 @@ describe(CacheServer.name, () => {
   });
   describe("Rooms", () => {
     let user: User;
+    let anotherUser: User;
 
     beforeEach(async () => {
       user = await server.createUser(CacheGenerator.makeUserCreate());
+      anotherUser = await server.createUser(CacheGenerator.makeUserCreate());
     });
 
     describe("(creating a room)", () => {
@@ -126,6 +128,79 @@ describe(CacheServer.name, () => {
         expect(inRoomNow).toBe(false);
         expect(await server.queryUserRooms(user.id)).toEqual([]);
         expect(await server.queryRoomUsers(room.id)).toEqual([]);
+      });
+      it("should prevent a user from joining a room when missing the password or providing the wrong password", async () => {
+        const roomData = CacheGenerator.makeRoomCreate(user.id);
+        const room = await server.createRoom({
+          ...roomData,
+          password: "123",
+        });
+
+        expect.hasAssertions();
+
+        try {
+          await server.joinRoom(anotherUser.id, room.id);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.ForbiddenError);
+        }
+
+        try {
+          await server.joinRoom(anotherUser.id, room.id, "ABC");
+        } catch (error) {
+          expect(error).toBeInstanceOf(Error);
+        }
+      });
+      it("should prevent a user on the blacklist from joining a room", async () => {
+        const roomData = CacheGenerator.makeRoomCreate(user.id);
+        const room = await server.createRoom(roomData);
+        const modified = await server.modifyRoomSecurity(
+          room.id,
+          user.id,
+          anotherUser.id,
+          "blacklisted"
+        );
+
+        expect.hasAssertions();
+
+        try {
+          await server.joinRoom(anotherUser.id, room.id);
+        } catch (error) {
+          expect(modified).toBe(true);
+          expect(error).toBeInstanceOf(CacheServer.errors.ForbiddenError);
+          expect(await server.queryUserRooms(anotherUser.id)).toEqual([]);
+          expect(await server.queryRoomUsers(room.id)).toEqual([]);
+        }
+      });
+    });
+    describe("(modifying room security)", () => {
+      it("should allow an owner to modify the permissions of a user", async () => {
+        const roomData = CacheGenerator.makeRoomCreate(user.id);
+        const room = await server.createRoom(roomData);
+        const modified = await server.modifyRoomSecurity(
+          room.id,
+          user.id,
+          anotherUser.id,
+          "blacklisted"
+        );
+
+        expect(modified).toBe(true);
+
+        let permissions =
+          (await server.queryRoom(room.id))?.permissions[anotherUser.id] ?? [];
+
+        expect(permissions.includes("blacklisted")).toBe(true);
+
+        await server.modifyRoomSecurity(
+          room.id,
+          user.id,
+          anotherUser.id,
+          "blacklisted"
+        );
+
+        permissions =
+          (await server.queryRoom(room.id))?.permissions[anotherUser.id] ?? [];
+
+        expect(permissions.includes("blacklisted")).toBe(false);
       });
     });
   });
