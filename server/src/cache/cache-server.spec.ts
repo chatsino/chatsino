@@ -110,53 +110,109 @@ describe(CacheServer.name, () => {
   });
   describe("Messages", () => {
     let user: User;
+    let anotherUser: User;
     let room: Room;
 
     beforeEach(async () => {
       user = await server.createUser(CacheGenerator.makeUserCreate());
+      anotherUser = await server.createUser(CacheGenerator.makeUserCreate());
       room = await server.createRoom(CacheGenerator.makeRoomCreate(user.id));
     });
 
-    it("should allow a user to message a room", async () => {
-      const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
-      const message = await server.sendMessage(messageData);
+    describe("(sending a message)", () => {
+      it("should allow a user to message a room", async () => {
+        const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
+        const message = await server.sendMessage(messageData);
 
-      expect(message).toEqual({
-        ...messageData,
-        id: expect.any(Number),
-        createdAt: expect.any(String),
-        changedAt: expect.any(String),
-        authorId: user.id,
-        roomId: room.id,
-        reactions: {},
+        expect(message).toEqual({
+          ...messageData,
+          id: expect.any(Number),
+          createdAt: expect.any(String),
+          changedAt: expect.any(String),
+          authorId: user.id,
+          roomId: room.id,
+          reactions: {},
+        });
+        expect(await server.queryMessageCount()).toBe(1);
+        expect(await server.queryUserMessages(user.id)).toEqual([message.id]);
+        expect(await server.queryRoomMessages(room.id)).toEqual([message.id]);
       });
-      expect(await server.queryMessageCount()).toBe(1);
-      expect(await server.queryUserMessages(user.id)).toEqual([message.id]);
-      expect(await server.queryRoomMessages(room.id)).toEqual([message.id]);
-    });
-    it("should fail to send the same message twice in a row", async () => {
-      const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
-      await server.sendMessage(messageData);
+      it("should prevent a user from sending a message to a room that does not exist", async () => {
+        const messageData = CacheGenerator.makeMessageCreate(user.id, -50);
 
-      expect.hasAssertions();
+        expect.hasAssertions();
 
-      try {
+        try {
+          await server.sendMessage(messageData);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.NotFoundError);
+        }
+      });
+      it("should prevent sending the same message twice in a row", async () => {
+        const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
         await server.sendMessage(messageData);
-      } catch (error) {
-        expect(error).toBeInstanceOf(CacheServer.errors.ConflictError);
-      }
+
+        expect.hasAssertions();
+
+        try {
+          await server.sendMessage(messageData);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.ConflictError);
+        }
+      });
+      it("should prevent sending a message when invalid data is passed", async () => {
+        const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
+        delete (messageData as any).content;
+
+        expect.hasAssertions();
+
+        try {
+          await server.sendMessage(messageData);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.ValidationError);
+        }
+      });
     });
-    it("should fail to send a message when invalid data is passed", async () => {
-      const messageData = CacheGenerator.makeMessageCreate(user.id, room.id);
-      delete (messageData as any).content;
+    describe("(editing a message)", () => {
+      it("should allow a user to edit their own message", async () => {
+        const message = await server.sendMessage(
+          CacheGenerator.makeMessageCreate(user.id, room.id)
+        );
+        const edit = CacheGenerator.makeMessageCreate(user.id, room.id).content;
+        const editedMessage = await server.editMessage(
+          message.id,
+          user.id,
+          edit
+        );
 
-      expect.hasAssertions();
+        expect(editedMessage.id).toBe(message.id);
+        expect(editedMessage.content).toBe(edit);
+      });
+      it("should prevent a user from editing a message that does not exist", async () => {
+        const edit = CacheGenerator.makeMessageCreate(user.id, room.id).content;
 
-      try {
-        await server.sendMessage(messageData);
-      } catch (error) {
-        expect(error).toBeInstanceOf(CacheServer.errors.ValidationError);
-      }
+        expect.hasAssertions();
+
+        try {
+          await server.editMessage(-50, user.id, edit);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.NotFoundError);
+        }
+      });
+      it("should prevent a user from editing another user's message", async () => {
+        const message = await server.sendMessage(
+          CacheGenerator.makeMessageCreate(user.id, room.id)
+        );
+        const edit = CacheGenerator.makeMessageCreate(user.id, room.id).content;
+
+        expect.hasAssertions();
+
+        try {
+          await server.editMessage(message.id, anotherUser.id, edit);
+        } catch (error) {
+          expect(error).toBeInstanceOf(CacheServer.errors.ForbiddenError);
+        }
+      });
     });
   });
 });

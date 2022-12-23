@@ -63,11 +63,25 @@ export class CacheServer {
         content: yup.string().min(1).required(),
       })
       .required(),
+    messageEditSchema: yup
+      .object({
+        content: yup.string().min(1).required(),
+      })
+      .required(),
   };
 
   public static errors = {
     BadRequestError: class extends Error {
       statusCode = 400;
+    },
+    NotAllowedError: class extends Error {
+      statusCode = 401;
+    },
+    ForbiddenError: class extends Error {
+      statusCode = 403;
+    },
+    NotFoundError: class extends Error {
+      statusCode = 404;
     },
     ConflictError: class extends Error {
       statusCode = 409;
@@ -152,13 +166,13 @@ export class CacheServer {
     const author = await this.queryUser(authorId);
 
     if (!author) {
-      throw new CacheServer.errors.BadRequestError("User does not exist.");
+      throw new CacheServer.errors.NotFoundError("User does not exist.");
     }
 
     const room = await this.queryRoom(roomId);
 
     if (!room) {
-      throw new CacheServer.errors.BadRequestError("Room does not exist.");
+      throw new CacheServer.errors.NotFoundError("Room does not exist.");
     }
 
     const lastMessageContent = await this.queryUserLastMessageContent(authorId);
@@ -183,6 +197,39 @@ export class CacheServer {
     ]);
 
     return message;
+  }
+
+  public async editMessage(
+    messageId: MessageID,
+    editorId: UserID,
+    content: string
+  ) {
+    await CacheServer.schemas.messageEditSchema.validate({ content });
+
+    const message = await this.queryMessage(messageId);
+
+    if (!message) {
+      throw new CacheServer.errors.NotFoundError("Message does not exist.");
+    }
+
+    if (editorId !== message.authorId) {
+      throw new CacheServer.errors.ForbiddenError(
+        "Editor cannot edit that message."
+      );
+    }
+
+    if (content === message.content) {
+      throw new CacheServer.errors.BadRequestError("No changes were made.");
+    }
+
+    await Promise.all([
+      this.storeMessageContent(message, content),
+      this.updateMessageTimestamp(message),
+    ]);
+
+    const editedMessage = (await this.queryMessage(messageId)) as Message;
+
+    return editedMessage;
   }
   // #endregion
 
@@ -280,9 +327,26 @@ export class CacheServer {
   private storeMessage(message: Message) {
     return this.json.set(CacheServer.keys.message(message.id), ".", message);
   }
+
+  private storeMessageContent(message: Message, content: string) {
+    return this.json.set(
+      CacheServer.keys.message(message.id),
+      "content",
+      content
+    );
+  }
+
+  private updateMessageTimestamp(message: Message) {
+    return this.json.set(
+      CacheServer.keys.message(message.id),
+      "changedAt",
+      rightNow()
+    );
+  }
   // #endregion
 
   // #region Queries
+  // -- User
   public queryUser(id: UserID) {
     return this.json.get(CacheServer.keys.user(id)) as Promise<null | User>;
   }
@@ -317,6 +381,12 @@ export class CacheServer {
     >;
   }
 
+  public async queryUsername(username: string) {
+    return parseInt(
+      (await this.redis.get(CacheServer.keys.username(username))) ?? "0"
+    );
+  }
+  // -- Room
   public queryRoom(id: RoomID) {
     return this.json.get(CacheServer.keys.room(id)) as Promise<null | Room>;
   }
@@ -351,15 +421,16 @@ export class CacheServer {
     );
   }
 
+  // -- Message
+  public async queryMessage(id: MessageID) {
+    return this.json.get(
+      CacheServer.keys.message(id)
+    ) as Promise<null | Message>;
+  }
+
   public async queryMessageCount() {
     return parseInt(
       (await this.redis.get(CacheServer.keys.messageCount())) ?? "0"
-    );
-  }
-
-  public async queryUsername(username: string) {
-    return parseInt(
-      (await this.redis.get(CacheServer.keys.username(username))) ?? "0"
     );
   }
   // #endregion
