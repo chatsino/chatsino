@@ -8,6 +8,7 @@ import {
   Message,
   MessageCreate,
   MessageID,
+  Reaction,
   Room,
   RoomCreate,
   RoomID,
@@ -318,6 +319,31 @@ export class CacheServer {
 
     return !message.pinned;
   }
+
+  public async reactToMessage(
+    messageId: MessageID,
+    userId: UserID,
+    reaction: Reaction
+  ) {
+    const { message, user } = (await this.retrieve({
+      messageId,
+      userId,
+    })) as {
+      message: Message;
+      user: User;
+    };
+    const previousUserIds = message.reactions[reaction] ?? [];
+    const userIds = previousUserIds.includes(user.id)
+      ? previousUserIds.filter((id) => id !== user.id)
+      : previousUserIds.concat(user.id);
+
+    await Promise.all([
+      this.storeMessageReactions(message, reaction, userIds),
+      this.updateMessageTimestamp(message),
+    ]);
+
+    return userIds.includes(userId);
+  }
   // #endregion
 
   // #region Mutations
@@ -490,6 +516,19 @@ export class CacheServer {
       "pinned",
       pinned
     );
+  }
+
+  private storeMessageReactions(
+    message: Message,
+    reaction: Reaction,
+    userIds: UserID[]
+  ) {
+    const key = CacheServer.keys.message(message.id);
+    const path = `reactions.${reaction}`;
+
+    return userIds.length === 0
+      ? this.json.del(key, path)
+      : this.json.set(key, path, userIds);
   }
 
   private updateMessageTimestamp(message: Message) {

@@ -272,5 +272,37 @@ describe(CacheServer.name, () => {
         expect(await server.queryRoomPins(room.id)).toEqual([]);
       });
     });
+    describe("(reacting to a message)", () => {
+      it("should allow for a message to be reacted to", async () => {
+        const message = await server.sendMessage(
+          CacheGenerator.makeMessageCreate(user.id, room.id)
+        );
+        const reaction = ":smile:";
+
+        expect(message.reactions[reaction]).toBeUndefined();
+
+        const reacted = await server.reactToMessage(
+          message.id,
+          user.id,
+          reaction
+        );
+
+        expect(reacted).toBe(true);
+        expect(
+          (await server.queryMessage(message.id))?.reactions[reaction]
+        ).toEqual([user.id]);
+
+        const reactedNow = await server.reactToMessage(
+          message.id,
+          user.id,
+          reaction
+        );
+
+        expect(reactedNow).toBe(false);
+        expect(
+          (await server.queryMessage(message.id))?.reactions[reaction]
+        ).toBeUndefined();
+      });
+    });
   });
 });

@@ -52,6 +52,8 @@ export type Message = Metadata<MessageID> &
     pinned?: boolean;
   };
 
+export type Reaction = string;
+
 export type Potentially<T> = T | undefined;
 
 export type EntityRetrievalRequest = {
