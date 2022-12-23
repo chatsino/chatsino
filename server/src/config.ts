@@ -56,35 +56,38 @@ export const PASSWORD_HASH_SIZE = 60;
 export const JWT_ACCESS_EXPIRATON_TIME_SECONDS = 60 * 20;
 
 // Logging
-export const LOGGER_NAMES = {
-  SERVER: "Server",
-  SOCKET_SERVER: "Socket Server",
-  CACHE: "Persistence/Cache",
-  REQUEST: "Middleware/Request",
-  RESPONSE: "Helpers/Response",
+export enum LOGGER_NAMES {
+  SERVER = "Server",
+  SOCKET_SERVER = "Socket Server",
+  CACHE = "Persistence/Cache",
+  REQUEST = "Middleware/Request",
+  RESPONSE = "Helpers/Response",
 
   // Auth
-  TICKET: "Auth/Tickets",
-  TOKEN: "Auth/Tokens",
+  TICKET = "Auth/Tickets",
+  TOKEN = "Auth/Tokens",
+
+  // Cache
+  OBJECT_MAPPER = "Cache/Object Mapper",
 
   // Router
-  AUTH_ROUTER: "Router/Auth",
-  CHAT_ROUTER: "Router/Chat",
-  USER_ROUTER: "Router/User",
+  AUTH_ROUTER = "Router/Auth",
+  CHAT_ROUTER = "Router/Chat",
+  USER_ROUTER = "Router/User",
 
   // Models
-  BLACKJACK_MODEL: "Models/Blackjack",
-  CLIENT_MODEL: "Models/Client",
-  CHAT_MESSAGE_MODEL: "Models/ChatMessage",
-  CHATROOM_MODEL: "Models/Chatroom",
-  TRANSACTION_MODEL: "Models/Transaction",
+  BLACKJACK_MODEL = "Models/Blackjack",
+  CLIENT_MODEL = "Models/Client",
+  CHAT_MESSAGE_MODEL = "Models/ChatMessage",
+  CHATROOM_MODEL = "Models/Chatroom",
+  TRANSACTION_MODEL = "Models/Transaction",
 
   // Managers
-  BLACKJACK_MANAGER: "Managers/Blackjack",
-  CLIENT_MANAGER: "Managers/Client",
-  CHATROOM_MANAGER: "Managers/Chatroom",
-  CHAT_MESSAGE_MANAGER: "Managers/ChatMessage",
-};
+  BLACKJACK_MANAGER = "Managers/Blackjack",
+  CLIENT_MANAGER = "Managers/Client",
+  CHATROOM_MANAGER = "Managers/Chatroom",
+  CHAT_MESSAGE_MANAGER = "Managers/ChatMessage",
+}
 
 // File Uploads
 export const FILE_UPLOAD_DIRECTORY = path.join(__dirname, "../../uploads");

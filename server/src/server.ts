@@ -13,7 +13,7 @@ import {
   waitForDatabaseAndCache,
 } from "persistence";
 import * as routes from "routes";
-import { CacheServer } from "cache/cache-server";
+import { UserEntity } from "cache/entities";
 import { SocketServer } from "socket-server";
 
 const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
@@ -57,7 +57,8 @@ export async function startServer() {
     handleUncaughtExceptionsAndRejections();
   }
 
-  const cache = new CacheServer();
+  SERVER_LOGGER.info("Creating indices.");
+  createIndices();
 
   server.listen(config.PORT, () =>
     SERVER_LOGGER.info(`Server listening on port ${config.PORT}.`)
@@ -90,6 +91,10 @@ function applyRoutes(app: Express) {
 function initializeFeatureManagers() {
   managers.initializeBlackjackManager();
   managers.initializeChatroomManager();
+}
+
+function createIndices() {
+  return Promise.all([UserEntity.createIndex()]);
 }
 
 function handleUncaughtExceptionsAndRejections() {

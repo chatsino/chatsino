@@ -699,6 +699,10 @@ export class CacheServer {
     >;
   }
 
+  public queryUserFoo() {
+    return this.redis.ft;
+  }
+
   public async queryUsername(username: string) {
     return parseInt(
       (await this.redis.get(CacheServer.keys.username(username))) ?? "0"
