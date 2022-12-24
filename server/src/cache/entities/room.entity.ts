@@ -1,7 +1,7 @@
 import { executeCommand } from "cache/object-mapper";
 import { rightNow } from "helpers";
 import { Client, Entity, Schema } from "redis-om";
-import { User, UserEntity, userErrors } from "./user.entity";
+import { UserEntity, userErrors } from "./user.entity";
 
 export type OwnerPermissionMarker = "O";
 export type CoOwnerPermissionMarker = "C";
@@ -20,21 +20,25 @@ export type PermissionMarker =
   | BlacklistedPermissionMarker
   | WhitelistedPermissionMarker;
 
-export const RoomPermissions: Record<string, PermissionMarker> = {
-  Owner: "O",
-  CoOwner: "C",
-  Guest: "G",
-  Talk: "T",
-  Muted: "M",
-  Blacklisted: "B",
-  Whitelisted: "W",
-};
-
-export type OnlyRoomPermission<S> = S extends ""
+export type OnlyPermissionMarker<S> = S extends ""
   ? unknown
   : S extends `${PermissionMarker}${infer Tail}`
-  ? OnlyRoomPermission<Tail>
+  ? OnlyPermissionMarker<Tail>
   : never;
+
+export enum RoomPermission {
+  Owner = "O",
+  CoOwner = "C",
+  Guest = "G",
+  Talk = "T",
+  Muted = "M",
+  Blacklisted = "B",
+  Whitelisted = "W",
+}
+
+export type RoomUserPermissions = Record<RoomPermission, boolean>;
+
+export type RoomPermissionLookup = Record<string, RoomUserPermissions>;
 
 export interface Room {
   id: string;
@@ -59,7 +63,72 @@ export type RoomCreate = {
   password: string;
 };
 
-export class Room extends Entity {}
+export class Room extends Entity {
+  private get permissionLookup(): RoomPermissionLookup {
+    return this.permissions.reduce((prev, next) => {
+      const { userId, permissions } = deserializeRoomPermissions(next);
+      const isOwner = permissions.includes(RoomPermission.Owner);
+      const permissionLookup = {
+        [RoomPermission.Owner]: isOwner,
+        [RoomPermission.CoOwner]:
+          isOwner || permissions.includes(RoomPermission.CoOwner),
+        [RoomPermission.Muted]: permissions.includes(RoomPermission.Muted),
+        [RoomPermission.Blacklisted]: permissions.includes(
+          RoomPermission.Blacklisted
+        ),
+        [RoomPermission.Whitelisted]: permissions.includes(
+          RoomPermission.Whitelisted
+        ),
+      };
+      const isAnOwner =
+        permissionLookup[RoomPermission.Owner] ||
+        permissionLookup[RoomPermission.CoOwner];
+      const meetsGuestRequirements =
+        isAnOwner ||
+        (!permissionLookup[RoomPermission.Blacklisted] &&
+          (!this.whitelistActive ||
+            (this.whitelistActive &&
+              permissionLookup[RoomPermission.Whitelisted])));
+
+      prev[userId] = {
+        ...permissionLookup,
+        [RoomPermission.Guest]: meetsGuestRequirements,
+        [RoomPermission.Talk]:
+          meetsGuestRequirements && !permissionLookup[RoomPermission.Muted],
+      };
+
+      return prev;
+    }, {} as Record<string, RoomUserPermissions>);
+  }
+
+  public get whitelistActive(): boolean {
+    return Object.values(this.permissionLookup).some(
+      (permissions) => permissions[RoomPermission.Whitelisted]
+    );
+  }
+
+  public getUserPermissions(userId: string): RoomUserPermissions {
+    return (
+      this.permissionLookup[userId] ?? {
+        [RoomPermission.Owner]: false,
+        [RoomPermission.CoOwner]: false,
+        [RoomPermission.Guest]: true,
+        [RoomPermission.Talk]: true,
+        [RoomPermission.Muted]: false,
+        [RoomPermission.Blacklisted]: false,
+        [RoomPermission.Whitelisted]: false,
+      }
+    );
+  }
+
+  public meetsPermissionRequirement<T extends string>(
+    userId: string,
+    requirement: T & OnlyPermissionMarker<T>
+  ): boolean {
+    const userPermissions = this.getUserPermissions(userId);
+    return userPermissions[requirement as keyof RoomUserPermissions];
+  }
+}
 
 export const roomSchema = new Schema(Room, {
   id: {
@@ -159,15 +228,7 @@ export const roomQueries = {
   allPublicRooms: async () => {
     const rooms = await roomQueries.allRooms();
 
-    return rooms.filter((room) => {
-      const whitelistActive = room.permissions.some((each) =>
-        deserializeRoomPermissions(each).permissions.includes(
-          RoomPermissions.Whitelisted
-        )
-      );
-
-      return !(room.password || whitelistActive);
-    });
+    return rooms.filter((room) => !(room.password || room.whitelistActive));
   },
   totalRooms: () =>
     executeCommand((client) =>
@@ -183,86 +244,25 @@ export const roomQueries = {
     ) as Promise<Room>,
   userPermissions: async (roomId: string, userId: string) => {
     const room = await roomCrud.read(roomId);
-    const user = await UserEntity.crud.read(userId);
 
     if (!room) {
       throw new roomErrors.RoomNotFoundError();
     }
 
-    if (!user) {
-      throw new UserEntity.errors.UserNotFoundError();
-    }
-
-    const roomPermissions = room.permissions.map((each) =>
-      deserializeRoomPermissions(each)
-    );
-
-    return (
-      roomPermissions.find((each) => each.userId === userId)?.permissions ?? ""
-    );
+    return room.getUserPermissions(userId);
   },
   meetsRoomPermissionRequirement: async <T extends string>(
     roomId: string,
     userId: string,
-    requirement: T & OnlyRoomPermission<T>
+    requirement: T & OnlyPermissionMarker<T>
   ) => {
     const room = await roomCrud.read(roomId);
-    const user = await UserEntity.crud.read(userId);
 
-    if (!room || !user) {
-      return false;
+    if (!room) {
+      throw new roomErrors.RoomNotFoundError();
     }
 
-    const roomPermissions = room.permissions.map((each) =>
-      deserializeRoomPermissions(each)
-    );
-    const userPermissions =
-      roomPermissions.find((each) => each.userId === userId)?.permissions ?? "";
-
-    const isOwner = userPermissions.includes(RoomPermissions.Owner);
-    const isCoOwner = userPermissions.includes(RoomPermissions.CoOwner);
-    const ownsOrCoOwns = isOwner || isCoOwner;
-    const meetsGuestRequirement = () => {
-      if (ownsOrCoOwns) {
-        return true;
-      }
-
-      const whitelistActive = roomPermissions.some((each) =>
-        each.permissions.includes(RoomPermissions.Whitelisted)
-      );
-
-      if (whitelistActive) {
-        const onWhitelist = userPermissions.includes(
-          RoomPermissions.Whitelisted
-        );
-
-        return onWhitelist;
-      }
-
-      const onBlacklist = userPermissions.includes(RoomPermissions.Blacklisted);
-
-      return !onBlacklist;
-    };
-
-    if (requirement === RoomPermissions.Owner) {
-      return isOwner;
-    }
-
-    if (requirement === RoomPermissions.CoOwner) {
-      return ownsOrCoOwns;
-    }
-
-    if (requirement === RoomPermissions.Guest) {
-      return meetsGuestRequirement();
-    }
-
-    if (requirement === RoomPermissions.Talk) {
-      const isMuted = userPermissions.includes(RoomPermissions.Muted);
-
-      return meetsGuestRequirement() && !isMuted;
-    }
-
-    return true;
+    return room.meetsPermissionRequirement(userId, requirement);
   },
   roomUsers: async (roomId: string) => {
     const room = await roomCrud.read(roomId);
@@ -355,7 +355,7 @@ export const roomMutations = {
     roomId: string,
     userId: string,
     operation: "add" | "remove",
-    markers: M & OnlyRoomPermission<M>
+    markers: M & OnlyPermissionMarker<M>
   ) => {
     const room = await roomCrud.read(roomId);
 
@@ -369,10 +369,9 @@ export const roomMutations = {
       throw new userErrors.UserNotFoundError();
     }
 
-    const hasOwnerPermission = await roomQueries.meetsRoomPermissionRequirement(
-      roomId,
+    const hasOwnerPermission = room.meetsPermissionRequirement(
       userId,
-      "O"
+      RoomPermission.Owner
     );
 
     if (!hasOwnerPermission) {
@@ -416,31 +415,31 @@ export const roomMutations = {
       roomId,
       userId
     );
-    const previousMarkerExists = previousPermissions.includes(permission);
+    const previouslyPermitted = previousPermissions[permission];
 
     return roomMutations.modifyUserPermissions(
       roomId,
       userId,
-      previousMarkerExists ? "remove" : "add",
+      previouslyPermitted ? "remove" : "add",
       permission
     );
   },
   toggleCoOwner: (roomId: string, userId: string) =>
-    roomMutations.toggleUserPermission(roomId, userId, RoomPermissions.CoOwner),
+    roomMutations.toggleUserPermission(roomId, userId, RoomPermission.CoOwner),
   toggleBlacklisted: (roomId: string, userId: string) =>
     roomMutations.toggleUserPermission(
       roomId,
       userId,
-      RoomPermissions.Blacklisted
+      RoomPermission.Blacklisted
     ),
   toggleWhitelisted: (roomId: string, userId: string) =>
     roomMutations.toggleUserPermission(
       roomId,
       userId,
-      RoomPermissions.Whitelisted
+      RoomPermission.Whitelisted
     ),
   toggleMuted: (roomId: string, userId: string) =>
-    roomMutations.toggleUserPermission(roomId, userId, RoomPermissions.Muted),
+    roomMutations.toggleUserPermission(roomId, userId, RoomPermission.Muted),
 };
 
 export const roomErrors = {
@@ -476,11 +475,11 @@ export class RoomEntity {
 }
 
 // Helpers
-export function serializeRoomPermissions(userId: string, permissions: string) {
+function serializeRoomPermissions(userId: string, permissions: string) {
   return [userId, permissions].join("/");
 }
 
-export function deserializeRoomPermissions(permissionsString: string): {
+function deserializeRoomPermissions(permissionsString: string): {
   userId: string;
   permissions: string;
 } {

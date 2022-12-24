@@ -109,10 +109,18 @@ export const userQueries = {
         .equals(username)
         .return.first()
     ) as Promise<User>,
+  usersByUsernameList: (...usernames: string[]) =>
+    executeCommand((client) =>
+      createUserRepository(client)
+        .search()
+        .where("username")
+        .containOneOf(...usernames)
+        .return.all()
+    ) as Promise<User[]>,
 };
 
 export const userMutations = {
-  createUserEntity: async (data: UserCreate) => {
+  createUser: async (data: UserCreate) => {
     const existingUserWithUsername = await userQueries.userByUsername(
       data.username
     );
@@ -123,7 +131,7 @@ export const userMutations = {
 
     return userCrud.create(data);
   },
-  updateUserEntity: async (id: string, data: Partial<User>) => {
+  updateUser: async (id: string, data: Partial<User>) => {
     const user = await userCrud.read(id);
 
     if (!user) {
