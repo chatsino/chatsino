@@ -11,6 +11,9 @@ describe(RoomEntity.name, () => {
     describe(RoomEntity.queries.totalRooms.name, () => {
       it("should return the total number of rooms", async () => {});
     });
+    describe(RoomEntity.queries.roomById.name, () => {
+      it("should return a room with the specified ID", async () => {});
+    });
     describe(RoomEntity.queries.roomByRoomTitle.name, () => {
       it("should return a room when the specified title has been used", async () => {});
     });
@@ -36,6 +39,11 @@ describe(RoomEntity.name, () => {
     describe(RoomEntity.mutations.createRoom.name, () => {
       it("should create a room", async () => {});
       it("should prevent creating a room with a duplicate title", async () => {});
+    });
+    describe(RoomEntity.mutations.createDirectMessageRoom.name, () => {
+      it("should create a private room", async () => {});
+      it("should prevent creating a room when either provided user ID is invalid", async () => {});
+      it("should prevent creating a room a private room between the two users already exists", async () => {});
     });
     describe(RoomEntity.mutations.updateRoom.name, () => {
       it("should change a message", async () => {});
@@ -64,6 +72,11 @@ describe(RoomEntity.name, () => {
       it("should prevent a user with the wrong password from sending a message to a room", async () => {});
       it("should prevent a blacklisted user from sending a message to a room", async () => {});
       it("should prevent a non-whitelisted user from sending a message to a room", async () => {});
+    });
+    describe(RoomEntity.mutations.sendDirectMessage.name, () => {
+      it("should create a direct message and add it to a private room", async () => {});
+      it("should create a new direct message room if this is the first message between two users", async () => {});
+      it("should prevent sending a direct message if either specified user does not exist", async () => {});
     });
     describe(RoomEntity.mutations.pinMessage.name, () => {
       it("should add a message to the set of room pins", async () => {});

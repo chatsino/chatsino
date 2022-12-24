@@ -2,7 +2,7 @@ import { executeCommand } from "cache/object-mapper";
 import { rightNow } from "helpers";
 import { Client, Entity, Schema } from "redis-om";
 import { MessageEntity } from "./message.entity";
-import { UserEntity, userErrors } from "./user.entity";
+import { UserEntity } from "./user.entity";
 
 export type OwnerPermissionMarker = "O";
 export type CoOwnerPermissionMarker = "C";
@@ -41,6 +41,14 @@ export type RoomUserPermissions = Record<RoomPermission, boolean>;
 
 export type RoomPermissionLookup = Record<string, RoomUserPermissions>;
 
+export type RoomCreate = {
+  ownerId: string;
+  avatar: string;
+  title: string;
+  description: string;
+  password: string;
+};
+
 export interface Room {
   id: string;
   ownerId: string;
@@ -55,14 +63,6 @@ export interface Room {
   messages: string[];
   pins: string[];
 }
-
-export type RoomCreate = {
-  ownerId: string;
-  avatar: string;
-  title: string;
-  description: string;
-  password: string;
-};
 
 export class Room extends Entity {
   private get permissionLookup(): RoomPermissionLookup {
@@ -229,6 +229,7 @@ export const roomCrud = {
         throw new roomErrors.RoomNotFoundError();
       }
 
+      room.id = data.id ?? room.id;
       room.avatar = data.avatar ?? room.avatar;
       room.title = data.title ?? room.title;
       room.description = data.description ?? room.description;
@@ -239,8 +240,10 @@ export const roomCrud = {
       room.pins = data.pins ?? room.pins;
       room.changedAt = rightNow();
 
-      return repository.save(room);
-    }),
+      await repository.save(room);
+
+      return roomCrud.read(room.entityId);
+    }) as Promise<Room>,
   delete: (id: string) =>
     executeCommand(async (client) => createRoomRepository(client).remove(id)),
 };
@@ -259,6 +262,14 @@ export const roomQueries = {
     executeCommand((client) =>
       createRoomRepository(client).search().return.count()
     ) as Promise<number>,
+  roomById: (roomId: string) =>
+    executeCommand((client) =>
+      createRoomRepository(client)
+        .search()
+        .where("id")
+        .equals(roomId)
+        .return.first()
+    ) as Promise<Room>,
   roomByRoomTitle: (title: string) =>
     executeCommand((client) =>
       createRoomRepository(client)
@@ -328,6 +339,35 @@ export const roomMutations = {
 
     return roomCrud.create(data);
   },
+  createDirectMessageRoom: async (userIdA: string, userIdB: string) => {
+    const [sendingUser, receivingUser] = await UserEntity.crud.readList(
+      userIdA,
+      userIdB
+    );
+
+    if (!sendingUser || !receivingUser) {
+      throw new UserEntity.errors.UserNotFoundError();
+    }
+
+    const roomId = serializeDirectMessageRoomId(userIdA, userIdB);
+    const existingDirectMessageRoom = await roomQueries.roomById(roomId);
+
+    if (existingDirectMessageRoom) {
+      throw new roomErrors.RoomForbiddenActionError();
+    }
+
+    const room = await roomCrud.create({
+      ownerId: "",
+      avatar: "",
+      title: `${sendingUser.username} & ${receivingUser.username}`,
+      description: `A private conversation between ${sendingUser.username} and ${receivingUser.username}.`,
+      password: "",
+    });
+
+    room.id = roomId;
+
+    return roomCrud.update(room.entityId, room);
+  },
   updateRoom: async (roomId: string, data: Partial<Room>) => {
     const room = await roomCrud.read(roomId);
 
@@ -336,11 +376,11 @@ export const roomMutations = {
     }
 
     if (data.title) {
-      const existingRoomWithRoomname = await roomQueries.roomByRoomTitle(
+      const existingRoomWithRoomTitle = await roomQueries.roomByRoomTitle(
         data.title
       );
 
-      if (!existingRoomWithRoomname) {
+      if (!existingRoomWithRoomTitle) {
         throw new roomErrors.RoomTitleConflictError();
       }
     }
@@ -398,7 +438,7 @@ export const roomMutations = {
     );
 
     if (!hasOwnerPermission) {
-      throw new roomErrors.RoomForbiddenModification();
+      throw new roomErrors.RoomForbiddenModificationError();
     }
 
     const modifiedPermissionList = markers.split("");
@@ -471,7 +511,7 @@ export const roomMutations = {
     }
 
     if (!room.meetsPermissionRequirement(userId, RoomPermission.Talk)) {
-      throw new roomErrors.RoomForbiddenAction();
+      throw new roomErrors.RoomForbiddenActionError();
     }
 
     const message = await MessageEntity.mutations.createMessage({
@@ -484,6 +524,41 @@ export const roomMutations = {
 
     return message;
   },
+  sendDirectMessage: async (
+    sendingUserId: string,
+    receivingUserId: string,
+    content: string
+  ) => {
+    const [sendingUser, receivingUser] = await UserEntity.crud.readList(
+      sendingUserId,
+      receivingUserId
+    );
+
+    if (!sendingUser || !receivingUser) {
+      throw new UserEntity.errors.UserNotFoundError();
+    }
+
+    let existingDirectMessageRoom = await roomQueries.roomById(
+      serializeDirectMessageRoomId(sendingUserId, receivingUserId)
+    );
+
+    if (!existingDirectMessageRoom) {
+      existingDirectMessageRoom = await roomMutations.createDirectMessageRoom(
+        sendingUserId,
+        receivingUserId
+      );
+    }
+
+    const message = await MessageEntity.mutations.createMessage({
+      roomId: existingDirectMessageRoom.entityId,
+      userId: sendingUserId,
+      content,
+    });
+
+    existingDirectMessageRoom.messages.push(message.id);
+
+    return message;
+  },
   pinMessage: async (roomId: string, userId: string, messageId: string) => {
     const room = await roomCrud.read(roomId);
 
@@ -492,7 +567,7 @@ export const roomMutations = {
     }
 
     if (!room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)) {
-      throw new roomErrors.RoomForbiddenAction();
+      throw new roomErrors.RoomForbiddenActionError();
     }
 
     room.pinMessage(messageId);
@@ -517,7 +592,7 @@ export const roomMutations = {
       !removingOwnMessage &&
       !room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)
     ) {
-      throw new roomErrors.RoomForbiddenAction();
+      throw new roomErrors.RoomForbiddenActionError();
     }
 
     if (removingOwnMessage) {
@@ -536,7 +611,7 @@ export const roomMutations = {
     }
 
     if (!room.meetsPermissionRequirement(userId, RoomPermission.Owner)) {
-      throw new roomErrors.RoomForbiddenAction();
+      throw new roomErrors.RoomForbiddenActionError();
     }
 
     const messages = await roomQueries.roomMessages(roomId);
@@ -555,11 +630,11 @@ export const roomErrors = {
     statusCode = 401;
     message = "That is the wrong password.";
   },
-  RoomForbiddenAction: class extends Error {
+  RoomForbiddenActionError: class extends Error {
     statusCode = 403;
     message = "User cannot perform that action.";
   },
-  RoomForbiddenModification: class extends Error {
+  RoomForbiddenModificationError: class extends Error {
     statusCode = 403;
     message = "User cannot modify that room.";
   },
@@ -601,4 +676,11 @@ function deserializeRoomPermissions(permissionsString: string): {
     userId,
     permissions,
   };
+}
+
+function serializeDirectMessageRoomId(userIdA: string, userIdB: string) {
+  const joined = [userIdA, userIdB]
+    .sort((a, b) => a.localeCompare(b))
+    .join("___");
+  return `DM/${joined}`;
 }
