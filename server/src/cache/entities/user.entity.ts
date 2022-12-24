@@ -14,8 +14,6 @@ export interface User {
   lastActive: string;
 }
 
-export type UserData = User;
-
 export class User extends Entity {}
 
 export const userSchema = new Schema(User, {

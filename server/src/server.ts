@@ -13,7 +13,7 @@ import {
   waitForDatabaseAndCache,
 } from "persistence";
 import * as routes from "routes";
-import { UserEntity } from "cache/entities";
+import { RoomEntity, UserEntity } from "cache/entities";
 import { SocketServer } from "socket-server";
 
 const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
@@ -94,7 +94,7 @@ function initializeFeatureManagers() {
 }
 
 function createIndices() {
-  return Promise.all([UserEntity.createIndex()]);
+  return Promise.all([UserEntity.createIndex(), RoomEntity.createIndex()]);
 }
 
 function handleUncaughtExceptionsAndRejections() {
