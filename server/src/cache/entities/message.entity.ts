@@ -19,6 +19,7 @@ export type MessageCreate = {
   roomId: string;
   userId: string;
   content: string;
+  mentions?: string[];
 };
 
 export type MessageReaction = {
@@ -248,21 +249,20 @@ export const messageQueries = {
 
 export const messageMutations = {
   createMessage: async (data: MessageCreate) => {
-    const message = await messageCrud.create(data);
-    const potentialUsernames = message.content
+    const potentialMentions = data.content
       .split(" ")
       .filter((word) => word.startsWith("@"))
       .map((potentialUsername) => potentialUsername.slice(1));
+    const mentions =
+      potentialMentions.length > 0
+        ? await UserEntity.queries.usersByUsernameList(...potentialMentions)
+        : [];
+    const message = await messageCrud.create({
+      ...data,
+      mentions: mentions.map(({ id }) => id),
+    });
 
-    if (potentialUsernames.length > 0) {
-      const mentionedUsers = await UserEntity.queries.usersByUsernameList(
-        ...potentialUsernames
-      );
-
-      message.mentions = mentionedUsers.map(({ id }) => id);
-    }
-
-    return message;
+    return messageCrud.create(message);
   },
   editMessage: async (messageId: string, userId: string, content: string) => {
     const message = await messageCrud.read(messageId);

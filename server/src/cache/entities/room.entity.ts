@@ -1,6 +1,7 @@
 import { executeCommand } from "cache/object-mapper";
 import { rightNow } from "helpers";
 import { Client, Entity, Schema } from "redis-om";
+import { MessageEntity } from "./message.entity";
 import { UserEntity, userErrors } from "./user.entity";
 
 export type OwnerPermissionMarker = "O";
@@ -127,6 +128,30 @@ export class Room extends Entity {
   ): boolean {
     const userPermissions = this.getUserPermissions(userId);
     return userPermissions[requirement as keyof RoomUserPermissions];
+  }
+
+  public pinMessage(messageId: string) {
+    if (!this.messages.includes(messageId)) {
+      throw new roomErrors.RoomMessageNotFoundError();
+    }
+
+    const previouslyPinned = this.pins.includes(messageId);
+
+    if (previouslyPinned) {
+      this.pins = this.pins.filter((each) => each !== messageId);
+    } else {
+      this.pins.push(messageId);
+    }
+
+    return !previouslyPinned;
+  }
+
+  public removeMessage(messageId: string) {
+    if (!this.messages.includes(messageId)) {
+      throw new roomErrors.RoomMessageNotFoundError();
+    }
+
+    this.messages = this.messages.filter((each) => each !== messageId);
   }
 }
 
@@ -272,6 +297,15 @@ export const roomQueries = {
     }
 
     return UserEntity.crud.readList(...room.users);
+  },
+  roomMessages: async (roomId: string) => {
+    const room = await roomCrud.read(roomId);
+
+    if (!room) {
+      throw new roomErrors.RoomNotFoundError();
+    }
+
+    return MessageEntity.crud.readList(...room.messages);
   },
 };
 
@@ -440,6 +474,91 @@ export const roomMutations = {
     ),
   toggleMuted: (roomId: string, userId: string) =>
     roomMutations.toggleUserPermission(roomId, userId, RoomPermission.Muted),
+  sendMessage: async (roomId: string, userId: string, content: string) => {
+    const room = await roomCrud.read(roomId);
+
+    if (!room) {
+      throw new roomErrors.RoomNotFoundError();
+    }
+
+    if (!room.meetsPermissionRequirement(userId, RoomPermission.Talk)) {
+      throw new roomErrors.RoomForbiddenAction();
+    }
+
+    const message = await MessageEntity.mutations.createMessage({
+      roomId,
+      userId,
+      content,
+    });
+
+    room.messages.push(message.id);
+
+    return message;
+  },
+  pinMessage: async (roomId: string, userId: string, messageId: string) => {
+    const room = await roomCrud.read(roomId);
+
+    if (!room) {
+      throw new roomErrors.RoomNotFoundError();
+    }
+
+    if (!room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)) {
+      throw new roomErrors.RoomForbiddenAction();
+    }
+
+    room.pinMessage(messageId);
+
+    return roomCrud.update(roomId, room);
+  },
+  removeMessage: async (roomId: string, userId: string, messageId: string) => {
+    const room = await roomCrud.read(roomId);
+    const message = await MessageEntity.crud.read(messageId);
+
+    if (!room) {
+      throw new roomErrors.RoomNotFoundError();
+    }
+
+    if (!message) {
+      throw new MessageEntity.errors.MessageNotFoundError();
+    }
+
+    const removingOwnMessage = message.userId === userId;
+
+    if (
+      !removingOwnMessage &&
+      !room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)
+    ) {
+      throw new roomErrors.RoomForbiddenAction();
+    }
+
+    if (removingOwnMessage) {
+      await MessageEntity.mutations.deleteMessage(messageId, userId);
+    }
+
+    room.removeMessage(messageId);
+
+    return roomCrud.update(roomId, room);
+  },
+  removeUserMessages: async (roomId: string, userId: string) => {
+    const room = await roomCrud.read(roomId);
+
+    if (!room) {
+      throw new roomErrors.RoomNotFoundError();
+    }
+
+    if (!room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)) {
+      throw new roomErrors.RoomForbiddenAction();
+    }
+
+    const messages = await roomQueries.roomMessages(roomId);
+    const messagesNotFromUser = messages.filter(
+      (each) => each.userId !== userId
+    );
+
+    room.messages = messagesNotFromUser.map((each) => each.userId);
+
+    return roomCrud.update(roomId, room);
+  },
 };
 
 export const roomErrors = {
@@ -458,6 +577,10 @@ export const roomErrors = {
   RoomNotFoundError: class extends Error {
     statusCode = 404;
     message = "That room does not exist.";
+  },
+  RoomMessageNotFoundError: class extends Error {
+    statusCode = 404;
+    message = "That message does not exist in that room.";
   },
   RoomTitleConflictError: class extends Error {
     statusCode = 409;
