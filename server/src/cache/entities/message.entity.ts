@@ -249,17 +249,10 @@ export const messageQueries = {
 
 export const messageMutations = {
   createMessage: async (data: MessageCreate) => {
-    const potentialMentions = data.content
-      .split(" ")
-      .filter((word) => word.startsWith("@"))
-      .map((potentialUsername) => potentialUsername.slice(1));
-    const mentions =
-      potentialMentions.length > 0
-        ? await UserEntity.queries.usersByUsernameList(...potentialMentions)
-        : [];
+    const mentions = await determineMentions(data.content);
     const message = await messageCrud.create({
       ...data,
-      mentions: mentions.map(({ id }) => id),
+      mentions,
     });
 
     return messageCrud.create(message);
@@ -279,7 +272,9 @@ export const messageMutations = {
       return;
     }
 
+    const mentions = await determineMentions(content);
     message.content = content;
+    message.mentions = mentions;
 
     return messageCrud.update(messageId, message);
   },
@@ -361,6 +356,18 @@ export class MessageEntity {
 }
 
 // #region Helpers
+export async function determineMentions(content: string) {
+  const potentialMentions = content
+    .split(" ")
+    .filter((word) => word.startsWith("@"))
+    .map((potentialUsername) => potentialUsername.slice(1));
+  const mentionedUsers =
+    potentialMentions.length > 0
+      ? await UserEntity.queries.usersByUsernameList(...potentialMentions)
+      : [];
+
+  return mentionedUsers.map((each) => each.id);
+}
 export function serializeMessageReactions(
   options: MessageReaction[]
 ): string[] {

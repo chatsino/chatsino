@@ -310,7 +310,7 @@ export const roomQueries = {
 };
 
 export const roomMutations = {
-  createRoomEntity: async (data: RoomCreate) => {
+  createRoom: async (data: RoomCreate) => {
     const { ownerId } = data;
     const user = await UserEntity.crud.read(ownerId);
 
@@ -328,7 +328,7 @@ export const roomMutations = {
 
     return roomCrud.create(data);
   },
-  updateRoomEntity: async (roomId: string, data: Partial<Room>) => {
+  updateRoom: async (roomId: string, data: Partial<Room>) => {
     const room = await roomCrud.read(roomId);
 
     if (!room) {
@@ -349,7 +349,6 @@ export const roomMutations = {
   },
   joinRoom: async (roomId: string, userId: string, password = "") => {
     const room = await roomCrud.read(roomId);
-    const user = await UserEntity.crud.read(roomId);
 
     if (!room) {
       throw new roomErrors.RoomNotFoundError();
@@ -357,10 +356,6 @@ export const roomMutations = {
 
     if (room.users.includes(userId)) {
       return roomMutations.leaveRoom(roomId, userId);
-    }
-
-    if (!user) {
-      throw new userErrors.UserNotFoundError();
     }
 
     if (password !== room.password) {
@@ -383,7 +378,7 @@ export const roomMutations = {
 
     return room.users.length === previousUserCount
       ? Promise.resolve()
-      : roomMutations.updateRoomEntity(roomId, room);
+      : roomMutations.updateRoom(roomId, room);
   },
   modifyUserPermissions: async <M extends string>(
     roomId: string,
@@ -395,12 +390,6 @@ export const roomMutations = {
 
     if (!room) {
       throw new roomErrors.RoomNotFoundError();
-    }
-
-    const user = await UserEntity.crud.read(roomId);
-
-    if (!user) {
-      throw new userErrors.UserNotFoundError();
     }
 
     const hasOwnerPermission = room.meetsPermissionRequirement(
@@ -438,7 +427,7 @@ export const roomMutations = {
 
     room.permissions = otherPermissions.concat(nextUserPermissions);
 
-    return roomMutations.updateRoomEntity(roomId, room);
+    return roomMutations.updateRoom(roomId, room);
   },
   toggleUserPermission: async (
     roomId: string,
@@ -546,7 +535,7 @@ export const roomMutations = {
       throw new roomErrors.RoomNotFoundError();
     }
 
-    if (!room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)) {
+    if (!room.meetsPermissionRequirement(userId, RoomPermission.Owner)) {
       throw new roomErrors.RoomForbiddenAction();
     }
 
