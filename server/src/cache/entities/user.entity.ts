@@ -1,7 +1,11 @@
 import { executeCommand } from "cache/object-mapper";
-import { UserCreate } from "cache/types";
 import { rightNow } from "helpers";
 import { Client, Entity, Schema } from "redis-om";
+
+export type UserCreate = {
+  avatar: string;
+  username: string;
+};
 
 export interface User {
   id: string;
@@ -14,7 +18,20 @@ export interface User {
   lastActive: string;
 }
 
-export class User extends Entity {}
+export class User extends Entity {
+  public get fields() {
+    return {
+      id: this.id,
+      createdAt: this.createdAt,
+      changedAt: this.changedAt,
+      avatar: this.avatar,
+      username: this.username,
+      chips: this.chips,
+      sessionCount: this.sessionCount,
+      lastActive: this.lastActive,
+    };
+  }
+}
 
 export const userSchema = new Schema(User, {
   id: {
@@ -64,19 +81,28 @@ export const userCrud = {
 
       user.id = user.entityId;
 
-      return repository.save(user);
+      await repository.save(user);
+
+      return user;
     }) as Promise<User>,
   readList: (...ids: string[]) =>
-    executeCommand(async (client) =>
-      createUserRepository(client).fetch(...ids)
-    ) as Promise<User[]>,
-  read: (id: string) => userCrud.readList(id).then((entities) => entities[0]),
+    executeCommand(async (client) => {
+      const users = await createUserRepository(client).fetch(...ids);
+
+      return [users].flat().filter((user) => user.id);
+    }) as Promise<User[]>,
+  read: (id: string) =>
+    executeCommand(async (client) => {
+      const user = await createUserRepository(client).fetch(id);
+
+      return user.id ? user : null;
+    }) as Promise<null | User>,
   update: (id: string, data: Partial<User>) =>
     executeCommand(async (client) => {
       const repository = createUserRepository(client);
       const user = await repository.fetch(id);
 
-      if (!user) {
+      if (!user.id) {
         throw new userErrors.UserNotFoundError();
       }
 
@@ -86,8 +112,10 @@ export const userCrud = {
       user.sessionCount = data.sessionCount ?? user.sessionCount;
       user.changedAt = rightNow();
 
-      return repository.save(user);
-    }),
+      await repository.save(user);
+
+      return user;
+    }) as Promise<User>,
   delete: (id: string) =>
     executeCommand(async (client) => createUserRepository(client).remove(id)),
 };

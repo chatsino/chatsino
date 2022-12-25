@@ -33,6 +33,20 @@ export type MessagePollOption = {
 };
 
 export class Message extends Entity {
+  public get fields() {
+    return {
+      id: this.id,
+      userId: this.userId,
+      roomId: this.roomId,
+      createdAt: this.createdAt,
+      changedAt: this.changedAt,
+      content: this.content,
+      reactions: this.reactions,
+      poll: this.poll,
+      mentions: this.mentions,
+    };
+  }
+
   public get isPoll() {
     return this.poll.length > 0;
   }
@@ -199,20 +213,32 @@ export const messageCrud = {
 
       message.id = message.entityId;
 
-      return repository.save(message);
+      await repository.save(message);
+
+      return message;
     }) as Promise<Message>,
   readList: (...ids: string[]) =>
-    executeCommand((client) =>
-      createMessageRepository(client).fetch(...ids)
-    ) as Promise<Message[]>,
+    executeCommand(async (client) => {
+      const messages = await createMessageRepository(client).fetch(...ids);
+
+      return [messages].flat().filter((each) => each.id);
+    }) as Promise<Message[]>,
   read: (id: string) =>
-    messageCrud.readList(id).then((entities) => entities[0]),
+    executeCommand(async (client) => {
+      const message = await createMessageRepository(client).fetch(id);
+
+      if (!message.id) {
+        throw new messageErrors.MessageNotFoundError();
+      }
+
+      return message;
+    }) as Promise<Message>,
   update: (id: string, data: Partial<Message>) =>
     executeCommand(async (client) => {
       const repository = createMessageRepository(client);
       const message = await repository.fetch(id);
 
-      if (!message) {
+      if (!message.id) {
         throw new messageErrors.MessageNotFoundError();
       }
 
@@ -222,7 +248,9 @@ export const messageCrud = {
       message.mentions = data.mentions ?? message.mentions;
       message.changedAt = rightNow();
 
-      return repository.save(message);
+      await repository.save(message);
+
+      return message;
     }),
   delete: (id: string) =>
     executeCommand((client) => createMessageRepository(client).remove(id)),
@@ -250,19 +278,14 @@ export const messageQueries = {
 export const messageMutations = {
   createMessage: async (data: MessageCreate) => {
     const mentions = await determineMentions(data.content);
-    const message = await messageCrud.create({
+
+    return messageCrud.create({
       ...data,
       mentions,
     });
-
-    return messageCrud.create(message);
   },
   editMessage: async (messageId: string, userId: string, content: string) => {
     const message = await messageCrud.read(messageId);
-
-    if (!message) {
-      throw new messageErrors.MessageNotFoundError();
-    }
 
     if (userId !== message.userId) {
       throw new messageErrors.MessageForbiddenEditError();
@@ -281,10 +304,6 @@ export const messageMutations = {
   deleteMessage: async (messageId: string, userId: string) => {
     const message = await messageCrud.read(messageId);
 
-    if (!message) {
-      throw new messageErrors.MessageNotFoundError();
-    }
-
     if (userId !== message.userId) {
       throw new messageErrors.MessageForbiddenDeleteError();
     }
@@ -298,10 +317,6 @@ export const messageMutations = {
   ) => {
     const message = await messageCrud.read(messageId);
 
-    if (!message) {
-      throw new messageErrors.MessageNotFoundError();
-    }
-
     message.react(userId, reaction);
 
     return messageCrud.update(messageId, message);
@@ -312,11 +327,6 @@ export const messageMutations = {
     option: string
   ) => {
     const message = await messageCrud.read(messageId);
-
-    if (!message) {
-      throw new messageErrors.MessageNotFoundError();
-    }
-
     const voted = message.voteInPoll(userId, option);
 
     if (voted) {
