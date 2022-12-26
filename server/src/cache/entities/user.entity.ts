@@ -64,7 +64,7 @@ export const createUserRepository = (client: Client) =>
   client.fetchRepository(userSchema);
 
 export const createUserIndex = () =>
-  executeCommand(async (client) => createUserRepository(client).createIndex());
+  executeCommand((client) => createUserRepository(client).createIndex());
 
 export const userCrud = {
   create: async (data: UserCreate) =>
