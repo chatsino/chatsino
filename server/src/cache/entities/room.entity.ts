@@ -2,7 +2,7 @@ import { executeCommand } from "cache/object-mapper";
 import { rightNow } from "helpers";
 import { Client, Entity, Schema } from "redis-om";
 import { MessageEntity } from "./message";
-import { UserEntity } from "./user.entity";
+import { UserEntity, UserNotFoundError } from "./user";
 
 export type OwnerPermissionMarker = "O";
 export type CoOwnerPermissionMarker = "C";
@@ -361,7 +361,7 @@ export const roomMutations = {
     const user = await UserEntity.crud.read(ownerId);
 
     if (!user) {
-      throw new UserEntity.errors.UserNotFoundError();
+      throw new UserNotFoundError();
     }
 
     const existingRoomWithRoomTitle = await roomQueries.roomByRoomTitle(
@@ -381,7 +381,7 @@ export const roomMutations = {
     );
 
     if (!sendingUser || !receivingUser) {
-      throw new UserEntity.errors.UserNotFoundError();
+      throw new UserNotFoundError();
     }
 
     const roomId = serializeDirectMessageRoomId(userIdA, userIdB);
@@ -601,7 +601,7 @@ export const roomMutations = {
     );
 
     if (!sendingUser || !receivingUser) {
-      throw new UserEntity.errors.UserNotFoundError();
+      throw new UserNotFoundError();
     }
 
     let existingDirectMessageRoom = await roomQueries.roomById(

@@ -2,7 +2,7 @@ import * as config from "config";
 import { RouletteStatus } from "games";
 import { createLogger } from "logger";
 import { createClient } from "redis";
-import { UserEntity } from "../user.entity";
+import { UserEntity } from "../user";
 import {
   NO_MORE_BETS_DURATION,
   SPINNING_DURATION,

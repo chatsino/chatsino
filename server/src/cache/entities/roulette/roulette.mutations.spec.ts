@@ -8,7 +8,7 @@ import {
   Roulette,
   UserRouletteBet,
 } from ".";
-import { User, UserEntity } from "../user.entity";
+import { User, UserCannotAffordError, UserEntity } from "../user";
 
 const CHANCE = new Chance();
 
@@ -114,7 +114,7 @@ describe("Roulette Mutations", () => {
           which: 12,
         });
       } catch (error) {
-        expect(error).toBeInstanceOf(UserEntity.errors.UserCannotAffordError);
+        expect(error).toBeInstanceOf(UserCannotAffordError);
       }
     });
     it("should prevent a user from placing a bet when bets are closed", async () => {

@@ -1,6 +1,6 @@
 import { Chance } from "chance";
 import { initializeCache, REDIS } from "persistence";
-import { MessageEntity } from "./message.entity";
+import { MessageEntity } from "./message";
 import {
   Room,
   RoomCreate,
@@ -8,7 +8,7 @@ import {
   serializeDirectMessageRoomId,
   serializeRoomPermissions,
 } from "./room.entity";
-import { UserEntity, User } from "./user.entity";
+import { User, UserEntity, UserNotFoundError } from "./user";
 
 const CHANCE = new Chance();
 
@@ -234,7 +234,7 @@ describe(RoomEntity.name, () => {
         try {
           await RoomEntity.mutations.createDirectMessageRoom(userA.id, "FOO");
         } catch (error) {
-          expect(error).toBeInstanceOf(UserEntity.errors.UserNotFoundError);
+          expect(error).toBeInstanceOf(UserNotFoundError);
         }
 
         try {
@@ -243,7 +243,7 @@ describe(RoomEntity.name, () => {
             userB.id
           );
         } catch (error) {
-          expect(error).toBeInstanceOf(UserEntity.errors.UserNotFoundError);
+          expect(error).toBeInstanceOf(UserNotFoundError);
         }
       });
       it("should prevent creating a private room between the two users already exists", async () => {
@@ -595,7 +595,7 @@ describe(RoomEntity.name, () => {
             CHANCE.sentence()
           );
         } catch (error) {
-          expect(error).toBeInstanceOf(UserEntity.errors.UserNotFoundError);
+          expect(error).toBeInstanceOf(UserNotFoundError);
         }
 
         try {
@@ -605,7 +605,7 @@ describe(RoomEntity.name, () => {
             CHANCE.sentence()
           );
         } catch (error) {
-          expect(error).toBeInstanceOf(UserEntity.errors.UserNotFoundError);
+          expect(error).toBeInstanceOf(UserNotFoundError);
         }
       });
     });
