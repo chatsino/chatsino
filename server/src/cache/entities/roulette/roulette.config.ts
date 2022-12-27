@@ -39,10 +39,18 @@ export const PAYOUT_MULTIPLIERS: Record<RouletteBetKind, number> = {
   "high-low": 1,
 };
 
-export const TAKING_BETS_DURATION = 60 * 15; // 15 minutes
+// export const TAKING_BETS_DURATION = 60 * 15; // 15 minutes
 
-export const NO_MORE_BETS_DURATION = 8; // 8 seconds
+// export const NO_MORE_BETS_DURATION = 8; // 8 seconds
 
-export const SPINNING_DURATION = 5; // 5 seconds
+// export const SPINNING_DURATION = 5; // 5 seconds
 
-export const TIME_BETWEEN_GAMES = 10; // 10 seconds
+// export const TIME_BETWEEN_GAMES = 10; // 10 seconds
+
+export const TAKING_BETS_DURATION = 2; // 15 minutes
+
+export const NO_MORE_BETS_DURATION = 2; // 8 seconds
+
+export const SPINNING_DURATION = 2; // 5 seconds
+
+export const TIME_BETWEEN_GAMES = 2; // 10 seconds

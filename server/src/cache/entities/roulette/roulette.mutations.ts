@@ -1,4 +1,5 @@
 import * as config from "config";
+import { createLogger } from "logger";
 import { createClient } from "redis";
 import { UserEntity } from "../user.entity";
 import {
@@ -16,11 +17,17 @@ import {
   UserRouletteBet,
 } from "./roulette.types";
 
+const ROULETTE_MUTATIONS_LOGGER = createLogger("Roulette Mutations");
+
 export const rouletteMutations = {
   startGame: async () => {
+    ROULETTE_MUTATIONS_LOGGER.info("Starting Roulette.");
+
     let game = await rouletteQueries.activeGame();
 
     if (!game) {
+      ROULETTE_MUTATIONS_LOGGER.info("No game in progress -- starting one.");
+
       game = await rouletteCrud.create();
     }
 
@@ -33,7 +40,6 @@ export const rouletteMutations = {
     await subscriber.connect();
     await client.configSet("notify-keyspace-events", "Ex");
 
-    const fromNow = (seconds: number) => new Date().getTime() + seconds;
     const waitForExpiration = async (
       expiredKey: string,
       expiresAt: number,
@@ -60,11 +66,13 @@ export const rouletteMutations = {
     while (activeGame.status !== "finished") {
       switch (activeGame.status) {
         case "taking-bets": {
+          ROULETTE_MUTATIONS_LOGGER.info("Taking bets.");
+
           const key = `${activeGame.id}@taking-bets`;
 
           await waitForExpiration(
             key,
-            fromNow(TAKING_BETS_DURATION),
+            TAKING_BETS_DURATION,
             !Boolean(await client.get(key))
           );
 
@@ -74,11 +82,13 @@ export const rouletteMutations = {
           continue;
         }
         case "no-more-bets": {
+          ROULETTE_MUTATIONS_LOGGER.info("No more bets.");
+
           const key = `${activeGame.id}@no-more-bets`;
 
           await waitForExpiration(
             key,
-            fromNow(NO_MORE_BETS_DURATION),
+            NO_MORE_BETS_DURATION,
             !Boolean(await client.get(key))
           );
 
@@ -88,11 +98,13 @@ export const rouletteMutations = {
           continue;
         }
         case "spinning": {
+          ROULETTE_MUTATIONS_LOGGER.info("Spinning...");
+
           const key = `${activeGame.id}@spinning`;
 
           await waitForExpiration(
             key,
-            fromNow(SPINNING_DURATION),
+            SPINNING_DURATION,
             !Boolean(await client.get(key))
           );
 
@@ -102,12 +114,22 @@ export const rouletteMutations = {
           continue;
         }
         case "waiting": {
+          ROULETTE_MUTATIONS_LOGGER.info(
+            { outcome: activeGame.outcome },
+            "Spin completed."
+          );
+
           const key = `${game.id}@waiting`;
 
           await waitForExpiration(
             key,
-            fromNow(TIME_BETWEEN_GAMES),
+            TIME_BETWEEN_GAMES,
             !Boolean(await client.get(key))
+          );
+
+          ROULETTE_MUTATIONS_LOGGER.info(
+            { outcome: activeGame.outcome },
+            "Paying out."
           );
 
           await rouletteMutations.payout();
@@ -119,6 +141,11 @@ export const rouletteMutations = {
         }
       }
     }
+
+    ROULETTE_MUTATIONS_LOGGER.info(
+      { outcome: activeGame.outcome },
+      "Game complete."
+    );
 
     return activeGame;
   },
