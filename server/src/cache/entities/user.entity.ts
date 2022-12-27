@@ -95,8 +95,12 @@ export const userCrud = {
     executeCommand(async (client) => {
       const user = await createUserRepository(client).fetch(id);
 
-      return user.id ? user : null;
-    }) as Promise<null | User>,
+      if (!user.id) {
+        throw new userErrors.UserNotFoundError();
+      }
+
+      return user;
+    }) as Promise<User>,
   update: (id: string, data: Partial<User>) =>
     executeCommand(async (client) => {
       const repository = createUserRepository(client);
@@ -160,11 +164,7 @@ export const userMutations = {
     return userCrud.create(data);
   },
   updateUser: async (id: string, data: Partial<User>) => {
-    const user = await userCrud.read(id);
-
-    if (!user) {
-      throw new userErrors.UserNotFoundError();
-    }
+    await userCrud.read(id);
 
     if (data.username) {
       const existingUserWithUsername = await userQueries.userByUsername(
@@ -178,9 +178,35 @@ export const userMutations = {
 
     return userCrud.update(id, data);
   },
+  chargeUser: async (userId: string, amount: number) => {
+    const user = await userCrud.read(userId);
+
+    if (user.chips < amount) {
+      throw new userErrors.UserCannotAffordError();
+    }
+
+    user.chips -= amount;
+
+    return userCrud.update(user.id, user);
+  },
+  payUser: async (userId: string, amount: number) => {
+    if (amount < 1) {
+      return;
+    }
+
+    const user = await userCrud.read(userId);
+
+    user.chips += amount;
+
+    return userCrud.update(user.id, user);
+  },
 };
 
 export const userErrors = {
+  UserCannotAffordError: class extends Error {
+    statusCode = 403;
+    message = "That user cannot afford that.";
+  },
   UserNotFoundError: class extends Error {
     statusCode = 404;
     message = "That user does not exist.";

@@ -9,9 +9,10 @@ export const rouletteCrud = {
       const repository = createRouletteRepository(client);
       const roulette = repository.createEntity({
         startedAt: rightNow(),
-        status: "waiting",
+        status: "taking-bets",
         bets: [],
         results: [],
+        participants: [],
         outcome: -1,
       });
 
@@ -46,6 +47,7 @@ export const rouletteCrud = {
       roulette.status = data.status ?? roulette.status;
       roulette.bets = data.bets ?? roulette.bets;
       roulette.results = data.results ?? roulette.results;
+      roulette.participants = data.participants ?? roulette.participants;
       roulette.outcome = data.outcome ?? roulette.outcome;
 
       await repository.save(roulette);

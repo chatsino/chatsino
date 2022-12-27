@@ -44,3 +44,5 @@ export const TAKING_BETS_DURATION = 60 * 15; // 15 minutes
 export const NO_MORE_BETS_DURATION = 8; // 8 seconds
 
 export const SPINNING_DURATION = 5; // 5 seconds
+
+export const TIME_BETWEEN_GAMES = 10; // 10 seconds

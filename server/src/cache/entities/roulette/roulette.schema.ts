@@ -13,9 +13,11 @@ import {
   RouletteBet,
   RouletteBetKind,
   RouletteBetWhich,
+  RouletteCannotFinishError,
   RouletteCannotPlaceBetError,
   RouletteCannotSpinError,
-  RouletteCannotStopSpiningError,
+  RouletteCannotStopSpininngError,
+  RouletteCannotStopTakingBetsError,
   RouletteColumnBet,
   RouletteDozenBet,
   RouletteEvenOddBet,
@@ -63,17 +65,16 @@ export class Roulette extends Entity {
   }
 
   public static serializeDeterminedBet(bet: DeterminedUserRouletteBet) {
-    const { kind, which, userId, wager, reward, paid } = bet;
-    return [userId, wager, kind, which, reward, paid].join("/");
+    const { kind, which, userId, wager, reward } = bet;
+    return [userId, wager, kind, which, reward].join("/");
   }
 
   public static deserializeDeterminedBet(betString: string) {
-    const [userId, wager, kind, which, reward, paid] = betString.split("/") as [
+    const [userId, wager, kind, which, reward] = betString.split("/") as [
       string,
       string,
       RouletteBetKind,
       RouletteBetWhich,
-      string,
       string
     ];
 
@@ -83,7 +84,6 @@ export class Roulette extends Entity {
       userId,
       wager: parseInt(wager),
       reward: parseInt(reward),
-      paid: paid === "true",
     } as DeterminedUserRouletteBet;
   }
 
@@ -131,6 +131,17 @@ export class Roulette extends Entity {
     }, {} as Record<string, DeterminedUserRouletteBet[]>);
   }
 
+  public getAmountOwedTo(userId: string) {
+    const results = this.resultsLookup[userId] ?? [];
+
+    return results.reduce((prev, next) => {
+      const { wager, reward } = next;
+      const amount = reward === 0 ? 0 : wager + reward;
+
+      return prev + amount;
+    }, 0);
+  }
+
   public takeBet(bet: UserRouletteBet) {
     if (this.status !== "taking-bets") {
       throw new RouletteCannotPlaceBetError();
@@ -143,6 +154,15 @@ export class Roulette extends Entity {
     this.bets.push(Roulette.serializeBet(bet));
   }
 
+  public stopTakingBets() {
+    if (this.status !== "taking-bets") {
+      throw new RouletteCannotStopTakingBetsError();
+    }
+
+    this.status = "no-more-bets";
+    this.determineResults();
+  }
+
   public spin() {
     if (this.status !== "no-more-bets") {
       throw new RouletteCannotSpinError();
@@ -153,11 +173,19 @@ export class Roulette extends Entity {
 
   public stopSpinning() {
     if (this.status !== "spinning") {
-      throw new RouletteCannotStopSpiningError();
+      throw new RouletteCannotStopSpininngError();
     }
 
     this.status = "waiting";
     this.determineResults();
+  }
+
+  public finish() {
+    if (this.status !== "waiting") {
+      throw new RouletteCannotFinishError();
+    }
+
+    this.status = "finished";
   }
 
   private determineResults() {
@@ -179,7 +207,6 @@ export class Roulette extends Entity {
         const won = handler(bet);
         const result: DeterminedUserRouletteBet = {
           ...bet,
-          paid: false,
           reward: won ? bet.wager * PAYOUT_MULTIPLIERS[bet.kind] : 0,
         };
 

@@ -81,7 +81,6 @@ export type UserRouletteBet = RouletteBet & {
 
 export type DeterminedUserRouletteBet = UserRouletteBet & {
   reward: number;
-  paid: boolean;
 };
 
 export class RouletteNoGameInProgressError extends Error {
@@ -104,9 +103,19 @@ export class RouletteCannotSpinError extends Error {
   message = "This game is not ready to spin.";
 }
 
-export class RouletteCannotStopSpiningError extends Error {
+export class RouletteCannotStopSpininngError extends Error {
   statusCode = 403;
   message = "This game is not spinning.";
+}
+
+export class RouletteCannotStopTakingBetsError extends Error {
+  statusCode = 403;
+  message = "This game is not taking bets.";
+}
+
+export class RouletteCannotFinishError extends Error {
+  statusCode = 403;
+  message = "This game is not ready to finish.";
 }
 
 export class RouletteNotFoundError extends Error {
