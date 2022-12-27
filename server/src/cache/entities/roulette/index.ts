@@ -4,6 +4,7 @@ import { rouletteQueries } from "./roulette.queries";
 import { rouletteMutations } from "./roulette.mutations";
 
 export * from "./roulette.config";
+export * from "./roulette.schema";
 export * from "./roulette.types";
 
 export class RouletteEntity {

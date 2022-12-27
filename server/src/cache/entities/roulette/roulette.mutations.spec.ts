@@ -1,15 +1,14 @@
 import { Chance } from "chance";
 import { initializeCache, REDIS } from "persistence";
-import { createRouletteIndex, Roulette } from "./roulette.schema";
-import { rouletteMutations } from "./roulette.mutations";
-import { User, UserEntity } from "../user.entity";
 import {
+  RouletteEntity,
   RouletteCannotFinishError,
   RouletteCannotPlaceBetError,
   RouletteNoGameInProgressError,
+  Roulette,
   UserRouletteBet,
-} from "./roulette.types";
-import { rouletteCrud } from "./roulette.crud";
+} from ".";
+import { User, UserEntity } from "../user.entity";
 
 const CHANCE = new Chance();
 
@@ -22,7 +21,7 @@ describe("Roulette Mutations", () => {
 
     await initializeCache();
     await REDIS.flushAll();
-    await Promise.all([UserEntity.createIndex(), createRouletteIndex()]);
+    await Promise.all([UserEntity.createIndex(), RouletteEntity.createIndex()]);
 
     userA = await UserEntity.mutations.createUser({
       avatar: CHANCE.avatar(),
@@ -35,9 +34,9 @@ describe("Roulette Mutations", () => {
 
     await UserEntity.mutations.payUser(userA.id, 20000);
   });
-  describe(rouletteMutations.startGame.name, () => {
+  describe(RouletteEntity.mutations.startGame.name, () => {
     it("should start a new roulette game and run through to completion", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
 
       let activeGame: Roulette;
 
@@ -67,19 +66,19 @@ describe("Roulette Mutations", () => {
       expect(finalGame.status).toBe("finished");
     });
     it("should load a previous game and continue where it left off", async () => {
-      const beforeGameHandler = rouletteMutations.startGame();
+      const beforeGameHandler = RouletteEntity.mutations.startGame();
       await beforeGameHandler.next(); // Taking bets
       await beforeGameHandler.next(); // No more bets
 
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       let activeGame = (await gameHandler.next()).value;
 
       expect(activeGame.status).toBe("no-more-bets");
     });
   });
-  describe(rouletteMutations.takeBet.name, () => {
+  describe(RouletteEntity.mutations.takeBet.name, () => {
     it("should allow a user to place a bet when bets are open", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       let activeGame = (await gameHandler.next()).value;
 
       expect(activeGame.bets).toHaveLength(0);
@@ -92,7 +91,7 @@ describe("Roulette Mutations", () => {
         which: 12,
       };
 
-      await rouletteMutations.takeBet(bet);
+      await RouletteEntity.mutations.takeBet(bet);
 
       activeGame = (await gameHandler.next()).value;
 
@@ -102,13 +101,13 @@ describe("Roulette Mutations", () => {
       expect(activeGame.participants).toContain(userA.id);
     });
     it("should prevent a user from placing a bet when they cannot afford to do so", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next();
 
       expect.hasAssertions();
 
       try {
-        await rouletteMutations.takeBet({
+        await RouletteEntity.mutations.takeBet({
           userId: userB.id,
           wager: 100,
           kind: "straight-up",
@@ -119,14 +118,14 @@ describe("Roulette Mutations", () => {
       }
     });
     it("should prevent a user from placing a bet when bets are closed", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
       await gameHandler.next(); // No more bets
 
       expect.hasAssertions();
 
       try {
-        await rouletteMutations.takeBet({
+        await RouletteEntity.mutations.takeBet({
           userId: userA.id,
           wager: 100,
           kind: "straight-up",
@@ -140,7 +139,7 @@ describe("Roulette Mutations", () => {
       expect.hasAssertions();
 
       try {
-        await rouletteMutations.takeBet({
+        await RouletteEntity.mutations.takeBet({
           userId: userA.id,
           wager: 100,
           kind: "straight-up",
@@ -151,9 +150,9 @@ describe("Roulette Mutations", () => {
       }
     });
   });
-  describe(rouletteMutations.payout.name, () => {
+  describe(RouletteEntity.mutations.payout.name, () => {
     it("should provide chips to users who win a straight-up bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -161,7 +160,7 @@ describe("Roulette Mutations", () => {
       const reward = wager * 35;
       const afterPayout = initialChips + reward;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "straight-up",
@@ -172,10 +171,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 12;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -183,7 +182,7 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should provide chips to users who win a line bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -191,7 +190,7 @@ describe("Roulette Mutations", () => {
       const reward = wager * 5;
       const afterPayout = initialChips + reward;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "line",
@@ -202,10 +201,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 29;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -213,7 +212,7 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should provide chips to users who win a column bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -221,7 +220,7 @@ describe("Roulette Mutations", () => {
       const reward = wager * 2;
       const afterPayout = initialChips + reward;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "column",
@@ -232,10 +231,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 11;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -243,7 +242,7 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should provide chips to users who win a dozen bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -251,7 +250,7 @@ describe("Roulette Mutations", () => {
       const reward = wager * 2;
       const afterPayout = initialChips + reward;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "dozen",
@@ -262,10 +261,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 4;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -273,7 +272,7 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should provide chips to users who win an even/odd bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -281,7 +280,7 @@ describe("Roulette Mutations", () => {
       const reward = wager;
       const afterPayout = initialChips + reward;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "even-odd",
@@ -292,10 +291,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 22;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -303,7 +302,7 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should provide chips to users who win a red/black bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -311,7 +310,7 @@ describe("Roulette Mutations", () => {
       const reward = wager;
       const afterPayout = initialChips + reward;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "red-black",
@@ -322,10 +321,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 19;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -333,7 +332,7 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should provide chips to users who win a high/low bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -341,7 +340,7 @@ describe("Roulette Mutations", () => {
       const reward = wager;
       const afterPayout = initialChips + reward;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "high-low",
@@ -352,10 +351,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 30;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -363,7 +362,7 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should provide chips to users who win two or more bets at once", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
@@ -373,13 +372,13 @@ describe("Roulette Mutations", () => {
       const rewardB = wagerB;
       const afterPayout = initialChips + rewardA + rewardB;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager: wagerA,
         kind: "straight-up",
         which: 12,
       });
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager: wagerB,
         kind: "high-low",
@@ -390,10 +389,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 12;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -401,14 +400,14 @@ describe("Roulette Mutations", () => {
       expect(user.chips).toBe(afterPayout);
     });
     it("should not provide chips to users who lose a bet", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       const initialChips = 20000;
       const wager = 100;
       const afterPayout = initialChips - wager;
 
-      await rouletteMutations.takeBet({
+      await RouletteEntity.mutations.takeBet({
         userId: userA.id,
         wager,
         kind: "straight-up",
@@ -419,10 +418,10 @@ describe("Roulette Mutations", () => {
       let activeGame = (await gameHandler.next()).value; // Spinning
 
       activeGame.outcome = 14;
-      await rouletteCrud.update(activeGame.id, activeGame);
+      await RouletteEntity.crud.update(activeGame.id, activeGame);
 
       activeGame = (await gameHandler.next()).value; // Waiting
-      await rouletteMutations.payout();
+      await RouletteEntity.mutations.payout();
 
       const user = await UserEntity.crud.read(userA.id);
 
@@ -433,19 +432,19 @@ describe("Roulette Mutations", () => {
       expect.hasAssertions();
 
       try {
-        await rouletteMutations.payout();
+        await RouletteEntity.mutations.payout();
       } catch (error) {
         expect(error).toBeInstanceOf(RouletteNoGameInProgressError);
       }
     });
     it("should prevent paying out when the game is not waiting", async () => {
-      const gameHandler = rouletteMutations.startGame();
+      const gameHandler = RouletteEntity.mutations.startGame();
       await gameHandler.next(); // Taking bets
 
       expect.hasAssertions();
 
       try {
-        await rouletteMutations.payout();
+        await RouletteEntity.mutations.payout();
       } catch (error) {
         expect(error).toBeInstanceOf(RouletteCannotFinishError);
       }

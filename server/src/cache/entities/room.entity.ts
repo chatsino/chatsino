@@ -1,7 +1,7 @@
 import { executeCommand } from "cache/object-mapper";
 import { rightNow } from "helpers";
 import { Client, Entity, Schema } from "redis-om";
-import { MessageEntity } from "./message.entity";
+import { MessageEntity } from "./message";
 import { UserEntity } from "./user.entity";
 
 export type OwnerPermissionMarker = "O";
