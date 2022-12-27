@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { executeCommand } from "cache/object-mapper";
 import { rightNow } from "helpers";
 import { createRouletteRepository, Roulette } from "./roulette.schema";

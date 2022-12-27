@@ -13,11 +13,6 @@ import {
   RouletteBet,
   RouletteBetKind,
   RouletteBetWhich,
-  RouletteCannotFinishError,
-  RouletteCannotPlaceBetError,
-  RouletteCannotSpinError,
-  RouletteCannotStopSpininngError,
-  RouletteCannotStopTakingBetsError,
   RouletteColumnBet,
   RouletteDozenBet,
   RouletteEvenOddBet,
@@ -55,10 +50,16 @@ export class Roulette extends Entity {
       RouletteBetKind,
       RouletteBetWhich
     ];
+    const shouldParse: RouletteBetKind[] = [
+      "straight-up",
+      "column",
+      "line",
+      "dozen",
+    ];
 
     return {
       kind,
-      which,
+      which: shouldParse.includes(kind) ? parseInt(which as string) : which,
       userId,
       wager: parseInt(wager),
     } as UserRouletteBet;
@@ -132,7 +133,7 @@ export class Roulette extends Entity {
   }
 
   public getAmountOwedTo(userId: string) {
-    const results = this.resultsLookup[userId] ?? [];
+    const results = this.resultsLookup[userId];
 
     return results.reduce((prev, next) => {
       const { wager, reward } = next;
@@ -143,10 +144,6 @@ export class Roulette extends Entity {
   }
 
   public takeBet(bet: UserRouletteBet) {
-    if (this.status !== "taking-bets") {
-      throw new RouletteCannotPlaceBetError();
-    }
-
     if (!this.participants.includes(bet.userId)) {
       this.participants.push(bet.userId);
     }
@@ -155,42 +152,25 @@ export class Roulette extends Entity {
   }
 
   public stopTakingBets() {
-    if (this.status !== "taking-bets") {
-      throw new RouletteCannotStopTakingBetsError();
-    }
-
     this.status = "no-more-bets";
     this.determineResults();
   }
 
   public spin() {
-    if (this.status !== "no-more-bets") {
-      throw new RouletteCannotSpinError();
-    }
-
     this.status = "spinning";
+    this.outcome = randomInteger(0, 37); // 37 === 00
   }
 
   public stopSpinning() {
-    if (this.status !== "spinning") {
-      throw new RouletteCannotStopSpininngError();
-    }
-
     this.status = "waiting";
     this.determineResults();
   }
 
   public finish() {
-    if (this.status !== "waiting") {
-      throw new RouletteCannotFinishError();
-    }
-
     this.status = "finished";
   }
 
   private determineResults() {
-    this.outcome = randomInteger(0, 37); // 37 === 00
-
     const checkers: Record<RouletteBetKind, (bet: RouletteBet) => boolean> = {
       "straight-up": this.checkStraightUpBet,
       line: this.checkLineBet,
@@ -203,7 +183,7 @@ export class Roulette extends Entity {
 
     this.results = Object.values(this.betLookup).reduce((prev, next) => {
       for (const bet of next) {
-        const handler = checkers[bet.kind];
+        const handler = checkers[bet.kind].bind(this);
         const won = handler(bet);
         const result: DeterminedUserRouletteBet = {
           ...bet,

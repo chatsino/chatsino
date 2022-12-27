@@ -1,8 +1,8 @@
 export type RouletteStatus =
-  | "waiting"
   | "taking-bets"
   | "no-more-bets"
   | "spinning"
+  | "waiting"
   | "finished";
 
 export type RouletteBetKind =
@@ -88,29 +88,9 @@ export class RouletteNoGameInProgressError extends Error {
   message = "There is no game in progress.";
 }
 
-export class RouletteGameInProgressError extends Error {
-  statusCode = 403;
-  message = "There is a game in progress.";
-}
-
 export class RouletteCannotPlaceBetError extends Error {
   statusCode = 403;
   message = "Betting is closed for this game.";
-}
-
-export class RouletteCannotSpinError extends Error {
-  statusCode = 403;
-  message = "This game is not ready to spin.";
-}
-
-export class RouletteCannotStopSpininngError extends Error {
-  statusCode = 403;
-  message = "This game is not spinning.";
-}
-
-export class RouletteCannotStopTakingBetsError extends Error {
-  statusCode = 403;
-  message = "This game is not taking bets.";
 }
 
 export class RouletteCannotFinishError extends Error {
@@ -118,7 +98,8 @@ export class RouletteCannotFinishError extends Error {
   message = "This game is not ready to finish.";
 }
 
+/* istanbul ignore next */
 export class RouletteNotFoundError extends Error {
   statusCode = 404;
-  message = "That roulette game was not found.";
+  message = "That game of roulette does not exist.";
 }

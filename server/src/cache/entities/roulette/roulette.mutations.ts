@@ -1,4 +1,5 @@
 import * as config from "config";
+import { RouletteStatus } from "games";
 import { createLogger } from "logger";
 import { createClient } from "redis";
 import { UserEntity } from "../user.entity";
@@ -6,140 +7,81 @@ import {
   NO_MORE_BETS_DURATION,
   SPINNING_DURATION,
   TAKING_BETS_DURATION,
-  TIME_BETWEEN_GAMES,
+  TIME_BETWEEN_GAMES_DURATION,
 } from "./roulette.config";
 import { rouletteCrud } from "./roulette.crud";
 import { rouletteQueries } from "./roulette.queries";
 import { Roulette } from "./roulette.schema";
 import {
   RouletteCannotFinishError,
+  RouletteCannotPlaceBetError,
   RouletteNoGameInProgressError,
   UserRouletteBet,
 } from "./roulette.types";
 
-const ROULETTE_MUTATIONS_LOGGER = createLogger("Roulette Mutations");
+export const ROULETTE_MUTATIONS_LOGGER = createLogger("Roulette Mutations");
+
+export const ROULETTE_STAGES: Array<{ key: RouletteStatus; duration: number }> =
+  [
+    {
+      key: "taking-bets",
+      duration: TAKING_BETS_DURATION,
+    },
+    {
+      key: "no-more-bets",
+      duration: NO_MORE_BETS_DURATION,
+    },
+    {
+      key: "spinning",
+      duration: SPINNING_DURATION,
+    },
+    {
+      key: "waiting",
+      duration: TIME_BETWEEN_GAMES_DURATION,
+    },
+  ];
 
 export const rouletteMutations = {
-  startGame: async () => {
+  handleGame: /* istanbul ignore next */ async () => {
     ROULETTE_MUTATIONS_LOGGER.info("Starting Roulette.");
 
-    let game = await rouletteQueries.activeGame();
+    const gameHandler = rouletteMutations.startGame();
+    let activeGame = (await gameHandler.next()).value;
+    const currentStageIndex = ROULETTE_STAGES.findIndex(
+      (each) => each.key === activeGame.status
+    );
+    const remainingStages = ROULETTE_STAGES.slice(currentStageIndex);
 
-    if (!game) {
-      ROULETTE_MUTATIONS_LOGGER.info("No game in progress -- starting one.");
+    ROULETTE_MUTATIONS_LOGGER.info(
+      { outcome: activeGame.outcome },
+      remainingStages.length === ROULETTE_STAGES.length
+        ? "No game in progress -- starting one."
+        : "Continuing previous game."
+    );
 
-      game = await rouletteCrud.create();
-    }
-
-    let activeGame = game as Roulette;
-    const updateGame = () => rouletteCrud.update(activeGame.id, activeGame);
-    const client = createClient({ url: config.REDIS_CONNECTION_STRING });
-    const subscriber = client.duplicate();
-
-    await client.connect();
-    await subscriber.connect();
-    await client.configSet("notify-keyspace-events", "Ex");
-
-    const waitForExpiration = async (
-      expiredKey: string,
-      expiresAt: number,
-      shouldSet: boolean
-    ) => {
-      if (shouldSet) {
-        await client.set(expiredKey, "true", {
-          EXAT: expiresAt,
-        });
-      }
-
-      return new Promise<void>((resolve) => {
-        const handleExpiration = (key: string) => {
-          if (key === expiredKey) {
-            subscriber.unsubscribe("__keyevent@0__:expired", handleExpiration);
-            resolve();
-          }
-        };
-
-        subscriber.subscribe("__keyevent@0__:expired", handleExpiration);
-      });
-    };
-
-    while (activeGame.status !== "finished") {
-      switch (activeGame.status) {
-        case "taking-bets": {
-          ROULETTE_MUTATIONS_LOGGER.info("Taking bets.");
-
-          const key = `${activeGame.id}@taking-bets`;
-
-          await waitForExpiration(
-            key,
-            TAKING_BETS_DURATION,
-            !Boolean(await client.get(key))
-          );
-
-          activeGame.stopTakingBets();
-          activeGame = await updateGame();
-
-          continue;
-        }
-        case "no-more-bets": {
-          ROULETTE_MUTATIONS_LOGGER.info("No more bets.");
-
-          const key = `${activeGame.id}@no-more-bets`;
-
-          await waitForExpiration(
-            key,
-            NO_MORE_BETS_DURATION,
-            !Boolean(await client.get(key))
-          );
-
-          activeGame.spin();
-          activeGame = await updateGame();
-
-          continue;
-        }
-        case "spinning": {
-          ROULETTE_MUTATIONS_LOGGER.info("Spinning...");
-
-          const key = `${activeGame.id}@spinning`;
-
-          await waitForExpiration(
-            key,
-            SPINNING_DURATION,
-            !Boolean(await client.get(key))
-          );
-
-          activeGame.stopSpinning();
-          activeGame = await updateGame();
-
-          continue;
-        }
-        case "waiting": {
+    for (const { key, duration } of remainingStages) {
+      const log: Record<RouletteStatus, () => void> = {
+        "taking-bets": () => ROULETTE_MUTATIONS_LOGGER.info("Taking bets."),
+        "no-more-bets": () => ROULETTE_MUTATIONS_LOGGER.info("No more bets."),
+        spinning: () => ROULETTE_MUTATIONS_LOGGER.info("Spinning."),
+        waiting: () =>
           ROULETTE_MUTATIONS_LOGGER.info(
             { outcome: activeGame.outcome },
             "Spin completed."
-          );
-
-          const key = `${game.id}@waiting`;
-
-          await waitForExpiration(
-            key,
-            TIME_BETWEEN_GAMES,
-            !Boolean(await client.get(key))
-          );
-
+          ),
+        finished: () =>
           ROULETTE_MUTATIONS_LOGGER.info(
             { outcome: activeGame.outcome },
             "Paying out."
-          );
+          ),
+      };
+      log[key]();
 
-          await rouletteMutations.payout();
+      const fullKey = `${activeGame.id}@${key}`;
 
-          activeGame.finish();
-          activeGame = await updateGame();
+      await waitForExpiration(fullKey, duration);
 
-          continue;
-        }
-      }
+      activeGame = (await gameHandler.next()).value;
     }
 
     ROULETTE_MUTATIONS_LOGGER.info(
@@ -149,11 +91,71 @@ export const rouletteMutations = {
 
     return activeGame;
   },
+  startGame: async function* () {
+    let game = await rouletteQueries.activeGame();
+
+    if (!game) {
+      game = await rouletteCrud.create();
+    }
+
+    let activeGame = game as Roulette;
+    const refetchGame = () => rouletteCrud.read(activeGame.id);
+    const updateGame = () => rouletteCrud.update(activeGame.id, activeGame);
+
+    yield activeGame;
+
+    while (activeGame.status !== "finished") {
+      activeGame = await refetchGame();
+
+      switch (activeGame.status) {
+        case "taking-bets": {
+          activeGame.stopTakingBets();
+          activeGame = await updateGame();
+
+          yield activeGame;
+
+          continue;
+        }
+        case "no-more-bets": {
+          activeGame.spin();
+          activeGame = await updateGame();
+
+          yield activeGame;
+
+          continue;
+        }
+        case "spinning": {
+          activeGame.stopSpinning();
+          activeGame = await updateGame();
+
+          yield activeGame;
+
+          continue;
+        }
+        case "waiting": {
+          await rouletteMutations.payout();
+
+          activeGame.finish();
+          activeGame = await updateGame();
+
+          yield activeGame;
+
+          continue;
+        }
+      }
+    }
+
+    return activeGame;
+  },
   takeBet: async (bet: UserRouletteBet) => {
     const game = await rouletteQueries.activeGame();
 
     if (!game) {
       throw new RouletteNoGameInProgressError();
+    }
+
+    if (game.status !== "taking-bets") {
+      throw new RouletteCannotPlaceBetError();
     }
 
     await UserEntity.mutations.chargeUser(bet.userId, bet.wager);
@@ -184,3 +186,32 @@ export const rouletteMutations = {
     );
   },
 };
+
+/* istanbul ignore next */
+async function waitForExpiration(expiredKey: string, expiresAt: number) {
+  const client = createClient({ url: config.REDIS_CONNECTION_STRING });
+  const subscriber = client.duplicate();
+
+  await client.connect();
+  await client.configSet("notify-keyspace-events", "Ex");
+  await subscriber.connect();
+
+  const shouldSet = await client.get(expiredKey);
+
+  if (shouldSet) {
+    await client.set(expiredKey, "true", {
+      EXAT: expiresAt,
+    });
+  }
+
+  return new Promise<void>((resolve) => {
+    const handleExpiration = (key: string) => {
+      if (key === expiredKey) {
+        subscriber.unsubscribe("__keyevent@0__:expired", handleExpiration);
+        resolve();
+      }
+    };
+
+    subscriber.subscribe("__keyevent@0__:expired", handleExpiration);
+  });
+}
