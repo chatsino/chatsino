@@ -28,6 +28,10 @@ export const REDIS_CONNECTION_STRING =
   process.env.REDIS_CONNECTION_STRING ?? "";
 
 // Caching
+export const MODELS_CONNECTION_STRING = "ws://localhost:4001";
+export const MODELS_RECONNECT_ATTEMPT_RATES_MS = [
+  1000, 1000, 2000, 3000, 5000, 8000, 13000, 21000, 34000,
+];
 export const TOKEN_CACHE_KEY = "jwt_label:Tokens/Access";
 export const TICKET_CACHE_KEY = "Ticket";
 export const TICKET_CACHE_TTL_SECONDS = 10;

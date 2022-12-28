@@ -3,6 +3,7 @@ import * as config from "config";
 import cookieParser from "cookie-parser";
 import express, { Express, Router } from "express";
 import fileUpload from "express-fileupload";
+import { sleep } from "helpers";
 import { createServer } from "http";
 import { createLogger } from "logger";
 import * as managers from "managers";
@@ -14,6 +15,7 @@ import {
 } from "persistence";
 import * as routes from "routes";
 import { SocketServer } from "socket-server";
+import { WebSocket } from "ws";
 
 const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
@@ -56,6 +58,9 @@ export async function startServer() {
     handleUncaughtExceptionsAndRejections();
   }
 
+  SERVER_LOGGER.info("Initializing socket connection to chatsino-models.");
+  initializeModelSocket();
+
   server.listen(config.PORT, () =>
     SERVER_LOGGER.info(`Server listening on port ${config.PORT}.`)
   );
@@ -87,6 +92,60 @@ function applyRoutes(app: Express) {
 function initializeFeatureManagers() {
   managers.initializeBlackjackManager();
   managers.initializeChatroomManager();
+}
+
+function initializeModelSocket() {
+  let fibonacciRolloffIndex = 0;
+
+  const initialize = () => {
+    let modelSocket = new WebSocket(config.MODELS_CONNECTION_STRING);
+
+    modelSocket.on("open", () => {
+      SERVER_LOGGER.info("Socket connection to chatsino-models established.");
+
+      fibonacciRolloffIndex = 0;
+    });
+    modelSocket.on("close", async () => {
+      SERVER_LOGGER.info("Socket connection to chatsino-models terminated.");
+
+      const duration =
+        config.MODELS_RECONNECT_ATTEMPT_RATES_MS[fibonacciRolloffIndex++] ??
+        config.MODELS_RECONNECT_ATTEMPT_RATES_MS[
+          config.MODELS_RECONNECT_ATTEMPT_RATES_MS.length - 1
+        ];
+
+      await sleep(duration);
+
+      SERVER_LOGGER.info(
+        { attempt: fibonacciRolloffIndex },
+        "Attempting to reconnect to chatsino-models."
+      );
+
+      initialize();
+    });
+    modelSocket.on("error", () => {
+      SERVER_LOGGER.error(
+        "Socket connection to chatsino-models experienced an error."
+      );
+    });
+    modelSocket.on("message", (event) => {
+      try {
+        const message = JSON.parse(event.toString()) as { kind: string };
+
+        SERVER_LOGGER.info(
+          { message },
+          "Received a socket message from chatsino-models."
+        );
+      } catch (error) {
+        SERVER_LOGGER.error(
+          { error },
+          "Socket connection to chatsino-models experienced an error."
+        );
+      }
+    });
+  };
+
+  initialize();
 }
 
 function handleUncaughtExceptionsAndRejections() {
