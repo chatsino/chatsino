@@ -1,19 +1,19 @@
 import path from "path";
 
 // App
-export const VERSION = process.env.VERSION;
-export const PORT = process.env.PORT;
+export const VERSION = process.env.VERSION as string;
+export const PORT = process.env.PORT as string;
 
 // Secrets
-export const JWT_SECRET = process.env.JWT_SECRET ?? "";
-export const COOKIE_SECRET = process.env.COOKIE_SECRET ?? "";
-export const TICKET_SECRET = process.env.TICKET_SECRET ?? "";
+export const JWT_SECRET = process.env.JWT_SECRET as string;
+export const COOKIE_SECRET = process.env.COOKIE_SECRET as string;
+export const TICKET_SECRET = process.env.TICKET_SECRET as string;
 
 // Postgres
-export const POSTGRES_HOST = process.env.POSTGRES_HOST;
-export const POSTGRES_PORT = 5432;
-export const POSTGRES_CONNECTION_STRING =
-  process.env.POSTGRES_CONNECTION_STRING ?? "";
+export const POSTGRES_HOST = process.env.POSTGRES_HOST as string;
+export const POSTGRES_PORT = parseInt(process.env.POSTGRES_PORT as string);
+export const POSTGRES_CONNECTION_STRING = process.env
+  .POSTGRES_CONNECTION_STRING as string;
 
 export const BLACKJACK_TABLE_NAME = "blackjack";
 export const CHAT_MESSAGE_TABLE_NAME = "chat_message";
@@ -23,12 +23,15 @@ export const TRANSACTION_TABLE_NAME = "transaction";
 
 // Redis
 export const REDIS_HOST = process.env.REDIS_HOST;
-export const REDIS_PORT = 6379;
-export const REDIS_CONNECTION_STRING =
-  process.env.REDIS_CONNECTION_STRING ?? "";
+export const REDIS_PORT = parseInt(process.env.REDIS_PORT as string);
+export const REDIS_CONNECTION_STRING = process.env
+  .REDIS_CONNECTION_STRING as string;
 
 // Caching
-export const MODELS_CONNECTION_STRING = "ws://localhost:4001";
+export const MODELS_HOST = process.env.MODELS_HOST;
+export const MODELS_PORT = parseInt(process.env.MODELS_PORT as string);
+export const MODELS_CONNECTION_STRING = process.env
+  .MODELS_CONNECTION_STRING as string;
 export const MODELS_RECONNECT_ATTEMPT_RATES_MS = [
   1000, 1000, 2000, 3000, 5000, 8000, 13000, 21000, 34000,
 ];

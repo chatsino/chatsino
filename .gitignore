@@ -11,17 +11,8 @@
 # production
 /**/build
 
-# database
-database
-
-# cache
-/cache/
-
-# caddy
-caddy
-
-# file uploads
-uploads
+# docker volumes
+volumes
 
 # misc
 /**/.DS_Store

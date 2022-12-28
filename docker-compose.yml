@@ -12,7 +12,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./database:/var/lib/postgresql/data
+      - ./volumes/database:/var/lib/postgresql/data
 
   cache:
     container_name: cache
@@ -21,7 +21,7 @@ services:
     ports:
       - 6379:6379
     volumes:
-      - ./cache:/data
+      - ./volumes/cache:/data
 
   models:
     container_name: models
@@ -54,17 +54,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./caddy:/data
-      - ./uploads:/uploads
+      - ./volumes/caddy:/data
+      - ./volumes/uploads:/uploads
     ports:
       - 80:80
       - 443:443
-
-  adminer:
-    container_name: adminer
-    image: adminer
-    restart: unless-stopped
-    depends_on:
-      - database
-    ports:
-      - 8080:8080

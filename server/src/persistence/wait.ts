@@ -13,5 +13,10 @@ export function waitForDatabaseAndCache() {
       port: config.REDIS_PORT,
       output: "silent",
     }),
+    waitPort({
+      host: config.MODELS_HOST,
+      port: config.MODELS_PORT,
+      output: "silent",
+    }),
   ]);
 }

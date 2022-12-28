@@ -17,7 +17,7 @@ import * as routes from "routes";
 import { SocketServer } from "socket-server";
 import { WebSocket } from "ws";
 
-const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
+export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
 export async function startServer() {
   SERVER_LOGGER.info(
@@ -66,6 +66,7 @@ export async function startServer() {
   );
 }
 
+// #region Helpers
 function applyMiddleware(app: Express) {
   return app.use(
     bodyParser.urlencoded({ extended: false }),
@@ -165,5 +166,4 @@ function handleUncaughtExceptionsAndRejections() {
       SERVER_LOGGER.info({ exitCode }, "Chatsino is shutting down. Goodbye!");
     });
 }
-
 // #endregion
