@@ -23,6 +23,17 @@ services:
     volumes:
       - ./cache:/data
 
+  models:
+    container_name: models
+    restart: unless-stopped
+    build:
+      context: ./models
+      dockerfile: Dockerfile
+    ports:
+      - 4001:4001
+    depends_on:
+      - cache
+
   server:
     container_name: server
     restart: unless-stopped
@@ -33,7 +44,7 @@ services:
       - 3001:3001
     depends_on:
       - database
-      - cache
+      - models
 
   client:
     container_name: client
@@ -57,12 +68,3 @@ services:
       - database
     ports:
       - 8080:8080
-
-  # redisinsight:
-  #   container_name: redisinsight
-  #   image: redislabs/redisinsight
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - cache
-  #   ports:
-  #     - 8001:8001
