@@ -7,7 +7,10 @@
     "start": "docker-compose up"
   },
   "dependencies": {
+    "chance": "^1.1.9",
     "react-icons": "^4.7.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/chance": "^1.1.3"
+  }
 }
