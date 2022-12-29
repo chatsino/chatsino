@@ -7,6 +7,12 @@ export async function clientSettingMiddleware(
   res: Response,
   next: NextFunction
 ) {
+  const session = req.session as UserSession;
+
+  if (session.userId) {
+    console.log("\n\n\n", session.userId, "\n\n\n");
+  }
+
   const token = req.headers.authorization ?? req.cookies[TOKEN_KEY];
 
   if (!token) {

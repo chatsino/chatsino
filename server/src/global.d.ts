@@ -1,1 +1,3 @@
-declare module "co-busboy";
+declare type UserSession = {
+  userId?: string;
+};

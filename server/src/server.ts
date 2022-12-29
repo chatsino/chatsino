@@ -1,8 +1,10 @@
 import bodyParser from "body-parser";
 import * as config from "config";
+import createRedisStore from "connect-redis";
 import cookieParser from "cookie-parser";
 import express, { Express, Router } from "express";
 import fileUpload from "express-fileupload";
+import session from "express-session";
 import { sleep } from "helpers";
 import { createServer } from "http";
 import { createLogger } from "logger";
@@ -13,6 +15,7 @@ import {
   initializeDatabase,
   waitForDatabaseAndCache,
 } from "persistence";
+import { createClient } from "redis";
 import * as routes from "routes";
 import { SocketServer } from "socket-server";
 import { WebSocket } from "ws";
@@ -29,8 +32,9 @@ export async function startServer() {
     {
       database: { host: config.POSTGRES_HOST, port: config.POSTGRES_PORT },
       cache: { host: config.REDIS_HOST, port: config.REDIS_PORT },
+      models: { host: config.MODELS_HOST, port: config.MODELS_PORT },
     },
-    "Waiting for database and cache."
+    "Waiting for database, cache and."
   );
   await waitForDatabaseAndCache();
 
@@ -42,7 +46,7 @@ export async function startServer() {
 
   SERVER_LOGGER.info("Initializing app.");
   const app = express();
-  applyMiddleware(app);
+  await applyMiddleware(app);
   applyRoutes(app);
 
   SERVER_LOGGER.info("Initializing HTTPS and WebSocket servers.");
@@ -67,11 +71,25 @@ export async function startServer() {
 }
 
 // #region Helpers
-function applyMiddleware(app: Express) {
+async function applyMiddleware(app: Express) {
+  const RedisStore = createRedisStore(session);
+  const redisClient = createClient({
+    url: config.REDIS_CONNECTION_STRING,
+    legacyMode: true,
+  });
+
+  await redisClient.connect();
+
   return app.use(
     bodyParser.urlencoded({ extended: false }),
     bodyParser.json(),
     cookieParser(config.COOKIE_SECRET),
+    session({
+      secret: config.JWT_SECRET,
+      resave: false,
+      saveUninitialized: true,
+      store: new RedisStore({ client: redisClient as any }),
+    }),
     fileUpload(),
     middleware.clientSettingMiddleware,
     middleware.requestLoggingMiddleware,

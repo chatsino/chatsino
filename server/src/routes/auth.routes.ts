@@ -38,8 +38,10 @@ export async function signupRoute(req: Request, res: Response) {
   try {
     const { username, password } = await clientSignupSchema.validate(req.body);
     const client = safetifyClient(await createClient(username, password));
-
     const token = await assignToken(res, client);
+    const session = req.session as UserSession;
+
+    session.userId = client.id.toString();
 
     return successResponse(res, "Successfully signed up.", {
       client,
@@ -66,6 +68,9 @@ export async function signinRoute(req: Request, res: Response) {
     }
 
     const token = await assignToken(res, client);
+    const session = req.session as UserSession;
+
+    session.userId = client.id.toString();
 
     return successResponse(res, "Successfully signed in.", { client, token });
   } catch (error) {
@@ -92,6 +97,10 @@ export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
     }
 
     await revokeToken(res, chatsinoClient);
+
+    await new Promise<void>((resolve, reject) =>
+      req.session.destroy((err) => (err ? reject(err) : resolve()))
+    );
 
     return successResponse(res, "Successfully signed out.");
   } catch (error) {
