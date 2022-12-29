@@ -3,14 +3,17 @@ import express from "express";
 import { createServer, Server } from "http";
 import { createLogger } from "helpers";
 import { WebSocket, WebSocketServer } from "ws";
+import { buildSearchIndices } from "cache";
 
 export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
-export function startServer() {
+export async function startServer() {
   SERVER_LOGGER.info(
     { environment: process.env.NODE_ENV, version: config.VERSION },
     "Chatsino-Models starting up."
   );
+
+  await buildSearchIndices();
 
   SERVER_LOGGER.info("Initializing app.");
   const app = express();
