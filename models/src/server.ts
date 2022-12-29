@@ -1,15 +1,16 @@
+import { buildSearchIndices, SUBSCRIBER } from "cache";
 import * as config from "config";
 import express from "express";
-import { createServer, Server } from "http";
-import { createLogger, guid } from "helpers";
-import { WebSocket, WebSocketServer } from "ws";
-import { buildSearchIndices, SUBSCRIBER } from "cache";
 import {
   CommonHandlerRequests,
   handleRequest,
   initializeRouletteHandlers,
   initializeUserHandlers,
+  isValidRequest,
 } from "handlers";
+import { createLogger, guid } from "helpers";
+import { createServer, Server } from "http";
+import { WebSocket, WebSocketServer } from "ws";
 
 export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
@@ -106,13 +107,15 @@ export function initializeSocketServer(server: Server) {
           throw new Error("Received message is missing a handler kind.");
         }
 
-        message.args = message.args ?? {};
+        if (!isValidRequest(message.kind)) {
+          throw new Error("That request kind is not supported.");
+        }
 
         return handleRequest(
           clients.toId.get(websocket) as string,
           message.userId,
           message.kind,
-          message.args
+          message.args ?? {}
         );
       } catch (error) {
         SERVER_LOGGER.info({ error }, "Error parsing received message.");

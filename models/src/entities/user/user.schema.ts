@@ -1,5 +1,5 @@
-import { generatePasswordHash, generatePasswordSaltHash } from "helpers";
 import { executeCommand } from "cache";
+import { generatePasswordHash, generatePasswordSaltHash } from "helpers";
 import { Client, Entity, Schema } from "redis-om";
 import { USER_ROLE_RANKING } from "./user.config";
 import { UserRole } from "./user.types";
@@ -47,7 +47,7 @@ export class User extends Entity {
   }
 
   public get isOperator() {
-    return this.permissions.administrator;
+    return this.permissions.operator;
   }
 
   public get isAdministrator() {
