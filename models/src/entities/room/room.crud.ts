@@ -1,7 +1,8 @@
-import { executeCommand } from "object-mapper";
 import { rightNow } from "helpers";
+import { executeCommand } from "cache";
+import { roomErrors } from "./room.errors";
 import { createRoomRepository, Room } from "./room.schema";
-import { RoomCreate, RoomNotFoundError } from "./room.types";
+import { RoomCreate } from "./room.types";
 
 export const roomCrud = {
   create: (data: RoomCreate) =>
@@ -24,44 +25,33 @@ export const roomCrud = {
       return room;
     }) as Promise<Room>,
   readList: (...ids: string[]) =>
-    executeCommand(async (client) => {
-      const rooms = await createRoomRepository(client).fetch(...ids);
-
-      return [rooms].flat().filter((room) => room.id);
-    }) as Promise<Room[]>,
+    executeCommand(async (client) =>
+      [await createRoomRepository(client).fetch(...ids)]
+        .flat()
+        .filter((room) => room.id)
+    ) as Promise<Room[]>,
   read: (id: string) =>
     executeCommand(async (client) => {
       const room = await createRoomRepository(client).fetch(id);
 
       if (!room.id) {
-        throw new RoomNotFoundError();
+        throw new roomErrors.NotFoundError();
       }
 
       return room;
     }) as Promise<Room>,
   update: (id: string, data: Partial<Room>) =>
     executeCommand(async (client) => {
-      const repository = createRoomRepository(client);
-      const room = await repository.fetch(id);
+      const room = await roomCrud.read(id);
 
-      if (!room.id) {
-        throw new RoomNotFoundError();
-      }
+      Object.assign(room, {
+        ...data,
+        changedAt: rightNow(),
+      });
 
-      room.id = data.id ?? room.id;
-      room.avatar = data.avatar ?? room.avatar;
-      room.title = data.title ?? room.title;
-      room.description = data.description ?? room.description;
-      room.password = data.password ?? room.password;
-      room.permissions = data.permissions ?? room.permissions;
-      room.messages = data.messages ?? room.messages;
-      room.users = data.users ?? room.users;
-      room.pins = data.pins ?? room.pins;
-      room.changedAt = rightNow();
+      await createRoomRepository(client).save(room);
 
-      await repository.save(room);
-
-      return roomCrud.read(room.entityId);
+      return room;
     }) as Promise<Room>,
   delete: (id: string) =>
     executeCommand(async (client) => createRoomRepository(client).remove(id)),

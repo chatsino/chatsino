@@ -1,7 +1,7 @@
 import * as config from "config";
 import express from "express";
 import { createServer, Server } from "http";
-import { createLogger } from "logger";
+import { createLogger } from "helpers";
 import { WebSocket, WebSocketServer } from "ws";
 
 export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
@@ -9,7 +9,7 @@ export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 export function startServer() {
   SERVER_LOGGER.info(
     { environment: process.env.NODE_ENV, version: config.VERSION },
-    "Model server starting up."
+    "Chatsino-Models starting up."
   );
 
   SERVER_LOGGER.info("Initializing app.");
@@ -30,7 +30,6 @@ export function startServer() {
 }
 
 // #region Helpers
-
 export function initializeSocketServer(server: Server) {
   const socketServer = new WebSocketServer({ noServer: true });
   const heartbeats = new Map<WebSocket, boolean>();

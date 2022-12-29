@@ -1,8 +1,8 @@
 /* istanbul ignore file */
-import { executeCommand } from "object-mapper";
 import { rightNow } from "helpers";
+import { executeCommand } from "cache";
+import { rouletteErrors } from "./roulette.errors";
 import { createRouletteRepository, Roulette } from "./roulette.schema";
-import { RouletteNotFoundError } from "./roulette.types";
 
 export const rouletteCrud = {
   create: async () =>
@@ -24,34 +24,28 @@ export const rouletteCrud = {
       return roulette;
     }) as Promise<Roulette>,
   readList: (...ids: string[]) =>
-    executeCommand(async (client) => {
-      const roulettes = await createRouletteRepository(client).fetch(...ids);
-
-      return [roulettes].flat().filter((roulette) => roulette.id);
-    }) as Promise<Roulette[]>,
+    executeCommand(async (client) =>
+      [await createRouletteRepository(client).fetch(...ids)]
+        .flat()
+        .filter((roulette) => roulette.id)
+    ) as Promise<Roulette[]>,
   read: (id: string) =>
     executeCommand(async (client) => {
       const roulette = await createRouletteRepository(client).fetch(id);
 
-      if (!roulette) {
-        throw new RouletteNotFoundError();
+      if (!roulette.id) {
+        throw new rouletteErrors.NotFoundError();
       }
 
       return roulette;
     }) as Promise<Roulette>,
   update: (id: string, data: Partial<Roulette>) =>
     executeCommand(async (client) => {
-      const repository = createRouletteRepository(client);
       const roulette = await rouletteCrud.read(id);
 
-      roulette.startedAt = data.startedAt ?? roulette.startedAt;
-      roulette.status = data.status ?? roulette.status;
-      roulette.bets = data.bets ?? roulette.bets;
-      roulette.results = data.results ?? roulette.results;
-      roulette.participants = data.participants ?? roulette.participants;
-      roulette.outcome = data.outcome ?? roulette.outcome;
+      Object.assign(roulette, data);
 
-      await repository.save(roulette);
+      await createRouletteRepository(client).save(roulette);
 
       return roulette;
     }) as Promise<Roulette>,

@@ -1,6 +1,6 @@
+import { initializeCache, CACHE } from "cache";
 import { Chance } from "chance";
-import { initializeCache, REDIS } from "cache";
-import { Room, RoomCreate, RoomEntity, RoomNotFoundError } from ".";
+import { Room, RoomCreate, RoomEntity } from ".";
 import { MessageEntity } from "../message";
 import { User, UserEntity } from "../user";
 
@@ -16,7 +16,7 @@ describe("Room Queries", () => {
 
   beforeEach(async () => {
     await initializeCache();
-    await REDIS.flushAll();
+    await CACHE.flushAll();
     await Promise.all([
       UserEntity.createIndex(),
       RoomEntity.createIndex(),
@@ -26,10 +26,12 @@ describe("Room Queries", () => {
     userA = await UserEntity.mutations.createUser({
       avatar: CHANCE.avatar(),
       username: "admin",
+      password: CHANCE.string({ length: 8 }),
     });
     userB = await UserEntity.mutations.createUser({
       avatar: CHANCE.avatar(),
       username: "user",
+      password: CHANCE.string({ length: 8 }),
     });
     roomData = {
       ownerId: userA.id,
@@ -108,7 +110,7 @@ describe("Room Queries", () => {
       try {
         await RoomEntity.queries.userPermissions(CHANCE.string(), userA.id);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
   });
@@ -133,7 +135,7 @@ describe("Room Queries", () => {
           "O"
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
   });
@@ -152,7 +154,7 @@ describe("Room Queries", () => {
       try {
         await RoomEntity.queries.roomUsers(CHANCE.string());
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
   });
@@ -174,7 +176,7 @@ describe("Room Queries", () => {
       try {
         await RoomEntity.queries.roomMessages(CHANCE.string());
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
   });

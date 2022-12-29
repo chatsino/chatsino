@@ -82,24 +82,3 @@ export type UserRouletteBet = RouletteBet & {
 export type DeterminedUserRouletteBet = UserRouletteBet & {
   reward: number;
 };
-
-export class RouletteNoGameInProgressError extends Error {
-  statusCode = 403;
-  message = "There is no game in progress.";
-}
-
-export class RouletteCannotPlaceBetError extends Error {
-  statusCode = 403;
-  message = "Betting is closed for this game.";
-}
-
-export class RouletteCannotFinishError extends Error {
-  statusCode = 403;
-  message = "This game is not ready to finish.";
-}
-
-/* istanbul ignore next */
-export class RouletteNotFoundError extends Error {
-  statusCode = 404;
-  message = "That game of roulette does not exist.";
-}

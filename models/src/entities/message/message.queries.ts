@@ -1,4 +1,4 @@
-import { executeCommand } from "object-mapper";
+import { executeCommand } from "cache";
 import { createMessageRepository, Message } from "./message.schema";
 
 export const messageQueries = {

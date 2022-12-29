@@ -1,7 +1,8 @@
-import { executeCommand } from "object-mapper";
 import { rightNow } from "helpers";
+import { executeCommand } from "cache";
+import { messageErrors } from "./message.errors";
 import { createMessageRepository, Message } from "./message.schema";
-import { MessageCreate, MessageNotFoundError } from "./message.types";
+import { MessageCreate } from "./message.types";
 
 export const messageCrud = {
   create: async (data: MessageCreate) =>
@@ -23,37 +24,31 @@ export const messageCrud = {
       return message;
     }) as Promise<Message>,
   readList: (...ids: string[]) =>
-    executeCommand(async (client) => {
-      const messages = await createMessageRepository(client).fetch(...ids);
-
-      return [messages].flat().filter((each) => each.id);
-    }) as Promise<Message[]>,
+    executeCommand(async (client) =>
+      [await createMessageRepository(client).fetch(...ids)]
+        .flat()
+        .filter((each) => each.id)
+    ) as Promise<Message[]>,
   read: (id: string) =>
     executeCommand(async (client) => {
       const message = await createMessageRepository(client).fetch(id);
 
       if (!message.id) {
-        throw new MessageNotFoundError();
+        throw new messageErrors.NotFoundError();
       }
 
       return message;
     }) as Promise<Message>,
   update: (id: string, data: Partial<Message>) =>
     executeCommand(async (client) => {
-      const repository = createMessageRepository(client);
-      const message = await repository.fetch(id);
+      const message = await messageCrud.read(id);
 
-      if (!message.id) {
-        throw new MessageNotFoundError();
-      }
+      Object.assign(message, {
+        ...data,
+        changedAt: rightNow(),
+      });
 
-      message.content = data.content ?? message.content;
-      message.reactions = data.reactions ?? message.reactions;
-      message.poll = data.poll ?? message.poll;
-      message.mentions = data.mentions ?? message.mentions;
-      message.changedAt = rightNow();
-
-      await repository.save(message);
+      await createMessageRepository(client).save(message);
 
       return message;
     }),

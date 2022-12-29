@@ -1,10 +1,7 @@
 import { messageCrud } from "./message.crud";
 import { Message } from "./message.schema";
-import {
-  MessageCreate,
-  MessageForbiddenDeleteError,
-  MessageForbiddenEditError,
-} from "./message.types";
+import { MessageCreate } from "./message.types";
+import { messageErrors } from "./message.errors";
 
 export const messageMutations = {
   createMessage: async (data: MessageCreate) => {
@@ -19,7 +16,7 @@ export const messageMutations = {
     const message = await messageCrud.read(messageId);
 
     if (userId !== message.userId) {
-      throw new MessageForbiddenEditError();
+      throw new messageErrors.ForbiddenEditError();
     }
 
     if (content === message.content) {
@@ -36,7 +33,7 @@ export const messageMutations = {
     const message = await messageCrud.read(messageId);
 
     if (userId !== message.userId) {
-      throw new MessageForbiddenDeleteError();
+      throw new messageErrors.ForbiddenDeleteError();
     }
 
     return messageCrud.delete(messageId);

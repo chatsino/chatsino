@@ -1,19 +1,8 @@
+import { initializeCache, CACHE } from "cache";
 import { Chance } from "chance";
-import { initializeCache, REDIS } from "cache";
-import {
-  Room,
-  RoomCreate,
-  RoomEntity,
-  RoomTitleConflictError,
-  RoomForbiddenActionError,
-  RoomNotAllowedError,
-  RoomMessageNotFoundError,
-  RoomNotFoundError,
-  RoomForbiddenModificationError,
-  RoomIncorrectPasswordError,
-} from ".";
+import { Room, RoomCreate, RoomEntity } from ".";
 import { MessageEntity } from "../message";
-import { User, UserNotFoundError, UserEntity } from "../user";
+import { User, UserEntity } from "../user";
 
 const CHANCE = new Chance();
 
@@ -27,7 +16,7 @@ describe("Room Mutations", () => {
 
   beforeEach(async () => {
     await initializeCache();
-    await REDIS.flushAll();
+    await CACHE.flushAll();
     await Promise.all([
       UserEntity.createIndex(),
       RoomEntity.createIndex(),
@@ -37,10 +26,12 @@ describe("Room Mutations", () => {
     userA = await UserEntity.mutations.createUser({
       avatar: CHANCE.avatar(),
       username: "admin",
+      password: CHANCE.string({ length: 8 }),
     });
     userB = await UserEntity.mutations.createUser({
       avatar: CHANCE.avatar(),
       username: "user",
+      password: CHANCE.string({ length: 8 }),
     });
     roomData = {
       ownerId: userA.id,
@@ -82,7 +73,7 @@ describe("Room Mutations", () => {
       try {
         await RoomEntity.mutations.createRoom(roomData);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomTitleConflictError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.TitleConflictError);
       }
     });
   });
@@ -107,7 +98,7 @@ describe("Room Mutations", () => {
       try {
         await RoomEntity.mutations.createDirectMessageRoom(userA.id, "FOO");
       } catch (error) {
-        expect(error).toBeInstanceOf(UserNotFoundError);
+        expect(error).toBeInstanceOf(UserEntity.errors.NotFoundError);
       }
 
       try {
@@ -116,7 +107,7 @@ describe("Room Mutations", () => {
           userB.id
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(UserNotFoundError);
+        expect(error).toBeInstanceOf(UserEntity.errors.NotFoundError);
       }
     });
     it("should prevent creating a private room between the two users already exists", async () => {
@@ -125,13 +116,17 @@ describe("Room Mutations", () => {
       try {
         await RoomEntity.mutations.createDirectMessageRoom(userA.id, userB.id);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
 
       try {
         await RoomEntity.mutations.createDirectMessageRoom(userB.id, userA.id);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
   });
@@ -153,7 +148,7 @@ describe("Room Mutations", () => {
           description: CHANCE.sentence(),
         });
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomTitleConflictError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.TitleConflictError);
       }
     });
   });
@@ -179,7 +174,7 @@ describe("Room Mutations", () => {
       try {
         await RoomEntity.mutations.joinRoom(CHANCE.string(), userA.id);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
     it("should prevent adding user to a room with the wrong password", async () => {
@@ -192,7 +187,7 @@ describe("Room Mutations", () => {
           CHANCE.string()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomIncorrectPasswordError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.IncorrectPasswordError);
       }
     });
     it("should prevent adding user to a room when blacklisted", async () => {
@@ -207,7 +202,7 @@ describe("Room Mutations", () => {
       try {
         await RoomEntity.mutations.joinRoom(roomA.id, userB.id);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotAllowedError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.UserNotAllowedError);
       }
     });
     it("should prevent adding user to a room not on the whitelist", async () => {
@@ -222,7 +217,7 @@ describe("Room Mutations", () => {
       try {
         await RoomEntity.mutations.joinRoom(roomA.id, userB.id);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotAllowedError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.UserNotAllowedError);
       }
     });
   });
@@ -262,7 +257,7 @@ describe("Room Mutations", () => {
           "M"
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
     it("should prevent a user from changing the permissions of another user when they are not the owner", async () => {
@@ -277,7 +272,9 @@ describe("Room Mutations", () => {
           "M"
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenModificationError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenModificationError
+        );
       }
     });
   });
@@ -311,7 +308,7 @@ describe("Room Mutations", () => {
           CHANCE.sentence()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
     it("should prevent a user with the wrong password from sending a message to a room", async () => {
@@ -335,7 +332,9 @@ describe("Room Mutations", () => {
           CHANCE.sentence()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
     it("should prevent a muted user from sending a message to a room", async () => {
@@ -350,7 +349,9 @@ describe("Room Mutations", () => {
           CHANCE.sentence()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
     it("should prevent a blacklisted user from sending a message to a room", async () => {
@@ -369,7 +370,9 @@ describe("Room Mutations", () => {
           CHANCE.sentence()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
     it("should prevent a non-whitelisted user from sending a message to a room", async () => {
@@ -388,7 +391,9 @@ describe("Room Mutations", () => {
           CHANCE.sentence()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
   });
@@ -416,6 +421,7 @@ describe("Room Mutations", () => {
       userB = await UserEntity.mutations.createUser({
         avatar: CHANCE.avatar(),
         username: CHANCE.word(),
+        password: CHANCE.string({ length: 8 }),
       });
 
       const messageId = Room.serializeDirectMessageRoomId(userA.id, userB.id);
@@ -440,7 +446,7 @@ describe("Room Mutations", () => {
           CHANCE.sentence()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(UserNotFoundError);
+        expect(error).toBeInstanceOf(UserEntity.errors.NotFoundError);
       }
 
       try {
@@ -450,7 +456,7 @@ describe("Room Mutations", () => {
           CHANCE.sentence()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(UserNotFoundError);
+        expect(error).toBeInstanceOf(UserEntity.errors.NotFoundError);
       }
     });
   });
@@ -492,7 +498,7 @@ describe("Room Mutations", () => {
           CHANCE.string()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomMessageNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.MessageNotFoundError);
       }
     });
     it("should prevent adding a message to the set of room pins of a room that does not exist", async () => {
@@ -505,7 +511,7 @@ describe("Room Mutations", () => {
           CHANCE.string()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
     it("should prevent a user who is not a co-owner from pinning a message of a room", async () => {
@@ -518,7 +524,9 @@ describe("Room Mutations", () => {
           CHANCE.string()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
   });
@@ -565,7 +573,7 @@ describe("Room Mutations", () => {
           CHANCE.string()
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
     it("should prevent a user from removing a message if they are not allowed", async () => {
@@ -585,7 +593,9 @@ describe("Room Mutations", () => {
           messageId
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
   });
@@ -617,7 +627,7 @@ describe("Room Mutations", () => {
           userA.id
         );
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomNotFoundError);
+        expect(error).toBeInstanceOf(RoomEntity.errors.NotFoundError);
       }
     });
     it("should prevent removing messages from a room if not the owner", async () => {
@@ -626,7 +636,9 @@ describe("Room Mutations", () => {
       try {
         await RoomEntity.mutations.removeUserMessages(roomA.id, userB.id);
       } catch (error) {
-        expect(error).toBeInstanceOf(RoomForbiddenActionError);
+        expect(error).toBeInstanceOf(
+          RoomEntity.errors.UserForbiddenActionError
+        );
       }
     });
   });

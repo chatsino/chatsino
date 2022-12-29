@@ -1,14 +1,7 @@
+import { initializeCache, CACHE } from "cache";
 import { Chance } from "chance";
-import { initializeCache, REDIS } from "cache";
-import {
-  RouletteEntity,
-  RouletteCannotFinishError,
-  RouletteCannotPlaceBetError,
-  RouletteNoGameInProgressError,
-  Roulette,
-  UserRouletteBet,
-} from ".";
-import { User, UserCannotAffordError, UserEntity } from "../user";
+import { Roulette, RouletteEntity, UserRouletteBet } from ".";
+import { User, UserEntity } from "../user";
 
 const CHANCE = new Chance();
 
@@ -20,16 +13,18 @@ describe("Roulette Mutations", () => {
     jest.resetModules();
 
     await initializeCache();
-    await REDIS.flushAll();
+    await CACHE.flushAll();
     await Promise.all([UserEntity.createIndex(), RouletteEntity.createIndex()]);
 
     userA = await UserEntity.mutations.createUser({
       avatar: CHANCE.avatar(),
       username: "admin",
+      password: CHANCE.string({ length: 8 }),
     });
     userB = await UserEntity.mutations.createUser({
       avatar: CHANCE.avatar(),
       username: "user",
+      password: CHANCE.string({ length: 8 }),
     });
 
     await UserEntity.mutations.payUser(userA.id, 20000);
@@ -114,7 +109,7 @@ describe("Roulette Mutations", () => {
           which: 12,
         });
       } catch (error) {
-        expect(error).toBeInstanceOf(UserCannotAffordError);
+        expect(error).toBeInstanceOf(UserEntity.errors.CannotAffordError);
       }
     });
     it("should prevent a user from placing a bet when bets are closed", async () => {
@@ -132,7 +127,7 @@ describe("Roulette Mutations", () => {
           which: 12,
         });
       } catch (error) {
-        expect(error).toBeInstanceOf(RouletteCannotPlaceBetError);
+        expect(error).toBeInstanceOf(RouletteEntity.errors.CannotPlaceBetError);
       }
     });
     it("should prevent a user from placing a bet when there is no active game", async () => {
@@ -146,7 +141,9 @@ describe("Roulette Mutations", () => {
           which: 12,
         });
       } catch (error) {
-        expect(error).toBeInstanceOf(RouletteNoGameInProgressError);
+        expect(error).toBeInstanceOf(
+          RouletteEntity.errors.NoGameInProgressError
+        );
       }
     });
   });
@@ -434,7 +431,9 @@ describe("Roulette Mutations", () => {
       try {
         await RouletteEntity.mutations.payout();
       } catch (error) {
-        expect(error).toBeInstanceOf(RouletteNoGameInProgressError);
+        expect(error).toBeInstanceOf(
+          RouletteEntity.errors.NoGameInProgressError
+        );
       }
     });
     it("should prevent paying out when the game is not waiting", async () => {
@@ -446,7 +445,7 @@ describe("Roulette Mutations", () => {
       try {
         await RouletteEntity.mutations.payout();
       } catch (error) {
-        expect(error).toBeInstanceOf(RouletteCannotFinishError);
+        expect(error).toBeInstanceOf(RouletteEntity.errors.CannotFinishError);
       }
     });
   });

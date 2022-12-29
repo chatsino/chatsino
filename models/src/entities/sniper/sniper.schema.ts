@@ -1,4 +1,4 @@
-import { executeCommand } from "object-mapper";
+import { executeCommand } from "cache";
 import { Client, Entity, Schema } from "redis-om";
 import { SNIPER_SKIM } from "./sniper.config";
 import { Snipe, SniperStatus } from "./sniper.types";

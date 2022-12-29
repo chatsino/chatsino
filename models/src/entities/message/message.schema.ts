@@ -1,4 +1,4 @@
-import { executeCommand } from "object-mapper";
+import { executeCommand } from "cache";
 import { Client, Entity, Schema } from "redis-om";
 import { UserEntity } from "../user";
 import { MessagePollOption, MessageReaction } from "./message.types";

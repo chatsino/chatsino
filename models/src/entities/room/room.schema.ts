@@ -1,8 +1,8 @@
-import { executeCommand } from "object-mapper";
+import { executeCommand } from "cache";
 import { Client, Entity, Schema } from "redis-om";
+import { roomErrors } from "./room.errors";
 import {
   OnlyPermissionMarker,
-  RoomMessageNotFoundError,
   RoomPermission,
   RoomPermissionLookup,
   RoomUserPermissions,
@@ -142,7 +142,7 @@ export class Room extends Entity {
 
   public pinMessage(messageId: string) {
     if (!this.messages.includes(messageId)) {
-      throw new RoomMessageNotFoundError();
+      throw new roomErrors.MessageNotFoundError();
     }
 
     const previouslyPinned = this.pins.includes(messageId);
@@ -158,7 +158,7 @@ export class Room extends Entity {
 
   public removeMessage(messageId: string) {
     if (!this.messages.includes(messageId)) {
-      throw new RoomMessageNotFoundError();
+      throw new roomErrors.MessageNotFoundError();
     }
 
     this.messages = this.messages.filter((each) => each !== messageId);

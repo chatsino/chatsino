@@ -1,5 +1,5 @@
 import * as config from "config";
-import { createLogger } from "logger";
+import { createLogger } from "helpers";
 import { createClient } from "redis";
 import { UserEntity } from "../user";
 import {
@@ -9,15 +9,10 @@ import {
   TIME_BETWEEN_GAMES_DURATION,
 } from "./roulette.config";
 import { rouletteCrud } from "./roulette.crud";
+import { rouletteErrors } from "./roulette.errors";
 import { rouletteQueries } from "./roulette.queries";
 import { Roulette } from "./roulette.schema";
-import {
-  RouletteCannotFinishError,
-  RouletteCannotPlaceBetError,
-  RouletteNoGameInProgressError,
-  RouletteStatus,
-  UserRouletteBet,
-} from "./roulette.types";
+import { RouletteStatus, UserRouletteBet } from "./roulette.types";
 
 export const ROULETTE_MUTATIONS_LOGGER = createLogger("Roulette Mutations");
 
@@ -151,11 +146,11 @@ export const rouletteMutations = {
     const game = await rouletteQueries.activeGame();
 
     if (!game) {
-      throw new RouletteNoGameInProgressError();
+      throw new rouletteErrors.NoGameInProgressError();
     }
 
     if (game.status !== "taking-bets") {
-      throw new RouletteCannotPlaceBetError();
+      throw new rouletteErrors.CannotPlaceBetError();
     }
 
     await UserEntity.mutations.chargeUser(bet.userId, bet.wager);
@@ -168,11 +163,11 @@ export const rouletteMutations = {
     const game = await rouletteQueries.activeGame();
 
     if (!game) {
-      throw new RouletteNoGameInProgressError();
+      throw new rouletteErrors.NoGameInProgressError();
     }
 
     if (game.status !== "waiting") {
-      throw new RouletteCannotFinishError();
+      throw new rouletteErrors.CannotFinishError();
     }
 
     await Promise.all(

@@ -14,7 +14,9 @@ const options = {
     "process.env.VERSION": `"${package.version}"`,
     "process.env.PORT": process.env.PORT,
     "process.env.REDIS_HOST": `"${process.env.REDIS_HOST}"`,
+    "process.env.REDIS_PORT": process.env.REDIS_PORT,
     "process.env.REDIS_CONNECTION_STRING": `"${process.env.REDIS_CONNECTION_STRING}"`,
+    "process.env.PASSWORD_SECRET": `"${process.env.PASSWORD_SECRET}"`,
   },
 };
 

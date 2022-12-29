@@ -1,4 +1,4 @@
-import { executeCommand } from "object-mapper";
+import { executeCommand } from "cache";
 import { MessageEntity } from "../message";
 import { UserEntity } from "../user";
 import { roomCrud } from "./room.crud";

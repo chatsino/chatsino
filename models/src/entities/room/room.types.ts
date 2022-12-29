@@ -42,38 +42,3 @@ export type RoomCreate = {
   description: string;
   password: string;
 };
-
-export class RoomIncorrectPasswordError extends Error {
-  statusCode = 401;
-  message = "That is the wrong password.";
-}
-
-export class RoomNotAllowedError extends Error {
-  statusCode = 401;
-  message = "User is not allowed in that room.";
-}
-
-export class RoomForbiddenActionError extends Error {
-  statusCode = 403;
-  message = "User cannot perform that action.";
-}
-
-export class RoomForbiddenModificationError extends Error {
-  statusCode = 403;
-  message = "User cannot modify that room.";
-}
-
-export class RoomNotFoundError extends Error {
-  statusCode = 404;
-  message = "That room does not exist.";
-}
-
-export class RoomMessageNotFoundError extends Error {
-  statusCode = 404;
-  message = "That message does not exist in that room.";
-}
-
-export class RoomTitleConflictError extends Error {
-  statusCode = 409;
-  message = "That room title is already in use.";
-}

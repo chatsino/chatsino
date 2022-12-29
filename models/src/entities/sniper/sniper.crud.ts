@@ -1,8 +1,8 @@
 /* istanbul ignore file */
-import { executeCommand } from "object-mapper";
 import { rightNow } from "helpers";
+import { executeCommand } from "cache";
+import { sniperErrors } from "./sniper.errors";
 import { createSniperRepository, Sniper } from "./sniper.schema";
-import { SniperNotFoundError } from "./sniper.types";
 
 export const sniperCrud = {
   create: async () =>
@@ -24,34 +24,28 @@ export const sniperCrud = {
       return sniper;
     }) as Promise<Sniper>,
   readList: (...ids: string[]) =>
-    executeCommand(async (client) => {
-      const snipers = await createSniperRepository(client).fetch(...ids);
-
-      return [snipers].flat().filter((sniper) => sniper.id);
-    }) as Promise<Sniper[]>,
+    executeCommand(async (client) =>
+      [await createSniperRepository(client).fetch(...ids)]
+        .flat()
+        .filter((sniper) => sniper.id)
+    ) as Promise<Sniper[]>,
   read: (id: string) =>
     executeCommand(async (client) => {
       const sniper = await createSniperRepository(client).fetch(id);
 
       if (!sniper) {
-        throw new SniperNotFoundError();
+        throw new sniperErrors.NotFoundError();
       }
 
       return sniper;
     }) as Promise<Sniper>,
   update: (id: string, data: Partial<Sniper>) =>
     executeCommand(async (client) => {
-      const repository = createSniperRepository(client);
       const sniper = await sniperCrud.read(id);
 
-      sniper.startedAt = data.startedAt ?? sniper.startedAt;
-      sniper.status = data.status ?? sniper.status;
-      sniper.snipes = data.snipes ?? sniper.snipes;
-      sniper.participants = data.participants ?? sniper.participants;
-      sniper.pot = data.pot ?? sniper.pot;
-      sniper.winner = data.winner ?? sniper.winner;
+      Object.assign(sniper, data);
 
-      await repository.save(sniper);
+      await createSniperRepository(client).save(sniper);
 
       return sniper;
     }) as Promise<Sniper>,

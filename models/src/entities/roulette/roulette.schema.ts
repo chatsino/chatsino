@@ -1,5 +1,5 @@
-import { executeCommand } from "object-mapper";
 import { randomInteger } from "helpers";
+import { executeCommand } from "cache";
 import { Client, Entity, Schema } from "redis-om";
 import {
   COLUMNS,

@@ -1,18 +1,14 @@
 import { MessageEntity } from "../message";
-import { UserEntity, UserNotFoundError } from "../user";
+import { UserEntity } from "../user";
 import { roomCrud } from "./room.crud";
+import { roomErrors } from "./room.errors";
 import { roomQueries } from "./room.queries";
 import { Room } from "./room.schema";
 import {
   OnlyPermissionMarker,
   PermissionMarker,
   RoomCreate,
-  RoomForbiddenActionError,
-  RoomForbiddenModificationError,
-  RoomIncorrectPasswordError,
-  RoomNotAllowedError,
   RoomPermission,
-  RoomTitleConflictError,
 } from "./room.types";
 
 export const roomMutations = {
@@ -21,7 +17,7 @@ export const roomMutations = {
     const user = await UserEntity.crud.read(ownerId);
 
     if (!user) {
-      throw new UserNotFoundError();
+      throw new UserEntity.errors.NotFoundError();
     }
 
     const existingRoomWithRoomTitle = await roomQueries.roomByRoomTitle(
@@ -29,7 +25,7 @@ export const roomMutations = {
     );
 
     if (existingRoomWithRoomTitle) {
-      throw new RoomTitleConflictError();
+      throw new roomErrors.TitleConflictError();
     }
 
     return roomCrud.create(data);
@@ -41,14 +37,14 @@ export const roomMutations = {
     );
 
     if (!sendingUser || !receivingUser) {
-      throw new UserNotFoundError();
+      throw new UserEntity.errors.NotFoundError();
     }
 
     const roomId = Room.serializeDirectMessageRoomId(userIdA, userIdB);
     const existingDirectMessageRoom = await roomQueries.roomById(roomId);
 
     if (existingDirectMessageRoom) {
-      throw new RoomForbiddenActionError();
+      throw new roomErrors.UserForbiddenActionError();
     }
 
     const room = await roomCrud.create({
@@ -71,7 +67,7 @@ export const roomMutations = {
       );
 
       if (existingRoomWithRoomTitle) {
-        throw new RoomTitleConflictError();
+        throw new roomErrors.TitleConflictError();
       }
     }
 
@@ -85,11 +81,11 @@ export const roomMutations = {
     }
 
     if (password !== room.password) {
-      throw new RoomIncorrectPasswordError();
+      throw new roomErrors.IncorrectPasswordError();
     }
 
     if (!room.meetsPermissionRequirement(userId, "G")) {
-      throw new RoomNotAllowedError();
+      throw new roomErrors.UserNotAllowedError();
     }
 
     room.users.push(userId);
@@ -120,7 +116,7 @@ export const roomMutations = {
     );
 
     if (!hasOwnerPermission) {
-      throw new RoomForbiddenModificationError();
+      throw new roomErrors.UserForbiddenModificationError();
     }
 
     const roomPermissionsBeforeChange = room.permissions.map(
@@ -235,7 +231,7 @@ export const roomMutations = {
       password !== room.password ||
       !room.meetsPermissionRequirement(userId, RoomPermission.Talk)
     ) {
-      throw new RoomForbiddenActionError();
+      throw new roomErrors.UserForbiddenActionError();
     }
 
     const message = await MessageEntity.mutations.createMessage({
@@ -261,7 +257,7 @@ export const roomMutations = {
     );
 
     if (!sendingUser || !receivingUser) {
-      throw new UserNotFoundError();
+      throw new UserEntity.errors.NotFoundError();
     }
 
     let existingDirectMessageRoom = await roomQueries.roomById(
@@ -294,7 +290,7 @@ export const roomMutations = {
     const room = await roomCrud.read(roomId);
 
     if (!room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)) {
-      throw new RoomForbiddenActionError();
+      throw new roomErrors.UserForbiddenActionError();
     }
 
     room.pinMessage(messageId);
@@ -310,7 +306,7 @@ export const roomMutations = {
       !removingOwnMessage &&
       !room.meetsPermissionRequirement(userId, RoomPermission.CoOwner)
     ) {
-      throw new RoomForbiddenActionError();
+      throw new roomErrors.UserForbiddenActionError();
     }
 
     if (removingOwnMessage) {
@@ -326,7 +322,7 @@ export const roomMutations = {
     const room = await roomCrud.read(roomId);
 
     if (!room.meetsPermissionRequirement(userId, RoomPermission.Owner)) {
-      throw new RoomForbiddenActionError();
+      throw new roomErrors.UserForbiddenActionError();
     }
 
     const messages = await roomQueries.roomMessages(roomId);

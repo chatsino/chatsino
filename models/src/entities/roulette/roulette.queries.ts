@@ -1,4 +1,4 @@
-import { executeCommand } from "object-mapper";
+import { executeCommand } from "cache";
 import { createRouletteRepository, Roulette } from "./roulette.schema";
 
 export const rouletteQueries = {
