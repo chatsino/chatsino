@@ -22,7 +22,7 @@ export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 export async function startServer() {
   SERVER_LOGGER.info(
     { environment: process.env.NODE_ENV, version: config.VERSION },
-    "Chatsino started up."
+    "Chatsino-Server started up."
   );
 
   SERVER_LOGGER.info(
@@ -163,7 +163,10 @@ function handleUncaughtExceptionsAndRejections() {
       process.exit(1);
     })
     .on("exit", (exitCode) => {
-      SERVER_LOGGER.info({ exitCode }, "Chatsino is shutting down. Goodbye!");
+      SERVER_LOGGER.info(
+        { exitCode },
+        "Chatsino-Server is shutting down. Goodbye!"
+      );
     });
 }
 // #endregion
