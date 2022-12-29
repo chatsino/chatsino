@@ -9,6 +9,8 @@ export const CACHE_LOGGER = createLogger(config.LOGGER_NAMES.CACHE);
 export const CACHE = createClient({
   url: config.REDIS_CONNECTION_STRING,
 });
+export const PUBLISHER = CACHE.duplicate();
+export const SUBSCRIBER = CACHE.duplicate();
 
 export let CACHE_INITIALIZED = false;
 
@@ -17,8 +19,14 @@ export function initializeCache() {
     return Promise.resolve();
   } else {
     CACHE_LOGGER.info("Initializing cache.");
+
     CACHE_INITIALIZED = true;
-    return CACHE.connect();
+
+    return Promise.all([
+      CACHE.connect(),
+      PUBLISHER.connect(),
+      SUBSCRIBER.connect(),
+    ]);
   }
 }
 

@@ -1,9 +1,10 @@
 import * as config from "config";
 import express from "express";
 import { createServer, Server } from "http";
-import { createLogger } from "helpers";
+import { createLogger, guid } from "helpers";
 import { WebSocket, WebSocketServer } from "ws";
-import { buildSearchIndices } from "cache";
+import { buildSearchIndices, SUBSCRIBER } from "cache";
+import { CommonHandlerRequests, handleRequest } from "handlers/common";
 
 export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
@@ -35,6 +36,10 @@ export async function startServer() {
 // #region Helpers
 export function initializeSocketServer(server: Server) {
   const socketServer = new WebSocketServer({ noServer: true });
+  const clients = {
+    toId: new Map<WebSocket, string>(),
+    toWebSocket: new Map<string, WebSocket>(),
+  };
   const heartbeats = new Map<WebSocket, boolean>();
   const heartbeat = (websocket: WebSocket) => heartbeats.set(websocket, true);
   const sendMessage = <T extends { kind: string }>(
@@ -64,12 +69,38 @@ export function initializeSocketServer(server: Server) {
     websocket.on("pong", () => heartbeat(websocket));
     websocket.on("close", () => {
       SERVER_LOGGER.info("Terminated a WebSocket connection.");
+
+      const id = clients.toId.get(websocket) as string;
+      clients.toId.delete(websocket);
+      clients.toWebSocket.delete(id);
+
+      heartbeats.delete(websocket);
     });
     websocket.on("message", (data) => {
       try {
-        const message = JSON.parse(data.toString());
+        const text = data.toString();
+        const message = JSON.parse(text) as {
+          userId: string;
+          kind: string;
+          args?: Record<string, unknown>;
+        };
 
-        SERVER_LOGGER.info({ message }, "Received a message from a client.");
+        if (!message.userId) {
+          throw new Error("Received message is missing userId.");
+        }
+
+        if (!message.kind) {
+          throw new Error("Received message is missing a handler kind.");
+        }
+
+        message.args = message.args ?? {};
+
+        return handleRequest(
+          clients.toId.get(websocket) as string,
+          message.userId,
+          message.kind,
+          message.args
+        );
       } catch (error) {
         SERVER_LOGGER.info({ error }, "Error parsing received message.");
       }
@@ -86,15 +117,35 @@ export function initializeSocketServer(server: Server) {
       socketServer.handleUpgrade(request, socket, head, resolve)
     );
 
+    const id = guid();
+    clients.toId.set(websocket, id);
+    clients.toWebSocket.set(id, websocket);
+
     heartbeats.set(websocket, true);
 
     return socketServer.emit("connection", websocket);
   });
 
-  let checkingForDisconnectedClients = setTimeout(
+  let checkingForDisconnectedClients: NodeJS.Timeout;
+
+  checkingForDisconnectedClients = setTimeout(
     checkForDisconnectedClients,
     config.CONNECTION_STATUS_CHECK_RATE_MS
   );
+
+  SUBSCRIBER.on(CommonHandlerRequests.Response, (message) => {
+    const { socketId, kind, result } = JSON.parse(message) as {
+      socketId: string;
+      kind: string;
+      result: unknown;
+    };
+
+    const websocket = clients.toWebSocket.get(socketId);
+
+    if (websocket) {
+      websocket.send(JSON.stringify({ kind, result }));
+    }
+  });
 }
 
 export function handleUncaughtExceptionsAndRejections() {
