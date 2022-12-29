@@ -8,10 +8,6 @@ import { UserCreate, UserRole } from "./user.types";
 
 export const userMutations = {
   createUser: async (data: UserCreate) => {
-    if (data.password.length < config.MINIMUM_PASSWORD_SIZE) {
-      throw new userErrors.MinimumPasswordSizeError();
-    }
-
     const existingUserWithUsername = await userQueries.userByUsername(
       data.username
     );

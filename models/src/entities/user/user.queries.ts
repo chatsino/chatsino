@@ -4,6 +4,7 @@ import { createUserRepository, User } from "./user.schema";
 import { UserRole } from "./user.types";
 
 export const userQueries = {
+  user: userCrud.read,
   allUsers: () =>
     executeCommand((client) =>
       createUserRepository(client).search().return.all()
@@ -19,7 +20,7 @@ export const userQueries = {
         .where("username")
         .equals(username)
         .return.first()
-    ) as Promise<User>,
+    ) as Promise<null | User>,
   usersByUsernameList: (...usernames: string[]) =>
     executeCommand((client) =>
       createUserRepository(client)
