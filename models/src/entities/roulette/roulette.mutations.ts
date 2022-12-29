@@ -2,12 +2,7 @@ import * as config from "config";
 import { createLogger } from "helpers";
 import { createClient } from "redis";
 import { UserEntity } from "../user";
-import {
-  NO_MORE_BETS_DURATION,
-  SPINNING_DURATION,
-  TAKING_BETS_DURATION,
-  TIME_BETWEEN_GAMES_DURATION,
-} from "./roulette.config";
+import { ROULETTE_STAGES } from "./roulette.config";
 import { rouletteCrud } from "./roulette.crud";
 import { rouletteErrors } from "./roulette.errors";
 import { rouletteQueries } from "./roulette.queries";
@@ -15,26 +10,6 @@ import { Roulette } from "./roulette.schema";
 import { RouletteStatus, UserRouletteBet } from "./roulette.types";
 
 export const ROULETTE_MUTATIONS_LOGGER = createLogger("Roulette Mutations");
-
-export const ROULETTE_STAGES: Array<{ key: RouletteStatus; duration: number }> =
-  [
-    {
-      key: "taking-bets",
-      duration: TAKING_BETS_DURATION,
-    },
-    {
-      key: "no-more-bets",
-      duration: NO_MORE_BETS_DURATION,
-    },
-    {
-      key: "spinning",
-      duration: SPINNING_DURATION,
-    },
-    {
-      key: "waiting",
-      duration: TIME_BETWEEN_GAMES_DURATION,
-    },
-  ];
 
 export const rouletteMutations = {
   handleGame: /* istanbul ignore next */ async () => {

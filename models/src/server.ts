@@ -4,7 +4,12 @@ import { createServer, Server } from "http";
 import { createLogger, guid } from "helpers";
 import { WebSocket, WebSocketServer } from "ws";
 import { buildSearchIndices, SUBSCRIBER } from "cache";
-import { CommonHandlerRequests, handleRequest } from "handlers/common";
+import {
+  CommonHandlerRequests,
+  handleRequest,
+  initializeRouletteHandlers,
+  initializeUserHandlers,
+} from "handlers";
 
 export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
@@ -14,7 +19,11 @@ export async function startServer() {
     "Chatsino-Models starting up."
   );
 
+  SERVER_LOGGER.info("Building search indices.");
   await buildSearchIndices();
+
+  SERVER_LOGGER.info("Initializing message handlers.");
+  await initializeMessageHandlers();
 
   SERVER_LOGGER.info("Initializing app.");
   const app = express();
@@ -29,11 +38,15 @@ export async function startServer() {
   }
 
   server.listen(config.PORT, () =>
-    SERVER_LOGGER.info(`Model server listening on port ${config.PORT}.`)
+    SERVER_LOGGER.info(`Chatsino-Models listening on port ${config.PORT}.`)
   );
 }
 
 // #region Helpers
+export function initializeMessageHandlers() {
+  return Promise.all([initializeRouletteHandlers(), initializeUserHandlers()]);
+}
+
 export function initializeSocketServer(server: Server) {
   const socketServer = new WebSocketServer({ noServer: true });
   const clients = {

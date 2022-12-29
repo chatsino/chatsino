@@ -1,4 +1,4 @@
-import { RouletteBetKind } from "./roulette.types";
+import { RouletteBetKind, RouletteStatus } from "./roulette.types";
 
 export const RED_NUMBERS = [
   1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
@@ -43,3 +43,23 @@ export const TAKING_BETS_DURATION = 60 * 15; // 15 minutes
 export const NO_MORE_BETS_DURATION = 5; // 5 seconds
 export const SPINNING_DURATION = 5; // 5 seconds
 export const TIME_BETWEEN_GAMES_DURATION = 10; // 10 seconds
+
+export const ROULETTE_STAGES: Array<{ key: RouletteStatus; duration: number }> =
+  [
+    {
+      key: "taking-bets",
+      duration: TAKING_BETS_DURATION,
+    },
+    {
+      key: "no-more-bets",
+      duration: NO_MORE_BETS_DURATION,
+    },
+    {
+      key: "spinning",
+      duration: SPINNING_DURATION,
+    },
+    {
+      key: "waiting",
+      duration: TIME_BETWEEN_GAMES_DURATION,
+    },
+  ];

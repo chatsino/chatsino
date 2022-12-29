@@ -64,8 +64,6 @@ export async function executeCommand(
 }
 
 export async function buildSearchIndices() {
-  CACHE_LOGGER.info("Building entity search indices.");
-
   return Promise.all(
     [
       entities.MessageEntity,
