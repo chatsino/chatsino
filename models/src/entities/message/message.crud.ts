@@ -51,7 +51,9 @@ export const messageCrud = {
       await createMessageRepository(client).save(message);
 
       return message;
-    }),
+    }) as Promise<Message>,
   delete: (id: string) =>
-    executeCommand((client) => createMessageRepository(client).remove(id)),
+    executeCommand((client) =>
+      createMessageRepository(client).remove(id)
+    ) as Promise<Message>,
 };

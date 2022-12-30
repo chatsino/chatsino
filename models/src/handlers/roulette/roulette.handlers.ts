@@ -7,9 +7,10 @@ export const initializeRouletteHandlers = () => {
   // Queries
   SUBSCRIBER.subscribe(RouletteRequests.GetActiveGame, async (message) => {
     const { socketId, kind } = parseRequest(message);
-    const game = await RouletteEntity.queries.activeGame();
 
     try {
+      const game = await RouletteEntity.queries.activeGame();
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully got active game.",
@@ -30,9 +31,10 @@ export const initializeRouletteHandlers = () => {
   // Mutations
   SUBSCRIBER.subscribe(RouletteRequests.HandleGame, async (message) => {
     const { socketId, kind } = parseRequest(message);
-    const game = await RouletteEntity.mutations.handleGame();
 
     try {
+      const game = await RouletteEntity.mutations.handleGame();
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully handled game.",

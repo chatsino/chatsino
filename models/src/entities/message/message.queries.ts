@@ -1,7 +1,9 @@
 import { executeCommand } from "cache";
+import { messageCrud } from "./message.crud";
 import { createMessageRepository, Message } from "./message.schema";
 
 export const messageQueries = {
+  message: messageCrud.read,
   allMessages: () =>
     executeCommand((client) =>
       createMessageRepository(client).search().return.all()

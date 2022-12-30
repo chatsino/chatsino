@@ -6,6 +6,7 @@ import {
   handleRequest,
   initializeRouletteHandlers,
   initializeUserHandlers,
+  initializeMessageHandlers,
   isValidRequest,
 } from "handlers";
 import { createLogger, guid } from "helpers";
@@ -23,8 +24,8 @@ export async function startServer() {
   SERVER_LOGGER.info("Building search indices.");
   await buildSearchIndices();
 
-  SERVER_LOGGER.info("Initializing message handlers.");
-  await initializeMessageHandlers();
+  SERVER_LOGGER.info("Initializing socket message handlers.");
+  await initializeSocketMessageHandlers();
 
   SERVER_LOGGER.info("Initializing app.");
   const app = express();
@@ -44,8 +45,12 @@ export async function startServer() {
 }
 
 // #region Helpers
-export function initializeMessageHandlers() {
-  return Promise.all([initializeRouletteHandlers(), initializeUserHandlers()]);
+export function initializeSocketMessageHandlers() {
+  return Promise.all([
+    initializeRouletteHandlers(),
+    initializeUserHandlers(),
+    initializeMessageHandlers(),
+  ]);
 }
 
 export function initializeSocketServer(server: Server) {

@@ -2,6 +2,7 @@ import { messageCrud } from "./message.crud";
 import { Message } from "./message.schema";
 import { MessageCreate } from "./message.types";
 import { messageErrors } from "./message.errors";
+import { UserEntity } from "entities/user";
 
 export const messageMutations = {
   createMessage: async (data: MessageCreate) => {
@@ -31,8 +32,9 @@ export const messageMutations = {
   },
   deleteMessage: async (messageId: string, userId: string) => {
     const message = await messageCrud.read(messageId);
+    const user = await UserEntity.crud.read(userId);
 
-    if (userId !== message.userId) {
+    if (userId !== message.userId && !user.isModerator) {
       throw new messageErrors.ForbiddenDeleteError();
     }
 
