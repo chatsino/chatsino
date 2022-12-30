@@ -1,13 +1,11 @@
-import { buildSearchIndices, SUBSCRIBER } from "cache";
+import { SUBSCRIBER } from "cache";
 import * as config from "config";
+import { buildSearchIndices } from "entities";
 import express from "express";
 import {
   CommonHandlerRequests,
   handleRequest,
-  initializeMessageHandlers,
-  initializeRoomHandlers,
-  initializeRouletteHandlers,
-  initializeUserHandlers,
+  initializeSocketMessageHandlers,
   isValidRequest,
 } from "handlers";
 import { createLogger, guid } from "helpers";
@@ -46,15 +44,6 @@ export async function startServer() {
 }
 
 // #region Helpers
-export function initializeSocketMessageHandlers() {
-  return Promise.all([
-    initializeRouletteHandlers(),
-    initializeUserHandlers(),
-    initializeMessageHandlers(),
-    initializeRoomHandlers(),
-  ]);
-}
-
 export function initializeSocketServer(server: Server) {
   const socketServer = new WebSocketServer({ noServer: true });
   const clients = {

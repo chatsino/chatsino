@@ -1,8 +1,7 @@
 import * as config from "config";
-import { createClient } from "redis";
 import { createLogger } from "helpers";
+import { createClient } from "redis";
 import { Client } from "redis-om";
-import * as entities from "./entities";
 
 export const CACHE_LOGGER = createLogger(config.LOGGER_NAMES.CACHE);
 
@@ -61,16 +60,4 @@ export async function executeCommand(
 
     throw error;
   }
-}
-
-export async function buildSearchIndices() {
-  return Promise.all(
-    [
-      entities.MessageEntity,
-      entities.RoomEntity,
-      entities.RouletteEntity,
-      entities.SniperEntity,
-      entities.UserEntity,
-    ].map((entity) => entity.createIndex())
-  );
 }
