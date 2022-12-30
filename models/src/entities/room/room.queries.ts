@@ -6,6 +6,7 @@ import { createRoomRepository, Room } from "./room.schema";
 import { OnlyPermissionMarker } from "./room.types";
 
 export const roomQueries = {
+  room: roomCrud.read,
   allRooms: () =>
     executeCommand((client) =>
       createRoomRepository(client)

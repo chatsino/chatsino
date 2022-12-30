@@ -4,9 +4,10 @@ import express from "express";
 import {
   CommonHandlerRequests,
   handleRequest,
+  initializeMessageHandlers,
+  initializeRoomHandlers,
   initializeRouletteHandlers,
   initializeUserHandlers,
-  initializeMessageHandlers,
   isValidRequest,
 } from "handlers";
 import { createLogger, guid } from "helpers";
@@ -50,6 +51,7 @@ export function initializeSocketMessageHandlers() {
     initializeRouletteHandlers(),
     initializeUserHandlers(),
     initializeMessageHandlers(),
+    initializeRoomHandlers(),
   ]);
 }
 
