@@ -242,9 +242,7 @@ export const roomMutations = {
 
     room.messages.push(message.id);
 
-    await roomCrud.update(roomId, room);
-
-    return room;
+    return roomCrud.update(roomId, room);
   },
   sendDirectMessage: async (
     sendingUserId: string,
@@ -263,6 +261,7 @@ export const roomMutations = {
     let existingDirectMessageRoom = await roomQueries.roomById(
       Room.serializeDirectMessageRoomId(sendingUserId, receivingUserId)
     );
+    const alreadyExisted = Boolean(existingDirectMessageRoom);
 
     if (!existingDirectMessageRoom) {
       existingDirectMessageRoom = await roomMutations.createDirectMessageRoom(
@@ -279,12 +278,13 @@ export const roomMutations = {
 
     existingDirectMessageRoom.messages.push(message.id);
 
-    await roomCrud.update(
-      existingDirectMessageRoom.entityId,
-      existingDirectMessageRoom
-    );
-
-    return existingDirectMessageRoom;
+    return {
+      room: await roomCrud.update(
+        existingDirectMessageRoom.entityId,
+        existingDirectMessageRoom
+      ),
+      alreadyExisted,
+    };
   },
   pinMessage: async (roomId: string, userId: string, messageId: string) => {
     const room = await roomCrud.read(roomId);

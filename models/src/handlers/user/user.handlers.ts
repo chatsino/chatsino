@@ -1,6 +1,7 @@
-import { SUBSCRIBER } from "cache";
+import { PUBLISHER, SUBSCRIBER } from "cache";
 import { UserEntity, UserRole } from "entities";
 import { parseRequest, respondTo } from "../common";
+import { UserEvents } from "./user.events";
 import { UserRequests } from "./user.requests";
 import { userValidators } from "./user.validators";
 
@@ -289,6 +290,13 @@ export const initializeUserHandlers = () => {
       );
       const user = await UserEntity.mutations.createUser(userCreate);
 
+      await PUBLISHER.publish(
+        UserEvents.UserCreated,
+        JSON.stringify({
+          user,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully created a user.",
@@ -317,6 +325,13 @@ export const initializeUserHandlers = () => {
         modifyingUserId,
         modifiedUserId,
         role as UserRole
+      );
+
+      await PUBLISHER.publish(
+        UserEvents.UserChanged,
+        JSON.stringify({
+          user,
+        })
       );
 
       return respondTo(socketId, kind, {
@@ -348,6 +363,13 @@ export const initializeUserHandlers = () => {
         duration
       );
 
+      await PUBLISHER.publish(
+        UserEvents.UserChanged,
+        JSON.stringify({
+          user,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully temporarily banned a user.",
@@ -377,6 +399,13 @@ export const initializeUserHandlers = () => {
         modifiedUserId
       );
 
+      await PUBLISHER.publish(
+        UserEvents.UserChanged,
+        JSON.stringify({
+          user,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully permanently banned a user.",
@@ -403,6 +432,13 @@ export const initializeUserHandlers = () => {
       ].validate(args);
       const user = await UserEntity.mutations.chargeUser(userId, amount);
 
+      await PUBLISHER.publish(
+        UserEvents.UserChanged,
+        JSON.stringify({
+          user,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully charged a user.",
@@ -428,6 +464,13 @@ export const initializeUserHandlers = () => {
         UserRequests.PayUser
       ].validate(args);
       const user = await UserEntity.mutations.payUser(userId, amount);
+
+      await PUBLISHER.publish(
+        UserEvents.UserChanged,
+        JSON.stringify({
+          user,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,

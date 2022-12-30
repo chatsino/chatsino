@@ -401,19 +401,23 @@ describe("Room Mutations", () => {
     it("should create a direct message and add it to a private room", async () => {
       expect(directMessageRoom.messages).toHaveLength(0);
 
-      directMessageRoom = await RoomEntity.mutations.sendDirectMessage(
-        userA.id,
-        userB.id,
-        CHANCE.sentence()
-      );
+      directMessageRoom = (
+        await RoomEntity.mutations.sendDirectMessage(
+          userA.id,
+          userB.id,
+          CHANCE.sentence()
+        )
+      ).room;
 
       expect(directMessageRoom.messages).toHaveLength(1);
 
-      directMessageRoom = await RoomEntity.mutations.sendDirectMessage(
-        userB.id,
-        userA.id,
-        CHANCE.sentence()
-      );
+      directMessageRoom = (
+        await RoomEntity.mutations.sendDirectMessage(
+          userB.id,
+          userA.id,
+          CHANCE.sentence()
+        )
+      ).room;
 
       expect(directMessageRoom.messages).toHaveLength(2);
     });

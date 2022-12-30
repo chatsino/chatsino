@@ -1,6 +1,7 @@
-import { SUBSCRIBER } from "cache";
+import { PUBLISHER, SUBSCRIBER } from "cache";
 import { PermissionMarker, RoomEntity } from "entities";
 import { parseRequest, respondTo } from "../common";
+import { RoomEvents } from "./room.events";
 import { RoomRequests } from "./room.requests";
 import { roomValidators } from "./room.validators";
 
@@ -242,6 +243,13 @@ export const initializeRoomHandlers = () => {
       );
       const room = await RoomEntity.mutations.createRoom(roomCreate);
 
+      await PUBLISHER.publish(
+        RoomEvents.RoomCreated,
+        JSON.stringify({
+          room,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully created a room.",
@@ -271,6 +279,13 @@ export const initializeRoomHandlers = () => {
         description,
         password,
       });
+
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,
@@ -302,6 +317,13 @@ export const initializeRoomHandlers = () => {
         password
       );
 
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully joined a room.",
@@ -327,6 +349,13 @@ export const initializeRoomHandlers = () => {
         RoomRequests.LeaveRoom
       ].validate(args);
       const room = await RoomEntity.mutations.leaveRoom(roomId, userId);
+
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,
@@ -356,6 +385,13 @@ export const initializeRoomHandlers = () => {
         roomId,
         modifyingUserId,
         modifiedUserId
+      );
+
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
       );
 
       return respondTo(socketId, kind, {
@@ -388,6 +424,13 @@ export const initializeRoomHandlers = () => {
         modifiedUserId
       );
 
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully toggled blacklist permissions for a room.",
@@ -418,6 +461,13 @@ export const initializeRoomHandlers = () => {
         modifiedUserId
       );
 
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully toggled whitelist permissions for a room.",
@@ -446,6 +496,13 @@ export const initializeRoomHandlers = () => {
         roomId,
         modifyingUserId,
         modifiedUserId
+      );
+
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
       );
 
       return respondTo(socketId, kind, {
@@ -479,6 +536,13 @@ export const initializeRoomHandlers = () => {
         password
       );
 
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully sent a message a room.",
@@ -503,10 +567,18 @@ export const initializeRoomHandlers = () => {
       const { sendingUserId, receivingUserId, content } = await roomValidators[
         RoomRequests.SendDirectMessage
       ].validate(args);
-      const room = await RoomEntity.mutations.sendDirectMessage(
-        sendingUserId,
-        receivingUserId,
-        content
+      const { room, alreadyExisted } =
+        await RoomEntity.mutations.sendDirectMessage(
+          sendingUserId,
+          receivingUserId,
+          content
+        );
+
+      await PUBLISHER.publish(
+        alreadyExisted ? RoomEvents.RoomChanged : RoomEvents.RoomCreated,
+        JSON.stringify({
+          room,
+        })
       );
 
       return respondTo(socketId, kind, {
@@ -539,6 +611,13 @@ export const initializeRoomHandlers = () => {
         messageId
       );
 
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully pinned a message.",
@@ -569,6 +648,13 @@ export const initializeRoomHandlers = () => {
         messageId
       );
 
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
+      );
+
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully removed a message.",
@@ -596,6 +682,13 @@ export const initializeRoomHandlers = () => {
       const room = await RoomEntity.mutations.removeUserMessages(
         roomId,
         userId
+      );
+
+      await PUBLISHER.publish(
+        RoomEvents.RoomChanged,
+        JSON.stringify({
+          room,
+        })
       );
 
       return respondTo(socketId, kind, {

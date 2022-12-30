@@ -1,6 +1,7 @@
-import { SUBSCRIBER } from "cache";
+import { PUBLISHER, SUBSCRIBER } from "cache";
 import { MessageEntity } from "entities";
 import { parseRequest, respondTo } from "../common";
+import { MessageEvents } from "./message.events";
 import { MessageRequests } from "./message.requests";
 import { messageValidators } from "./message.validators";
 
@@ -86,12 +87,22 @@ export const initializeMessageHandlers = () => {
       const messageCreate = await messageValidators[
         MessageRequests.CreateMessage
       ].validate(args);
+      const message = await MessageEntity.mutations.createMessage(
+        messageCreate
+      );
+
+      await PUBLISHER.publish(
+        MessageEvents.MessageCreated,
+        JSON.stringify({
+          message,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully created a message.",
         data: {
-          message: await MessageEntity.mutations.createMessage(messageCreate),
+          message,
         },
       });
     } catch (error) {
@@ -111,16 +122,24 @@ export const initializeMessageHandlers = () => {
       const { messageId, userId, content } = await messageValidators[
         MessageRequests.EditMessage
       ].validate(args);
+      const message = await MessageEntity.mutations.editMessage(
+        messageId,
+        userId,
+        content
+      );
+
+      await PUBLISHER.publish(
+        MessageEvents.MessageChanged,
+        JSON.stringify({
+          message,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully edited a message.",
         data: {
-          message: await MessageEntity.mutations.editMessage(
-            messageId,
-            userId,
-            content
-          ),
+          message,
         },
       });
     } catch (error) {
@@ -140,15 +159,23 @@ export const initializeMessageHandlers = () => {
       const { messageId, userId } = await messageValidators[
         MessageRequests.DeleteMessage
       ].validate(args);
+      const message = await MessageEntity.mutations.deleteMessage(
+        messageId,
+        userId
+      );
+
+      await PUBLISHER.publish(
+        MessageEvents.MessageDeleted,
+        JSON.stringify({
+          message,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully deleted a message.",
         data: {
-          message: await MessageEntity.mutations.deleteMessage(
-            messageId,
-            userId
-          ),
+          message,
         },
       });
     } catch (error) {
@@ -168,16 +195,24 @@ export const initializeMessageHandlers = () => {
       const { messageId, userId, reaction } = await messageValidators[
         MessageRequests.ReactToMessage
       ].validate(args);
+      const message = await MessageEntity.mutations.reactToMessage(
+        messageId,
+        userId,
+        reaction
+      );
+
+      await PUBLISHER.publish(
+        MessageEvents.MessageChanged,
+        JSON.stringify({
+          message,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully reacted to a message.",
         data: {
-          message: await MessageEntity.mutations.reactToMessage(
-            messageId,
-            userId,
-            reaction
-          ),
+          message,
         },
       });
     } catch (error) {
@@ -197,16 +232,24 @@ export const initializeMessageHandlers = () => {
       const { messageId, userId, option } = await messageValidators[
         MessageRequests.VoteInMessagePoll
       ].validate(args);
+      const message = await MessageEntity.mutations.voteInMessagePoll(
+        messageId,
+        userId,
+        option
+      );
+
+      await PUBLISHER.publish(
+        MessageEvents.MessageChanged,
+        JSON.stringify({
+          message,
+        })
+      );
 
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully reacted to a message.",
         data: {
-          message: await MessageEntity.mutations.voteInMessagePoll(
-            messageId,
-            userId,
-            option
-          ),
+          message,
         },
       });
     } catch (error) {
