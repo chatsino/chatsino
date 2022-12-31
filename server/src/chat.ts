@@ -36,13 +36,27 @@ export interface Room {
 export const CHAT_LOGGER = createLogger(config.LOGGER_NAMES.CHAT);
 
 export const CHAT = {
-  users: [] as User[],
-  rooms: [] as Room[],
-};
+  users: new Proxy([] as User[], {
+    set(target, property, value) {
+      target[property as any] = value;
 
-export enum CommonHandlerRequests {
-  Response = "response",
-}
+      // Alert everyone to the changed value.
+      CHAT_LOGGER.info({ value }, "Chat users were updated.");
+
+      return true;
+    },
+  }),
+  rooms: new Proxy([] as Room[], {
+    set(target, property, value) {
+      target[property as any] = value;
+
+      // Alert each room to the changed value.
+      CHAT_LOGGER.info({ value }, "Chat rooms were updated.");
+
+      return true;
+    },
+  }),
+};
 
 export enum UserRequests {
   // Queries
@@ -153,10 +167,10 @@ export async function initializeChat() {
 
         switch (kind) {
           case UserRequests.GetAllUsers: {
-            CHAT.users = data.users as User[];
+            CHAT.users.push(...(data.users as User[]));
           }
           case RoomRequests.AllPublicRooms: {
-            CHAT.rooms = data.rooms as Room[];
+            CHAT.rooms.push(...(data.rooms as Room[]));
           }
         }
       } catch (error) {
