@@ -1,4 +1,4 @@
-import { SUBSCRIBER } from "cache";
+import { initializeCache, SUBSCRIBER } from "cache";
 import * as config from "config";
 import { buildSearchIndices } from "entities";
 import express from "express";
@@ -19,6 +19,9 @@ export async function startServer() {
     { environment: process.env.NODE_ENV, version: config.VERSION },
     "Chatsino-Models starting up."
   );
+
+  SERVER_LOGGER.info("Starting cache.");
+  await initializeCache();
 
   SERVER_LOGGER.info("Building search indices.");
   await buildSearchIndices();
@@ -90,14 +93,11 @@ export function initializeSocketServer(server: Server) {
       try {
         const text = data.toString();
         const message = JSON.parse(text) as {
-          userId: string;
           kind: string;
           args?: Record<string, unknown>;
         };
 
-        if (!message.userId) {
-          throw new Error("Received message is missing userId.");
-        }
+        SERVER_LOGGER.info({ message }, "Received a request.");
 
         if (!message.kind) {
           throw new Error("Received message is missing a handler kind.");
@@ -109,12 +109,14 @@ export function initializeSocketServer(server: Server) {
 
         return handleRequest(
           clients.toId.get(websocket) as string,
-          message.userId,
           message.kind,
           message.args ?? {}
         );
       } catch (error) {
-        SERVER_LOGGER.info({ error }, "Error parsing received message.");
+        SERVER_LOGGER.info(
+          { error: error.message },
+          "Error parsing received message."
+        );
       }
     });
 
@@ -145,7 +147,7 @@ export function initializeSocketServer(server: Server) {
     config.CONNECTION_STATUS_CHECK_RATE_MS
   );
 
-  SUBSCRIBER.on(CommonHandlerRequests.Response, (message) => {
+  SUBSCRIBER.subscribe(CommonHandlerRequests.Response, (message) => {
     const { socketId, kind, result } = JSON.parse(message) as {
       socketId: string;
       kind: string;
@@ -155,7 +157,11 @@ export function initializeSocketServer(server: Server) {
     const websocket = clients.toWebSocket.get(socketId);
 
     if (websocket) {
+      SERVER_LOGGER.info({ socketId, kind, result }, "Responding to socket.");
+
       websocket.send(JSON.stringify({ kind, result }));
+    } else {
+      SERVER_LOGGER.info({ socketId }, "Socket no longer available.");
     }
   });
 }

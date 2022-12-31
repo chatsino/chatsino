@@ -43,7 +43,7 @@ export const initializeUserHandlers = () => {
         error: false,
         message: "Successfully got all users.",
         data: {
-          users: users.map((user) => user.fields),
+          users,
         },
       });
     } catch (error) {
@@ -92,7 +92,7 @@ export const initializeUserHandlers = () => {
           ? "Successfully got user by username."
           : "There is no such user with that username.",
         data: {
-          user: user ? user.fields : null,
+          user,
         },
       });
     } catch (error) {
@@ -118,7 +118,7 @@ export const initializeUserHandlers = () => {
         error: false,
         message: "Successfully got users by username list.",
         data: {
-          users: users.map((user) => user.fields),
+          users,
         },
       });
     } catch (error) {
@@ -141,7 +141,7 @@ export const initializeUserHandlers = () => {
         error: false,
         message: "Successfully got all moderators.",
         data: {
-          moderators: moderators.map((moderator) => moderator.fields),
+          moderators,
         },
       });
     } catch (error) {
@@ -164,9 +164,7 @@ export const initializeUserHandlers = () => {
         error: false,
         message: "Successfully got all administrators.",
         data: {
-          administrators: administrators.map(
-            (administrators) => administrators.fields
-          ),
+          administrators,
         },
       });
     } catch (error) {
@@ -189,7 +187,7 @@ export const initializeUserHandlers = () => {
         error: false,
         message: "Successfully got all operators.",
         data: {
-          operators: operators.map((operators) => operators.fields),
+          operators,
         },
       });
     } catch (error) {
@@ -212,7 +210,7 @@ export const initializeUserHandlers = () => {
         error: false,
         message: "Successfully got all banned users.",
         data: {
-          users: users.map((user) => user.fields),
+          users,
         },
       });
     } catch (error) {

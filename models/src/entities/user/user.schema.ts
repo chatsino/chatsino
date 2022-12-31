@@ -32,8 +32,7 @@ export class User extends Entity {
       lastActive: this.lastActive,
       role: this.role,
       banDuration: this.banDuration,
-      hash: this.hash,
-      salt: this.salt,
+      // hash & salt are not "public"
     };
   }
 

@@ -8,7 +8,7 @@ export const userQueries = {
   allUsers: () =>
     executeCommand((client) =>
       createUserRepository(client).search().return.all()
-    ) as Promise<User[]>,
+    ).then((users: User[]) => users.map((each) => each.fields)),
   totalUsers: () =>
     executeCommand((client) =>
       createUserRepository(client).search().return.count()
@@ -20,7 +20,7 @@ export const userQueries = {
         .where("username")
         .equals(username)
         .return.first()
-    ) as Promise<null | User>,
+    ).then((result: null | User) => (result ? result.fields : null)),
   usersByUsernameList: (...usernames: string[]) =>
     executeCommand((client) =>
       createUserRepository(client)
@@ -28,7 +28,7 @@ export const userQueries = {
         .where("username")
         .containOneOf(...usernames)
         .return.all()
-    ) as Promise<User[]>,
+    ).then((users: User[]) => users.map((each) => each.fields)),
   usersByRole: (role: UserRole) =>
     executeCommand((client) =>
       createUserRepository(client)
@@ -36,7 +36,7 @@ export const userQueries = {
         .where("role")
         .equals(role)
         .return.all()
-    ) as Promise<User[]>,
+    ).then((users: User[]) => users.map((each) => each.fields)),
   allModerators: () => userQueries.usersByRole("moderator"),
   allAdministrators: () => userQueries.usersByRole("administrator"),
   allOperators: () => userQueries.usersByRole("operator"),
@@ -49,7 +49,7 @@ export const userQueries = {
         .or("banDuration")
         .is.greaterThan(0)
         .return.all()
-    ) as Promise<User[]>,
+    ).then((users: User[]) => users.map((each) => each.fields)),
   canUserAfford: async (userId: string, amount: number) => {
     try {
       const user = await userCrud.read(userId);

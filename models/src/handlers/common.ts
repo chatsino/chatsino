@@ -19,7 +19,6 @@ export const respondTo = <
 
 export const handleRequest = (
   socketId: string,
-  userId: string,
   kind: string,
   args: Record<string, unknown> = {}
 ) => {
@@ -27,7 +26,6 @@ export const handleRequest = (
     kind,
     JSON.stringify({
       socketId,
-      userId,
       kind,
       args,
     })
