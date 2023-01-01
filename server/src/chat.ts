@@ -1,5 +1,12 @@
 import * as config from "config";
-import { sleep, updateInPlace } from "helpers";
+import {
+  CombinedSubscriptions,
+  RoomSocketEvents,
+  RoomSocketRequests,
+  UserSocketEvents,
+  UserSocketRequests,
+} from "enums";
+import { guid, sleep } from "helpers";
 import { createLogger } from "logger";
 import { WebSocket } from "ws";
 
@@ -33,125 +40,61 @@ export interface Room {
   pins: string[];
 }
 
-export enum RoomEvents {
-  RoomCreated = "room-created",
-  RoomChanged = "room-changed",
-}
-
-export interface Chat {
-  users: User[];
-  rooms: Room[];
-}
+export type ChatHandlers = Record<
+  string,
+  undefined | ((data: unknown) => unknown)
+>;
 
 export const CHAT_LOGGER = createLogger(config.LOGGER_NAMES.CHAT);
 
-export enum UserRequests {
-  // Queries
-  GetUser = "get-user",
-  GetAllUsers = "get-all-users",
-  GetTotalUsers = "get-total-users",
-  GetUserByUsername = "get-user-by-username",
-  GetUsersByUsernameList = "get-users-by-username-list",
-  GetAllModerators = "get-all-moderators",
-  GetAllAdministrators = "get-all-administrators",
-  GetAllOperators = "get-all-operators",
-  GetBannedUsers = "get-banned-users",
-  GetCanUserAfford = "get-can-user-afford",
-  GetIsCorrectPassword = "get-is-correct-password",
+const rolloffIndices: Record<string, number> = {};
 
-  // Mutations
-  CreateUser = "create-user",
-  ReassignUser = "reassign-user",
-  TempbanUser = "tempban-user",
-  PermabanUser = "permaban-user",
-  ChargeUser = "charge-user",
-  PayUser = "pay-user",
-  ChangeUserPassword = "change-user-password",
-}
-
-export enum UserEvents {
-  UserCreated = "user-created",
-  UserChanged = "user-changed",
-}
-
-export enum RoomRequests {
-  // Queries
-  Room = "room",
-  AllRooms = "all-rooms",
-  AllPublicRooms = "all-public-rooms",
-  TotalRooms = "total-rooms",
-  RoomByID = "room-by-id",
-  RoomByRoomTitle = "room-by-room-title",
-  MeetsRoomPermissionRequirement = "meets-room-permission-requirement",
-  RoomUsers = "room-users",
-  RoomMessages = "room-messages",
-
-  // Mutations
-  CreateRoom = "create-room",
-  UpdateRoom = "update-room",
-  JoinRoom = "join-room",
-  LeaveRoom = "leave-room",
-  ToggleCoOwner = "toggle-co-owner",
-  ToggleBlacklisted = "toggle-blacklisted",
-  ToggleWhitelisted = "toggle-whitelisted",
-  ToggleMuted = "toggle-muted",
-  SendMessage = "send-message",
-  SendDirectMessage = "send-direct-message",
-  PinMessage = "pin-message",
-  RemoveMessage = "remove-message",
-  RemoveUserMessages = "remove-user-messages",
-}
-
-let fibonacciRolloffIndex = 0;
-
-export async function initializeChat(
-  onChange: (chat: Chat) => unknown = () => {}
-) {
+export async function initializeChat(handlers: ChatHandlers) {
+  const chatId = guid();
   const modelSocket = new WebSocket(config.MODELS_CONNECTION_STRING);
+
+  let hasBeenManuallyClosed = false;
 
   await new Promise<void>((resolve) => {
     modelSocket.on("open", () => {
       CHAT_LOGGER.info("Socket connection to Chatsino-Models established.");
 
-      fibonacciRolloffIndex = 0;
+      rolloffIndices[chatId] = 0;
 
       resolve();
     });
     modelSocket.on("close", async () => {
       CHAT_LOGGER.info("Socket connection to Chatsino-Models terminated.");
 
-      const duration =
-        config.MODELS_RECONNECT_ATTEMPT_RATES_MS[fibonacciRolloffIndex++] ??
-        config.MODELS_RECONNECT_ATTEMPT_RATES_MS[
-          config.MODELS_RECONNECT_ATTEMPT_RATES_MS.length - 1
-        ];
+      if (!hasBeenManuallyClosed) {
+        const duration =
+          config.MODELS_RECONNECT_ATTEMPT_RATES_MS[rolloffIndices[chatId]++] ??
+          config.MODELS_RECONNECT_ATTEMPT_RATES_MS[
+            config.MODELS_RECONNECT_ATTEMPT_RATES_MS.length - 1
+          ];
 
-      await sleep(duration);
+        await sleep(duration);
 
-      CHAT_LOGGER.info(
-        { attempt: fibonacciRolloffIndex },
-        "Attempting to reconnect to Chatsino-Models."
-      );
+        CHAT_LOGGER.info(
+          { attempt: rolloffIndices[chatId] },
+          "Attempting to reconnect to Chatsino-Models."
+        );
 
-      return initializeChat(onChange);
+        return initializeChat(handlers);
+      }
     });
     modelSocket.on("error", (error) => {
       CHAT_LOGGER.error(
-        { error },
+        { error: error.message },
         "Socket connection to Chatsino-Models experienced an error."
       );
     });
   });
 
-  const chat: Chat = {
-    users: [],
-    rooms: [],
-  };
-
   modelSocket.on("message", (event) => {
     try {
       const { kind, result, data } = JSON.parse(event.toString()) as {
-        kind: string;
+        kind: CombinedSubscriptions;
         // For Requests:
         result?: {
           error: boolean;
@@ -161,10 +104,6 @@ export async function initializeChat(
         // For Events:
         data?: Record<string, unknown>;
       };
-
-      if (kind === "info") {
-        return;
-      }
 
       if (data) {
         CHAT_LOGGER.info(
@@ -176,59 +115,61 @@ export async function initializeChat(
         const room = data.room as Room;
 
         switch (kind) {
-          case UserEvents.UserCreated: {
-            chat.users.push(user);
+          case UserSocketEvents.UserCreated:
+          case UserSocketEvents.UserChanged: {
+            return handlers[kind]?.({ user });
           }
-          case UserEvents.UserChanged: {
-            chat.users = updateInPlace(user, chat.users);
-          }
-          case RoomEvents.RoomCreated: {
-            chat.rooms.push(room);
-          }
-          case RoomEvents.RoomChanged: {
-            chat.rooms = updateInPlace(room, chat.rooms);
+          case RoomSocketEvents.RoomCreated:
+          case RoomSocketEvents.RoomChanged: {
+            return handlers[kind]?.({ room });
           }
           default:
-            return onChange(chat);
+            return;
         }
-      } else {
-        const { error, message, data: requestData } = result!;
+      } else if (result) {
+        const { error, message, data: requestData } = result;
 
         CHAT_LOGGER.info(
           { error, message, kind },
           "Received a response from Chatsino-Models."
         );
 
-        const users = requestData.users as User[];
-        const rooms = requestData.rooms as Room[];
-
         switch (kind) {
-          case UserRequests.GetAllUsers: {
-            chat.users = users;
+          case UserSocketRequests.GetAllUsers: {
+            return handlers[kind]?.({ users: requestData.users as User[] });
           }
-          case RoomRequests.AllPublicRooms: {
-            chat.rooms = rooms;
+          case RoomSocketRequests.AllPublicRooms: {
+            return handlers[kind]?.({ rooms: requestData.rooms as Room[] });
           }
           default:
-            return onChange(chat);
+            return;
         }
+      } else {
+        CHAT_LOGGER.info({ kind });
       }
     } catch (error) {
       CHAT_LOGGER.error(
-        { error },
+        { error: error.message },
         "Socket connection to Chatsino-Models experienced an error."
       );
     }
   });
 
-  modelSocket.send(
-    JSON.stringify({
-      kind: UserRequests.GetAllUsers,
-    })
-  );
-  modelSocket.send(
-    JSON.stringify({
-      kind: RoomRequests.AllPublicRooms,
-    })
-  );
+  return {
+    request: (
+      kind: CombinedSubscriptions,
+      args: Record<string, unknown> = {}
+    ) => {
+      return modelSocket.send(
+        JSON.stringify({
+          kind,
+          args,
+        })
+      );
+    },
+    close: () => {
+      hasBeenManuallyClosed = true;
+      return modelSocket.close();
+    },
+  };
 }

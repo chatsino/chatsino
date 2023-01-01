@@ -120,11 +120,6 @@ export function initializeSocketServer(server: Server) {
         );
       }
     });
-
-    sendMessage(websocket, {
-      kind: "info",
-      message: "Connection established.",
-    });
   });
 
   server.on("upgrade", async (request, socket, head) => {

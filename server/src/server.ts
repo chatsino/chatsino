@@ -1,5 +1,4 @@
 import bodyParser from "body-parser";
-import { initializeChat } from "chat";
 import * as config from "config";
 import createRedisStore from "connect-redis";
 import cookieParser from "cookie-parser";
@@ -17,7 +16,7 @@ import {
 } from "persistence";
 import { createClient } from "redis";
 import * as routes from "routes";
-import { SocketServer } from "socket-server";
+import { initializeSocketServer } from "sockets";
 
 export const SERVER_LOGGER = createLogger(config.LOGGER_NAMES.SERVER);
 
@@ -50,14 +49,15 @@ export async function startServer() {
 
   SERVER_LOGGER.info("Initializing HTTPS and WebSocket servers.");
   const server = createServer(app);
-  const socketServer = new SocketServer();
-  server.on("upgrade", socketServer.handleUpgrade.bind(socketServer));
+  // const socketServer = new SocketServer();
+  // server.on("upgrade", socketServer.handleUpgrade.bind(socketServer));
+  initializeSocketServer(server);
 
   SERVER_LOGGER.info("Initializing feature managers.");
   initializeFeatureManagers();
 
-  SERVER_LOGGER.info("Initializing chat.");
-  await initializeChat();
+  // SERVER_LOGGER.info("Initializing chat.");
+  // await initializeChat();
 
   if (process.env.NODE_ENV === "production") {
     SERVER_LOGGER.info("Handling uncaught exceptions and rejections.");
@@ -110,6 +110,7 @@ function applyRoutes(app: Express) {
 function initializeFeatureManagers() {
   managers.initializeBlackjackManager();
   managers.initializeChatroomManager();
+  managers.initializeUserManager();
 }
 
 function handleUncaughtExceptionsAndRejections() {

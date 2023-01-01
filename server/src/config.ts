@@ -94,6 +94,7 @@ export enum LOGGER_NAMES {
   CLIENT_MANAGER = "Managers/Client",
   CHATROOM_MANAGER = "Managers/Chatroom",
   CHAT_MESSAGE_MANAGER = "Managers/ChatMessage",
+  USER_MANAGER = "Managers/User",
 
   // Chat
   CHAT = "Chat",

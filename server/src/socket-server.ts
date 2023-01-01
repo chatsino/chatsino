@@ -1,6 +1,6 @@
 import { validateTicket } from "auth";
 import * as config from "config";
-import { ChatMessageSocketRequests, ClientSocketRequests } from "enums";
+import { ClientSocketRequests } from "enums";
 import { Request } from "express";
 import { createLogger } from "logger";
 import { Client, ClientIdentifier, readHydratedChatroom } from "models";

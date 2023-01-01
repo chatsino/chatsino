@@ -9,4 +9,6 @@ export const API_CONNECTION_STRING = `ws://${API_HOST}:${API_PORT}/api`;
 
 export enum LOGGER_NAMES {
   SERVER = "Server",
+  SIMULATION = "Simulation",
+  SOCKETS = "Sockets",
 }
