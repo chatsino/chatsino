@@ -1,6 +1,6 @@
 import { PUBLISHER, SUBSCRIBER } from "cache";
 import { UserEntity, UserRole } from "entities";
-import { parseRequest, respondTo } from "../common";
+import { parseRequest, publishEvent, respondTo } from "../common";
 import { UserEvents } from "./user.events";
 import { UserRequests } from "./user.requests";
 import { userValidators } from "./user.validators";
@@ -288,12 +288,9 @@ export const initializeUserHandlers = () => {
       );
       const user = await UserEntity.mutations.createUser(userCreate);
 
-      await PUBLISHER.publish(
-        UserEvents.UserCreated,
-        JSON.stringify({
-          user,
-        })
-      );
+      await publishEvent(UserEvents.UserCreated, {
+        user,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -325,12 +322,9 @@ export const initializeUserHandlers = () => {
         role as UserRole
       );
 
-      await PUBLISHER.publish(
-        UserEvents.UserChanged,
-        JSON.stringify({
-          user,
-        })
-      );
+      await publishEvent(UserEvents.UserChanged, {
+        user,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -361,12 +355,9 @@ export const initializeUserHandlers = () => {
         duration
       );
 
-      await PUBLISHER.publish(
-        UserEvents.UserChanged,
-        JSON.stringify({
-          user,
-        })
-      );
+      await publishEvent(UserEvents.UserChanged, {
+        user,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -397,12 +388,9 @@ export const initializeUserHandlers = () => {
         modifiedUserId
       );
 
-      await PUBLISHER.publish(
-        UserEvents.UserChanged,
-        JSON.stringify({
-          user,
-        })
-      );
+      await publishEvent(UserEvents.UserChanged, {
+        user,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -430,12 +418,9 @@ export const initializeUserHandlers = () => {
       ].validate(args);
       const user = await UserEntity.mutations.chargeUser(userId, amount);
 
-      await PUBLISHER.publish(
-        UserEvents.UserChanged,
-        JSON.stringify({
-          user,
-        })
-      );
+      await publishEvent(UserEvents.UserChanged, {
+        user,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -463,12 +448,9 @@ export const initializeUserHandlers = () => {
       ].validate(args);
       const user = await UserEntity.mutations.payUser(userId, amount);
 
-      await PUBLISHER.publish(
-        UserEvents.UserChanged,
-        JSON.stringify({
-          user,
-        })
-      );
+      await publishEvent(UserEvents.UserChanged, {
+        user,
+      });
 
       return respondTo(socketId, kind, {
         error: false,

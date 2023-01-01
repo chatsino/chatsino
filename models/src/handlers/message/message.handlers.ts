@@ -1,6 +1,6 @@
 import { PUBLISHER, SUBSCRIBER } from "cache";
 import { MessageEntity } from "entities";
-import { parseRequest, respondTo } from "../common";
+import { parseRequest, publishEvent, respondTo } from "../common";
 import { MessageEvents } from "./message.events";
 import { MessageRequests } from "./message.requests";
 import { messageValidators } from "./message.validators";
@@ -91,12 +91,9 @@ export const initializeMessageHandlers = () => {
         messageCreate
       );
 
-      await PUBLISHER.publish(
-        MessageEvents.MessageCreated,
-        JSON.stringify({
-          message,
-        })
-      );
+      await publishEvent(MessageEvents.MessageCreated, {
+        message,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -128,12 +125,9 @@ export const initializeMessageHandlers = () => {
         content
       );
 
-      await PUBLISHER.publish(
-        MessageEvents.MessageChanged,
-        JSON.stringify({
-          message,
-        })
-      );
+      await publishEvent(MessageEvents.MessageChanged, {
+        message,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -164,12 +158,9 @@ export const initializeMessageHandlers = () => {
         userId
       );
 
-      await PUBLISHER.publish(
-        MessageEvents.MessageDeleted,
-        JSON.stringify({
-          message,
-        })
-      );
+      await publishEvent(MessageEvents.MessageDeleted, {
+        message,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -201,12 +192,9 @@ export const initializeMessageHandlers = () => {
         reaction
       );
 
-      await PUBLISHER.publish(
-        MessageEvents.MessageChanged,
-        JSON.stringify({
-          message,
-        })
-      );
+      await publishEvent(MessageEvents.MessageChanged, {
+        message,
+      });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -238,12 +226,9 @@ export const initializeMessageHandlers = () => {
         option
       );
 
-      await PUBLISHER.publish(
-        MessageEvents.MessageChanged,
-        JSON.stringify({
-          message,
-        })
-      );
+      await publishEvent(MessageEvents.MessageChanged, {
+        message,
+      });
 
       return respondTo(socketId, kind, {
         error: false,

@@ -1,6 +1,6 @@
 import { PUBLISHER, SUBSCRIBER } from "cache";
 import { PermissionMarker, RoomEntity } from "entities";
-import { parseRequest, respondTo } from "../common";
+import { parseRequest, publishEvent, respondTo } from "../common";
 import { RoomEvents } from "./room.events";
 import { RoomRequests } from "./room.requests";
 import { roomValidators } from "./room.validators";
@@ -243,6 +243,8 @@ export const initializeRoomHandlers = () => {
       );
       const room = await RoomEntity.mutations.createRoom(roomCreate);
 
+      await publishEvent(RoomEvents.RoomCreated, { room });
+
       await PUBLISHER.publish(
         RoomEvents.RoomCreated,
         JSON.stringify({
@@ -280,12 +282,7 @@ export const initializeRoomHandlers = () => {
         password,
       });
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -317,12 +314,7 @@ export const initializeRoomHandlers = () => {
         password
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -350,12 +342,7 @@ export const initializeRoomHandlers = () => {
       ].validate(args);
       const room = await RoomEntity.mutations.leaveRoom(roomId, userId);
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -387,12 +374,7 @@ export const initializeRoomHandlers = () => {
         modifiedUserId
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -424,12 +406,7 @@ export const initializeRoomHandlers = () => {
         modifiedUserId
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -461,12 +438,7 @@ export const initializeRoomHandlers = () => {
         modifiedUserId
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -498,12 +470,7 @@ export const initializeRoomHandlers = () => {
         modifiedUserId
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -536,12 +503,7 @@ export const initializeRoomHandlers = () => {
         password
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -611,12 +573,7 @@ export const initializeRoomHandlers = () => {
         messageId
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -648,12 +605,7 @@ export const initializeRoomHandlers = () => {
         messageId
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,
@@ -684,12 +636,7 @@ export const initializeRoomHandlers = () => {
         userId
       );
 
-      await PUBLISHER.publish(
-        RoomEvents.RoomChanged,
-        JSON.stringify({
-          room,
-        })
-      );
+      await publishEvent(RoomEvents.RoomChanged, { room });
 
       return respondTo(socketId, kind, {
         error: false,

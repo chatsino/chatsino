@@ -1,21 +1,15 @@
 import { PUBLISHER } from "cache";
 
+export type HandlerResponse = {
+  error?: boolean;
+  message: string;
+  data: Record<string, unknown>;
+};
+
 export enum CommonHandlerRequests {
   Response = "response",
+  Event = "event",
 }
-
-export const respondTo = <
-  T extends { error: boolean; message: string; data: Record<string, unknown> }
->(
-  socketId: string,
-  kind: string,
-  result: T
-) => {
-  return PUBLISHER.publish(
-    CommonHandlerRequests.Response,
-    JSON.stringify({ socketId, kind, result })
-  );
-};
 
 export const handleRequest = (
   socketId: string,
@@ -39,3 +33,19 @@ export const parseRequest = (message: string) =>
     kind: string;
     args: Record<string, unknown>;
   };
+
+export const respondTo = (
+  socketId: string,
+  kind: string,
+  result: HandlerResponse
+) =>
+  PUBLISHER.publish(
+    CommonHandlerRequests.Response,
+    JSON.stringify({ socketId, kind, result })
+  );
+
+export const publishEvent = (kind: string, data: HandlerResponse["data"]) =>
+  PUBLISHER.publish(
+    CommonHandlerRequests.Event,
+    JSON.stringify({ kind, data })
+  );
