@@ -1,7 +1,6 @@
 import * as config from "config";
-import { sleep } from "helpers";
+import { sleep, updateInPlace } from "helpers";
 import { createLogger } from "logger";
-import { Observable, Subscriber } from "rxjs";
 import { WebSocket } from "ws";
 
 export interface User {
@@ -105,26 +104,10 @@ export enum RoomRequests {
 
 let fibonacciRolloffIndex = 0;
 
-export async function initializeChat() {
+export async function initializeChat(
+  onChange: (chat: Chat) => unknown = () => {}
+) {
   const modelSocket = new WebSocket(config.MODELS_CONNECTION_STRING);
-
-  CHAT_LOGGER.info("Connected to Chatsino-Models -- initializing chat.");
-
-  const chat: Chat = {
-    users: [],
-    rooms: [],
-  };
-  const { observable, subscriber } = await new Promise<{
-    observable: Observable<Chat>;
-    subscriber: Subscriber<Chat>;
-  }>((resolve) => {
-    const observable = new Observable<Chat>((subscriber) => {
-      resolve({
-        observable,
-        subscriber,
-      });
-    });
-  });
 
   await new Promise<void>((resolve) => {
     modelSocket.on("open", () => {
@@ -150,89 +133,92 @@ export async function initializeChat() {
         "Attempting to reconnect to Chatsino-Models."
       );
 
-      initializeChat();
+      return initializeChat(onChange);
     });
-    modelSocket.on("error", () => {
+    modelSocket.on("error", (error) => {
       CHAT_LOGGER.error(
+        { error },
         "Socket connection to Chatsino-Models experienced an error."
       );
     });
-    modelSocket.on("message", (event) => {
-      try {
-        const {
-          kind,
-          result: { error, message, data },
-        } = JSON.parse(event.toString()) as {
-          kind: string;
-          result: {
-            error: boolean;
-            message: string;
-            data: Record<string, unknown>;
-          };
-        };
+  });
 
+  const chat: Chat = {
+    users: [],
+    rooms: [],
+  };
+
+  modelSocket.on("message", (event) => {
+    try {
+      const { kind, result, data } = JSON.parse(event.toString()) as {
+        kind: string;
+        // For Requests:
+        result?: {
+          error: boolean;
+          message: string;
+          data: Record<string, unknown>;
+        };
+        // For Events:
+        data?: Record<string, unknown>;
+      };
+
+      if (kind === "info") {
+        return;
+      }
+
+      if (data) {
         CHAT_LOGGER.info(
-          { kind, error, message },
-          "Received a socket message from Chatsino-Models."
+          { kind },
+          "Received a published event from Chatsino-Models."
         );
+
+        const user = data.user as User;
+        const room = data.room as Room;
 
         switch (kind) {
-          // Requests
-          case UserRequests.GetAllUsers: {
-            chat.users = data.users as User[];
-            return subscriber.next(chat);
-          }
-          case RoomRequests.AllPublicRooms: {
-            chat.rooms = data.rooms as Room[];
-            return subscriber.next(chat);
-          }
-          // Events
           case UserEvents.UserCreated: {
-            chat.users.push(data.user as User);
-            return subscriber.next(chat);
+            chat.users.push(user);
           }
           case UserEvents.UserChanged: {
-            const user = data.user as User;
-            const userIndex = chat.users.findIndex(
-              (each) => each.id === user.id
-            );
-
-            if (userIndex > -1) {
-              const earlierUsers = chat.users.slice(0, userIndex);
-              const laterUsers = chat.users.slice(userIndex + 1);
-
-              chat.users = [...earlierUsers, user, ...laterUsers];
-
-              return subscriber.next(chat);
-            }
+            chat.users = updateInPlace(user, chat.users);
           }
           case RoomEvents.RoomCreated: {
-            chat.rooms.push(data.room as Room);
-            return subscriber.next(chat);
+            chat.rooms.push(room);
           }
           case RoomEvents.RoomChanged: {
-            const room = data.room as Room;
-            const roomIndex = chat.rooms.findIndex(
-              (each) => each.id === room.id
-            );
-
-            if (roomIndex > -1) {
-              const earlierRooms = chat.rooms.slice(0, roomIndex);
-              const laterRooms = chat.rooms.slice(roomIndex + 1);
-
-              chat.rooms = [...earlierRooms, room, ...laterRooms];
-
-              return subscriber.next(chat);
-            }
+            chat.rooms = updateInPlace(room, chat.rooms);
           }
+          default:
+            return onChange(chat);
         }
-      } catch (error) {
-        CHAT_LOGGER.error(
-          { error },
-          "Socket connection to Chatsino-Models experienced an error."
+      } else {
+        const { error, message, data: requestData } = result!;
+
+        CHAT_LOGGER.info(
+          { error, message, kind },
+          "Received a response from Chatsino-Models."
         );
+
+        const users = requestData.users as User[];
+        const rooms = requestData.rooms as Room[];
+
+        switch (kind) {
+          case UserRequests.GetAllUsers: {
+            chat.users = users;
+          }
+          case RoomRequests.AllPublicRooms: {
+            chat.rooms = rooms;
+          }
+          default:
+            return onChange(chat);
+        }
       }
-    });
+    } catch (error) {
+      CHAT_LOGGER.error(
+        { error },
+        "Socket connection to Chatsino-Models experienced an error."
+      );
+    }
   });
 
   modelSocket.send(
@@ -245,17 +231,4 @@ export async function initializeChat() {
       kind: RoomRequests.AllPublicRooms,
     })
   );
-
-  observable.subscribe({
-    next(updatedChat) {
-      CHAT_LOGGER.info("Chat was updated.");
-      // Do stuff.
-    },
-    error(error: Error) {
-      CHAT_LOGGER.info({ error }, "Observable: Error");
-    },
-    complete() {
-      CHAT_LOGGER.info("Observable: Complete");
-    },
-  });
 }

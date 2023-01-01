@@ -1,3 +1,4 @@
+export * from "./arrays";
 export * from "./encryption";
 export * from "./generators";
 export * from "./numbers";

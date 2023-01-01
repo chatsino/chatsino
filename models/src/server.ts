@@ -5,6 +5,7 @@ import express from "express";
 import {
   CommonHandlerRequests,
   handleRequest,
+  HandlerResponse,
   initializeSocketMessageHandlers,
   isValidRequest,
 } from "handlers";
@@ -151,17 +152,39 @@ export function initializeSocketServer(server: Server) {
     const { socketId, kind, result } = JSON.parse(message) as {
       socketId: string;
       kind: string;
-      result: unknown;
+      result: HandlerResponse;
     };
 
     const websocket = clients.toWebSocket.get(socketId);
 
     if (websocket) {
-      SERVER_LOGGER.info({ socketId, kind, result }, "Responding to socket.");
+      SERVER_LOGGER.info({ socketId, kind }, "Responding to socket.");
 
-      websocket.send(JSON.stringify({ kind, result }));
+      sendMessage(websocket, {
+        kind,
+        result,
+      });
     } else {
       SERVER_LOGGER.info({ socketId }, "Socket no longer available.");
+    }
+  });
+
+  SUBSCRIBER.subscribe(CommonHandlerRequests.Event, (message) => {
+    const { kind, data } = JSON.parse(message) as {
+      kind: string;
+      data: HandlerResponse["data"];
+    };
+
+    SERVER_LOGGER.info(
+      { kind, recipients: clients.toWebSocket.keys() },
+      "Publishing an event."
+    );
+
+    for (const websocket of clients.toWebSocket.values()) {
+      sendMessage(websocket, {
+        kind,
+        data,
+      });
     }
   });
 }
