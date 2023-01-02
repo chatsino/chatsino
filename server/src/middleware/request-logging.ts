@@ -1,6 +1,6 @@
 import * as config from "config";
 import type { NextFunction, Request, Response } from "express";
-import { createLogger } from "logger";
+import { createLogger } from "helpers";
 
 export const REQUEST_LOGGER = createLogger(config.LOGGER_NAMES.REQUEST);
 

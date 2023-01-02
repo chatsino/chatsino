@@ -1,7 +1,7 @@
 import * as config from "config";
 import { Response } from "express";
-import { createLogger } from "logger";
 import { ValidationError } from "yup";
+import { createLogger } from "./logger";
 
 export const RESPONSE_LOGGER = createLogger(config.LOGGER_NAMES.RESPONSE);
 

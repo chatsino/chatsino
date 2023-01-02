@@ -1,6 +1,5 @@
 import * as config from "config";
-import { now } from "helpers";
-import { createLogger } from "logger";
+import { createLogger, now } from "helpers";
 import { createClient } from "redis";
 
 export type CacheConnectionStatus =

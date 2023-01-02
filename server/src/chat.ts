@@ -1,6 +1,5 @@
 import * as config from "config";
-import { guid, sleep } from "helpers";
-import { createLogger } from "logger";
+import { createLogger, guid, sleep } from "helpers";
 import {
   CombinedSubscriptions,
   Room,

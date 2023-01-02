@@ -1,7 +1,6 @@
 import * as config from "config";
 import { Request, Response, Router } from "express";
-import { errorResponse, successResponse } from "helpers";
-import { createLogger } from "logger";
+import { createLogger, errorResponse, successResponse } from "helpers";
 import { makeRequest, UserSocketRequests } from "models";
 
 export const USER_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.USER_ROUTER);

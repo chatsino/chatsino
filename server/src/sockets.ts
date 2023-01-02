@@ -1,8 +1,7 @@
 import { initializeChat } from "chat";
 import * as config from "config";
-import { guid } from "helpers";
+import { createLogger, guid } from "helpers";
 import { Server } from "http";
-import { createLogger } from "logger";
 import {
   CombinedRequests,
   Room,

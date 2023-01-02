@@ -1,8 +1,7 @@
 import * as config from "config";
 import { Request, Response, Router } from "express";
 import { stat, unlink } from "fs/promises";
-import { errorResponse, successResponse } from "helpers";
-import { createLogger } from "logger";
+import { createLogger, errorResponse, successResponse } from "helpers";
 import { requiredRoleMiddleware } from "middleware";
 import {
   makeRequest,

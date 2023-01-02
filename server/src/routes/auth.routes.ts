@@ -1,7 +1,6 @@
 import * as config from "config";
 import { Request, Response, Router } from "express";
-import { handleGenericErrors, successResponse } from "helpers";
-import { createLogger } from "logger";
+import { createLogger, handleGenericErrors, successResponse } from "helpers";
 import { makeRequest, User, UserSocketRequests, userValidators } from "models";
 import { issueTicket } from "tickets";
 
