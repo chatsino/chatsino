@@ -1,7 +1,7 @@
 import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse } from "helpers";
-import { authenticatedRouteMiddleware } from "middleware";
+import { requiredRoleMiddleware } from "middleware";
 import { User, userValidators } from "validators";
 import { makeRequest } from "_models";
 
@@ -12,7 +12,7 @@ export function createAdminRouter() {
   adminRouter.post("/pay-client", payUserRoute);
   adminRouter.post(
     "/change-permission",
-    authenticatedRouteMiddleware("admin:unlimited"),
+    requiredRoleMiddleware("admin:unlimited"),
     changeUserRoleRoute
   );
 

@@ -4,7 +4,7 @@ import { Request, Response, Router } from "express";
 import { stat, unlink } from "fs/promises";
 import { errorResponse, successResponse } from "helpers";
 import { createLogger } from "logger";
-import { authenticatedRouteMiddleware } from "middleware";
+import { requiredRoleMiddleware } from "middleware";
 import path from "path";
 import uuid from "uuid4";
 import {
@@ -25,37 +25,37 @@ export function createChatRouter() {
   chatRouter.get("/rooms/:roomId", getRoomRoute);
   chatRouter.post(
     "/rooms/:roomId/avatar",
-    authenticatedRouteMiddleware("user"),
+    requiredRoleMiddleware("user"),
     changeRoomAvatarRoute
   );
   chatRouter.post(
     "/rooms/:roomId/messages",
-    authenticatedRouteMiddleware("user"),
+    requiredRoleMiddleware("user"),
     sendChatMessageRoute
   );
   chatRouter.patch(
     "/rooms/:roomId/messages/:messageId",
-    authenticatedRouteMiddleware("user"),
+    requiredRoleMiddleware("user"),
     editChatMessageRoute
   );
   chatRouter.delete(
     "/rooms/:roomId/messages/:messageId",
-    authenticatedRouteMiddleware("user"),
+    requiredRoleMiddleware("user"),
     deleteChatMessageRoute
   );
   chatRouter.post(
     "/rooms/:roomId/messages/:messageId/reactions",
-    authenticatedRouteMiddleware("user"),
+    requiredRoleMiddleware("user"),
     reactToChatMessageRoute
   );
   chatRouter.post(
     "/rooms/:roomId/messages/:messageId/pin",
-    authenticatedRouteMiddleware("admin:limited"),
+    requiredRoleMiddleware("admin:limited"),
     pinChatMessageRoute
   );
   chatRouter.post(
     "/rooms/:roomId/messages/:messageId/vote",
-    authenticatedRouteMiddleware("user"),
+    requiredRoleMiddleware("user"),
     voteInPollRoute
   );
 

@@ -85,9 +85,7 @@ async function applyMiddleware(app: Express) {
       store: new RedisStore({ client: redisClient as any }),
     }),
     fileUpload(),
-    middleware.clientSettingMiddleware,
-    middleware.requestLoggingMiddleware,
-    middleware.cacheCheckingMiddleware
+    middleware.requestLoggingMiddleware
   );
 }
 

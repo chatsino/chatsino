@@ -1,18 +1,19 @@
 import * as config from "config";
-import type { NextFunction, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { createLogger } from "logger";
-import type { AuthenticatedRequest } from "./authenticated-route";
 
 const INCOMING_REQUEST_LOGGER = createLogger(config.LOGGER_NAMES.REQUEST);
 
 export function requestLoggingMiddleware(
-  req: AuthenticatedRequest,
+  req: Request,
   _: Response,
   next: NextFunction
 ) {
+  const { userId } = req.session as UserSession;
+
   INCOMING_REQUEST_LOGGER.info(
     {
-      client: req.chatsinoClient ?? null,
+      userId,
       ip: req.ip,
       path: req.path,
       query: req.query,
