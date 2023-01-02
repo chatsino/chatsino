@@ -1,6 +1,6 @@
 import Chance from "chance";
 import { makeRequest, setAuthorizationHeader } from "./make-request";
-import type { Client } from "persistence";
+import type { Client } from "cache";
 
 const CHANCE = new Chance();
 

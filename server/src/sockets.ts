@@ -1,4 +1,4 @@
-import { initializeChat, Room, User } from "chat";
+import { initializeChat } from "chat";
 import * as config from "config";
 import {
   CombinedRequests,
@@ -8,6 +8,7 @@ import {
 import { guid } from "helpers";
 import { Server } from "http";
 import { createLogger } from "logger";
+import { Room, User } from "validators";
 import { WebSocket, WebSocketServer } from "ws";
 
 export const SOCKETS_LOGGER = createLogger(config.LOGGER_NAMES.SOCKET_SERVER);

@@ -5,6 +5,7 @@ import { stat, unlink } from "fs/promises";
 import { errorResponse, successResponse } from "helpers";
 import { createLogger } from "logger";
 import { requiredRoleMiddleware } from "middleware";
+import { makeRequest } from "models";
 import path from "path";
 import uuid from "uuid4";
 import {
@@ -14,7 +15,6 @@ import {
   RoomPermission,
   roomValidators,
 } from "validators";
-import { makeRequest } from "_models";
 
 export const CHAT_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.CHAT_ROUTER);
 
@@ -50,7 +50,7 @@ export function createChatRouter() {
   );
   chatRouter.post(
     "/rooms/:roomId/messages/:messageId/pin",
-    requiredRoleMiddleware("admin:limited"),
+    requiredRoleMiddleware("user"),
     pinChatMessageRoute
   );
   chatRouter.post(

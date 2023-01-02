@@ -1,17 +1,11 @@
-import { issueTicket } from "auth";
 import * as config from "config";
 import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
-import { errorResponse, handleGenericErrors, successResponse } from "helpers";
+import { handleGenericErrors, successResponse } from "helpers";
 import { createLogger } from "logger";
-import { AuthenticatedRequest } from "middleware";
-import {
-  ClientNotFoundError as UserNotFoundError,
-  ClientWithUsernameExistsError,
-  IncorrectPasswordError,
-} from "models";
+import { makeRequest } from "models";
+import { issueTicket } from "tickets";
 import { User, userValidators } from "validators";
-import { makeRequest } from "_models";
 
 export const AUTH_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.AUTH_ROUTER);
 
@@ -79,10 +73,6 @@ export async function signupRoute(req: Request, res: Response) {
       "A request to sign up failed."
     );
 
-    if (error instanceof ClientWithUsernameExistsError) {
-      return errorResponse(res, error.message);
-    }
-
     return handleGenericErrors(res, error, "Unable to sign up.");
   }
 }
@@ -100,7 +90,7 @@ export async function signinRoute(req: Request, res: Response) {
     };
 
     if (!isCorrect) {
-      throw new IncorrectPasswordError();
+      throw new Error();
     }
 
     const user = await makeRequest(UserSocketRequests.GetUser, {
@@ -108,7 +98,7 @@ export async function signinRoute(req: Request, res: Response) {
     });
 
     if (!user) {
-      throw new UserNotFoundError();
+      throw new Error();
     }
 
     const session = req.session as UserSession;
@@ -121,15 +111,11 @@ export async function signinRoute(req: Request, res: Response) {
       "A request to sign in failed."
     );
 
-    if (error instanceof IncorrectPasswordError) {
-      return errorResponse(res, "Incorrect password.");
-    }
-
     return handleGenericErrors(res, error, "Unable to sign in.");
   }
 }
 
-export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
+export async function signoutRoute(req: Request, res: Response) {
   try {
     const { userId } = req.session as UserSession;
 
@@ -152,7 +138,7 @@ export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
   }
 }
 
-export async function ticketRoute(req: AuthenticatedRequest, res: Response) {
+export async function ticketRoute(req: Request, res: Response) {
   try {
     const { userId } = req.session as UserSession;
     const { remoteAddress } = req.socket;

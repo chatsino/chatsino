@@ -1,6 +1,6 @@
 import * as config from "config";
-import * as yup from "yup";
 import { RoomSocketRequests } from "enums";
+import * as yup from "yup";
 
 export enum RoomPermission {
   Owner = "O",

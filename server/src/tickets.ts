@@ -1,35 +1,39 @@
+import { clearCachedValue, getCachedValue, setCachedValue } from "cache";
 import * as config from "config";
+import { UserSocketRequests } from "enums";
 import { Request } from "express";
 import { decrypt, encrypt, now } from "helpers";
 import { createLogger } from "logger";
-import { Client, ClientNotFoundError, getClientByIdentifier } from "models";
+import { makeRequest } from "models";
 import querystring from "node:querystring";
-import { clearCachedValue, getCachedValue, setCachedValue } from "persistence";
+import { User } from "validators";
 
 export interface Ticket {
   issuedAt: number;
   issuedTo: string;
-  username: string;
+  userId: string;
 }
 
 export const TICKET_LOGGER = createLogger(config.LOGGER_NAMES.TICKET);
 
-export async function issueTicket(username: string, remoteAddress: string) {
-  const client = await getClientByIdentifier(username);
+export async function issueTicket(userId: string, remoteAddress: string) {
+  const { user } = (await makeRequest(UserSocketRequests.GetUser)) as {
+    user: Nullable<User>;
+  };
 
-  if (!client) {
-    throw new ClientNotFoundError();
+  if (!user || user.banDuration !== 0) {
+    throw new Error("User is not eligible to receive a ticket.");
   }
 
   const encryptedTicket = encryptTicket({
     issuedAt: now(),
     issuedTo: remoteAddress,
-    username,
+    userId,
   });
 
   await setCachedValue(
     `Tickets/${encryptedTicket}`,
-    JSON.stringify(client),
+    JSON.stringify(user),
     config.TICKET_CACHE_TTL_SECONDS
   );
 
@@ -50,15 +54,13 @@ export async function validateTicket(request: Request) {
     return null;
   }
 
-  const client = (await getCachedValue(`Tickets/${encryptedTicket}`)) as Client;
+  const user = (await getCachedValue(`Tickets/${encryptedTicket}`)) as User;
 
-  if (!client) {
-    TICKET_LOGGER.error({ client }, "Ticket not in cache.");
-
+  if (!user) {
     return null;
   }
 
-  const ticket = decryptTicket(encryptedTicket);
+  // const ticket = decryptTicket(encryptedTicket);
 
   // if (ticket.issuedTo !== remoteAddress) {
   //   TICKET_LOGGER.error(
@@ -71,7 +73,7 @@ export async function validateTicket(request: Request) {
 
   await clearCachedValue(`Tickets/${encryptedTicket}`);
 
-  return client;
+  return user;
 }
 
 export function encryptTicket(ticket: Ticket) {

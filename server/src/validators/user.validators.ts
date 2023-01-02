@@ -1,6 +1,6 @@
 import * as config from "config";
-import * as yup from "yup";
 import { UserSocketRequests } from "enums";
+import * as yup from "yup";
 
 export type UserRole = "user" | "moderator" | "administrator" | "operator";
 

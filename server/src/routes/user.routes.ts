@@ -3,7 +3,7 @@ import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse } from "helpers";
 import { createLogger } from "logger";
-import { makeRequest } from "_models";
+import { makeRequest } from "models";
 
 export const USER_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.USER_ROUTER);
 

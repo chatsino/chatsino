@@ -8,7 +8,7 @@ import {
   signout,
   validate,
 } from "../../utils";
-import type { Client } from "persistence";
+import type { Client } from "cache";
 
 const CHANCE = new Chance();
 

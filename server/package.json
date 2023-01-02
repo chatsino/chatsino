@@ -5,11 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "node ./esbuild",
-    "build:client": "cd ../client && yarn build && cp -r ./build ../server/public && cd ../server",
     "check:circular-dependencies": "npx madge -c --extensions ts,tsx ./src",
-    "seed": "NODE_ENV=development SCRIPT=seed yarn build && node build/chatsino",
     "start": "NODE_ENV=development yarn build && node build/chatsino | npx pino-pretty",
-    "start:test": "NODE_ENV=test yarn build && node build/chatsino | npx pino-pretty",
     "start:production": "NODE_ENV=production yarn build && node build/chatsino | npx pino-pretty",
     "test": "yarn test:unit",
     "test:api": "NODE_TLS_REJECT_UNAUTHORIZED=0 jest --config=api-tests/jest.config.js",

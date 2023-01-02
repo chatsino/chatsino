@@ -12,22 +12,16 @@ const options = {
   define: {
     "process.env.NODE_ENV": `"${process.env.NODE_ENV ?? "development"}"`,
     "process.env.VERSION": `"${package.version}"`,
-    "process.env.SCRIPT": process.env.SCRIPT
-      ? `"${process.env.SCRIPT}"`
-      : undefined,
     "process.env.PORT": process.env.PORT,
-    "process.env.POSTGRES_HOST": `"${process.env.POSTGRES_HOST}"`,
-    "process.env.POSTGRES_PORT": process.env.POSTGRES_PORT,
-    "process.env.POSTGRES_CONNECTION_STRING": `"${process.env.POSTGRES_CONNECTION_STRING}"`,
     "process.env.REDIS_HOST": `"${process.env.REDIS_HOST}"`,
     "process.env.REDIS_PORT": process.env.REDIS_PORT,
     "process.env.REDIS_CONNECTION_STRING": `"${process.env.REDIS_CONNECTION_STRING}"`,
-    "process.env.JWT_SECRET": `"${process.env.JWT_SECRET}"`,
-    "process.env.COOKIE_SECRET": `"${process.env.COOKIE_SECRET}"`,
-    "process.env.TICKET_SECRET": `"${process.env.TICKET_SECRET}"`,
     "process.env.MODELS_HOST": `"${process.env.MODELS_HOST}"`,
     "process.env.MODELS_PORT": process.env.MODELS_PORT,
     "process.env.MODELS_CONNECTION_STRING": `"${process.env.MODELS_CONNECTION_STRING}"`,
+    "process.env.SESSION_SECRET": `"${process.env.SESSION_SECRET}"`,
+    "process.env.COOKIE_SECRET": `"${process.env.COOKIE_SECRET}"`,
+    "process.env.TICKET_SECRET": `"${process.env.TICKET_SECRET}"`,
   },
   external: [
     "mysql2",
