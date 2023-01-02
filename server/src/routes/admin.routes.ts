@@ -1,79 +1,90 @@
+import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse } from "helpers";
 import { authenticatedRouteMiddleware } from "middleware";
-import {
-  changeClientPermissionLevel,
-  chargeClient,
-  ClientPermissionLevel,
-  payClient,
-} from "models";
-import { adminChangePermissionSchema, adminPaymentSchema } from "schemas";
+import { User, userValidators } from "validators";
+import { makeRequest } from "_models";
 
 export function createAdminRouter() {
   const adminRouter = Router();
 
-  adminRouter.post("/charge-client", chargeClientRoute);
-  adminRouter.post("/pay-client", payClientRoute);
+  adminRouter.post("/charge-client", chargeUserRoute);
+  adminRouter.post("/pay-client", payUserRoute);
   adminRouter.post(
     "/change-permission",
     authenticatedRouteMiddleware("admin:unlimited"),
-    changeClientPermissionRoute
+    changeUserRoleRoute
   );
 
   return adminRouter;
 }
 
-export async function chargeClientRoute(req: Request, res: Response) {
+export async function chargeUserRoute(req: Request, res: Response) {
   try {
-    const { clientId, amount } = await adminPaymentSchema.validate(req.body);
-    const charged = await chargeClient(clientId, amount, "Admin charge");
+    const { userId, amount } = await userValidators[
+      UserSocketRequests.ChargeUser
+    ].validate(req.body);
+    const { user } = (await makeRequest(UserSocketRequests.ChargeUser, {
+      userId,
+      amount,
+    })) as {
+      user: Nullable<User>;
+    };
 
-    if (!charged) {
+    if (!user) {
       throw new Error();
     }
 
-    return successResponse(res, "Successfully charged client.");
+    return successResponse(res, "Successfully charged user.");
   } catch (error) {
-    return errorResponse(res, "Unable to charge client.");
+    return errorResponse(res, "Unable to charge user.");
   }
 }
 
-export async function payClientRoute(req: Request, res: Response) {
+export async function payUserRoute(req: Request, res: Response) {
   try {
-    const { clientId, amount } = await adminPaymentSchema.validate(req.body);
-    const paid = await payClient(clientId, amount, "Admin payment");
+    const { userId, amount } = await userValidators[
+      UserSocketRequests.PayUser
+    ].validate(req.body);
+    const { user } = (await makeRequest(UserSocketRequests.PayUser, {
+      userId,
+      amount,
+    })) as {
+      user: Nullable<User>;
+    };
 
-    if (!paid) {
+    if (!user) {
       throw new Error();
     }
 
-    return successResponse(res, "Successfully paid client.");
+    return successResponse(res, "Successfully paid user.");
   } catch (error) {
-    return errorResponse(res, "Unable to pay client.");
+    return errorResponse(res, "Unable to pay user.");
   }
 }
 
-export async function changeClientPermissionRoute(req: Request, res: Response) {
+export async function changeUserRoleRoute(req: Request, res: Response) {
   try {
-    const { clientId, permissionLevel } =
-      await adminChangePermissionSchema.validate(req.body);
-    const client = await changeClientPermissionLevel(
-      clientId,
-      permissionLevel as ClientPermissionLevel
-    );
+    const { userId: modifyingUserId } = req.session as UserSession;
+    const { userId: modifiedUserId, role } = await userValidators[
+      UserSocketRequests.ReassignUser
+    ].validate(req.body);
+    const { user } = (await makeRequest(UserSocketRequests.ReassignUser, {
+      modifyingUserId,
+      modifiedUserId,
+      role,
+    })) as {
+      user: Nullable<User>;
+    };
 
-    if (!client) {
+    if (!user) {
       throw new Error();
     }
 
-    return successResponse(
-      res,
-      "Successfully changed client's permission level.",
-      {
-        client,
-      }
-    );
+    return successResponse(res, "Successfully changed users's role.", {
+      user,
+    });
   } catch (error) {
-    return errorResponse(res, "Unable to change client's permission level.");
+    return errorResponse(res, "Unable to change user's role.");
   }
 }

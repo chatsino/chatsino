@@ -1,18 +1,17 @@
-import { assignToken, issueTicket, revokeToken } from "auth";
+import { issueTicket } from "auth";
 import * as config from "config";
+import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { errorResponse, handleGenericErrors, successResponse } from "helpers";
 import { createLogger } from "logger";
 import { AuthenticatedRequest } from "middleware";
 import {
-  ClientNotFoundError,
+  ClientNotFoundError as UserNotFoundError,
   ClientWithUsernameExistsError,
-  createClient,
   IncorrectPasswordError,
-  safetifyClient,
-  verifyClientPassword,
 } from "models";
-import { clientSigninSchema, clientSignupSchema } from "schemas";
+import { User, userValidators } from "validators";
+import { makeRequest } from "_models";
 
 export const AUTH_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.AUTH_ROUTER);
 
@@ -28,27 +27,57 @@ export function createAuthRouter() {
   return authRouter;
 }
 
-export async function validateRoute(req: AuthenticatedRequest, res: Response) {
-  return successResponse(res, "Validation request succeeded.", {
-    client: req.chatsinoClient,
-  });
+export async function validateRoute(req: Request, res: Response) {
+  try {
+    const { userId } = req.session as UserSession;
+    const user = (await makeRequest(UserSocketRequests.GetUser, {
+      userId,
+    })) as {
+      user: Nullable<User>;
+    };
+
+    return successResponse(res, "Validation request succeeded.", {
+      user,
+    });
+  } catch (error) {
+    AUTH_ROUTER_LOGGER.error(
+      { error: error.message },
+      "A request to validate failed."
+    );
+
+    return handleGenericErrors(res, error, "Unable to validate.");
+  }
 }
 
 export async function signupRoute(req: Request, res: Response) {
   try {
-    const { username, password } = await clientSignupSchema.validate(req.body);
-    const client = safetifyClient(await createClient(username, password));
-    const token = await assignToken(res, client);
+    const { avatar, username, password } = await userValidators[
+      UserSocketRequests.CreateUser
+    ].validate(req.body);
+    const { user } = (await makeRequest(UserSocketRequests.CreateUser, {
+      avatar,
+      username,
+      password,
+    })) as {
+      user: Nullable<User>;
+    };
+
+    if (!user) {
+      throw new Error("Failed to create user.");
+    }
+
     const session = req.session as UserSession;
 
-    session.userId = client.id.toString();
+    session.userId = user.id;
 
     return successResponse(res, "Successfully signed up.", {
-      client,
-      token,
+      user,
     });
   } catch (error) {
-    AUTH_ROUTER_LOGGER.error({ error }, "A request to sign up failed.");
+    AUTH_ROUTER_LOGGER.error(
+      { error: error.message },
+      "A request to sign up failed."
+    );
 
     if (error instanceof ClientWithUsernameExistsError) {
       return errorResponse(res, error.message);
@@ -60,25 +89,37 @@ export async function signupRoute(req: Request, res: Response) {
 
 export async function signinRoute(req: Request, res: Response) {
   try {
-    const { username, password } = await clientSigninSchema.validate(req.body);
-    const client = await verifyClientPassword(username, password);
+    const { userId, password } = await userValidators[
+      UserSocketRequests.GetIsCorrectPassword
+    ].validate(req.body);
+    const { isCorrect } = (await makeRequest(UserSocketRequests.CreateUser, {
+      userId,
+      password,
+    })) as {
+      isCorrect: boolean;
+    };
 
-    if (!client) {
-      throw new Error();
+    if (!isCorrect) {
+      throw new IncorrectPasswordError();
     }
 
-    const token = await assignToken(res, client);
+    const user = await makeRequest(UserSocketRequests.GetUser, {
+      userId,
+    });
+
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+
     const session = req.session as UserSession;
+    session.userId = userId;
 
-    session.userId = client.id.toString();
-
-    return successResponse(res, "Successfully signed in.", { client, token });
+    return successResponse(res, "Successfully signed in.", { user });
   } catch (error) {
-    AUTH_ROUTER_LOGGER.error({ error }, "A request to sign in failed.");
-
-    if (error instanceof ClientNotFoundError) {
-      return errorResponse(res, "Unable to sign in.");
-    }
+    AUTH_ROUTER_LOGGER.error(
+      { error: error.message },
+      "A request to sign in failed."
+    );
 
     if (error instanceof IncorrectPasswordError) {
       return errorResponse(res, "Incorrect password.");
@@ -90,13 +131,11 @@ export async function signinRoute(req: Request, res: Response) {
 
 export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
   try {
-    const { chatsinoClient } = req;
+    const { userId } = req.session as UserSession;
 
-    if (!chatsinoClient) {
+    if (!userId) {
       throw new Error();
     }
-
-    await revokeToken(res, chatsinoClient);
 
     await new Promise<void>((resolve, reject) =>
       req.session.destroy((err) => (err ? reject(err) : resolve()))
@@ -104,7 +143,10 @@ export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
 
     return successResponse(res, "Successfully signed out.");
   } catch (error) {
-    AUTH_ROUTER_LOGGER.error({ error }, "A request to sign out failed.");
+    AUTH_ROUTER_LOGGER.error(
+      { error: error.message },
+      "A request to signout failed."
+    );
 
     return handleGenericErrors(res, error, "Unable to sign out.");
   }
@@ -112,21 +154,19 @@ export async function signoutRoute(req: AuthenticatedRequest, res: Response) {
 
 export async function ticketRoute(req: AuthenticatedRequest, res: Response) {
   try {
-    const {
-      chatsinoClient,
-      socket: { remoteAddress },
-    } = req;
+    const { userId } = req.session as UserSession;
+    const { remoteAddress } = req.socket;
 
-    if (!chatsinoClient || !remoteAddress) {
-      throw new Error();
+    if (!userId || !remoteAddress) {
+      throw new Error("Invalid ticket request.");
     }
 
     return successResponse(res, "Ticket assigned.", {
-      ticket: await issueTicket(chatsinoClient.username, remoteAddress),
+      ticket: await issueTicket(userId, remoteAddress),
     });
   } catch (error) {
     AUTH_ROUTER_LOGGER.error(
-      { error },
+      { error: error.message },
       "A request to receive a ticket failed."
     );
 

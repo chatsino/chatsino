@@ -49,15 +49,10 @@ export async function startServer() {
 
   SERVER_LOGGER.info("Initializing HTTPS and WebSocket servers.");
   const server = createServer(app);
-  // const socketServer = new SocketServer();
-  // server.on("upgrade", socketServer.handleUpgrade.bind(socketServer));
   initializeSocketServer(server);
 
   SERVER_LOGGER.info("Initializing feature managers.");
   initializeFeatureManagers();
-
-  // SERVER_LOGGER.info("Initializing chat.");
-  // await initializeChat();
 
   if (process.env.NODE_ENV === "production") {
     SERVER_LOGGER.info("Handling uncaught exceptions and rejections.");

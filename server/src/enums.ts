@@ -1,6 +1,12 @@
-export type CombinedRequests = UserSocketRequests | RoomSocketRequests;
+export type CombinedRequests =
+  | UserSocketRequests
+  | MessageSocketRequests
+  | RoomSocketRequests;
 
-export type CombinedEvents = UserSocketEvents | RoomSocketEvents;
+export type CombinedEvents =
+  | UserSocketEvents
+  | MessageSocketEvents
+  | RoomSocketEvents;
 
 export type CombinedSubscriptions = CombinedRequests | CombinedEvents;
 
@@ -96,4 +102,24 @@ export enum RoomSocketRequests {
 export enum RoomSocketEvents {
   RoomCreated = "room-created",
   RoomChanged = "room-changed",
+}
+
+export enum MessageSocketRequests {
+  // Queries
+  GetMessage = "get-message",
+  GetTotalMessages = "get-total-messages",
+  GetUserMessages = "get-user-messages",
+
+  // Mutations
+  CreateMessage = "create-message",
+  EditMessage = "edit-message",
+  DeleteMessage = "delete-message",
+  ReactToMessage = "react-to-message",
+  VoteInMessagePoll = "vote-in-message-poll",
+}
+
+export enum MessageSocketEvents {
+  MessageCreated = "message-created",
+  MessageChanged = "message-changed",
+  MessageDeleted = "message-deleted",
 }
