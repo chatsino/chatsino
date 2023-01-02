@@ -41,7 +41,7 @@ export enum LOGGER_NAMES {
   SOCKET_SERVER = "Socket Server",
   TICKET = "Tickets",
 
-  // Router
+  // Routers
   AUTH_ROUTER = "Router/Auth",
   CHAT_ROUTER = "Router/Chat",
   USER_ROUTER = "Router/User",

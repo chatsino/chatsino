@@ -6,6 +6,7 @@ import { makeRequest, UserSocketRequests } from "models";
 
 export const USER_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.USER_ROUTER);
 
+// Router
 export function createUserRouter() {
   const userRouter = Router();
 
@@ -14,6 +15,7 @@ export function createUserRouter() {
   return userRouter;
 }
 
+// Routes
 export async function getUsersRoute(_: Request, res: Response) {
   try {
     const { users } = await makeRequest(UserSocketRequests.GetAllUsers);

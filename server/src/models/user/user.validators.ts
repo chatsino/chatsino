@@ -1,7 +1,6 @@
 import * as config from "config";
 import * as yup from "yup";
-import { UserSocketRequests } from "./user.subscriptions";
-import { UserRole } from "./user.types";
+import { UserRole, UserSocketRequests } from "./user.types";
 
 export const USER_ROLE_RANKING: UserRole[] = [
   "user",

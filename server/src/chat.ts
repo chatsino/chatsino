@@ -130,14 +130,13 @@ export async function initializeChat(handlers: ChatHandlers) {
     request: (
       kind: CombinedSubscriptions,
       args: Record<string, unknown> = {}
-    ) => {
-      return modelSocket.send(
+    ) =>
+      modelSocket.send(
         JSON.stringify({
           kind,
           args,
         })
-      );
-    },
+      ),
     close: () => {
       hasBeenManuallyClosed = true;
       return modelSocket.close();

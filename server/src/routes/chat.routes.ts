@@ -19,6 +19,7 @@ import uuid from "uuid4";
 
 export const CHAT_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.CHAT_ROUTER);
 
+// Router
 export function createChatRouter() {
   const chatRouter = Router();
 
@@ -63,6 +64,7 @@ export function createChatRouter() {
   return chatRouter;
 }
 
+// Routes
 export async function getRoomsRoute(_: Request, res: Response) {
   try {
     const { rooms } = (await makeRequest(

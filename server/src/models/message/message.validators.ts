@@ -1,5 +1,5 @@
-import { MessageSocketRequests } from "./message.subscriptions";
 import * as yup from "yup";
+import { MessageSocketRequests } from "./message.types";
 
 const common = {
   entityId: yup.string().required(),

@@ -7,6 +7,7 @@ import { issueTicket } from "tickets";
 
 export const AUTH_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.AUTH_ROUTER);
 
+// Router
 export function createAuthRouter() {
   const authRouter = Router();
 
@@ -19,6 +20,7 @@ export function createAuthRouter() {
   return authRouter;
 }
 
+// Routes
 export async function validateRoute(req: Request, res: Response) {
   try {
     const { userId } = req.session as UserSession;

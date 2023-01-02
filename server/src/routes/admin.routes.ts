@@ -3,6 +3,7 @@ import { errorResponse, successResponse } from "helpers";
 import { requiredRoleMiddleware } from "middleware";
 import { makeRequest, User, UserSocketRequests, userValidators } from "models";
 
+// Router
 export function createAdminRouter() {
   const adminRouter = Router();
 
@@ -17,6 +18,7 @@ export function createAdminRouter() {
   return adminRouter;
 }
 
+// Routes
 export async function chargeUserRoute(req: Request, res: Response) {
   try {
     const { userId, amount } = await userValidators[

@@ -1,7 +1,6 @@
 import * as config from "config";
 import * as yup from "yup";
-import { RoomSocketRequests } from "./room.subscriptions";
-import { RoomPermission } from "./room.types";
+import { RoomPermission, RoomSocketRequests } from "./room.types";
 
 const common = {
   entityId: yup.string().required(),
