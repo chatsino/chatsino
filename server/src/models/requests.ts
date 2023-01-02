@@ -1,6 +1,20 @@
 import * as config from "config";
-import { CombinedRequests } from "enums";
 import { WebSocket } from "ws";
+import { MessageSocketEvents, MessageSocketRequests } from "./message";
+import { RoomSocketEvents, RoomSocketRequests } from "./room";
+import { UserSocketEvents, UserSocketRequests } from "./user";
+
+export type CombinedRequests =
+  | UserSocketRequests
+  | MessageSocketRequests
+  | RoomSocketRequests;
+
+export type CombinedEvents =
+  | UserSocketEvents
+  | MessageSocketEvents
+  | RoomSocketEvents;
+
+export type CombinedSubscriptions = CombinedRequests | CombinedEvents;
 
 export function makeRequest(
   kind: CombinedRequests,

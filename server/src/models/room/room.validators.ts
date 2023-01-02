@@ -1,31 +1,7 @@
 import * as config from "config";
-import { RoomSocketRequests } from "enums";
 import * as yup from "yup";
-
-export enum RoomPermission {
-  Owner = "O",
-  CoOwner = "C",
-  Guest = "G",
-  Talk = "T",
-  Muted = "M",
-  Blacklisted = "B",
-  Whitelisted = "W",
-}
-
-export interface Room {
-  id: string;
-  ownerId: string;
-  createdAt: string;
-  changedAt: string;
-  avatar: string;
-  title: string;
-  description: string;
-  password: string;
-  users: string[];
-  permissions: string[];
-  messages: string[];
-  pins: string[];
-}
+import { RoomSocketRequests } from "./room.subscriptions";
+import { RoomPermission } from "./room.types";
 
 const common = {
   entityId: yup.string().required(),

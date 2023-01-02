@@ -1,20 +1,21 @@
 import * as config from "config";
-import { MessageSocketRequests, RoomSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { stat, unlink } from "fs/promises";
 import { errorResponse, successResponse } from "helpers";
 import { createLogger } from "logger";
 import { requiredRoleMiddleware } from "middleware";
-import { makeRequest } from "models";
-import path from "path";
-import uuid from "uuid4";
 import {
+  makeRequest,
   Message,
+  MessageSocketRequests,
   messageValidators,
   Room,
   RoomPermission,
+  RoomSocketRequests,
   roomValidators,
-} from "validators";
+} from "models";
+import path from "path";
+import uuid from "uuid4";
 
 export const CHAT_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.CHAT_ROUTER);
 

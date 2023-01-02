@@ -2,7 +2,7 @@ import * as config from "config";
 import type { NextFunction, Request, Response } from "express";
 import { createLogger } from "logger";
 
-const INCOMING_REQUEST_LOGGER = createLogger(config.LOGGER_NAMES.REQUEST);
+export const REQUEST_LOGGER = createLogger(config.LOGGER_NAMES.REQUEST);
 
 export function requestLoggingMiddleware(
   req: Request,
@@ -11,7 +11,7 @@ export function requestLoggingMiddleware(
 ) {
   const { userId } = req.session as UserSession;
 
-  INCOMING_REQUEST_LOGGER.info(
+  REQUEST_LOGGER.info(
     {
       userId,
       ip: req.ip,

@@ -1,8 +1,6 @@
-import { UserSocketRequests } from "enums";
 import { NextFunction, Request, Response } from "express";
 import { errorResponse } from "helpers";
-import { makeRequest } from "models";
-import { User, UserRole } from "validators";
+import { makeRequest, User, UserRole, UserSocketRequests } from "models";
 
 export const USER_ROLE_RANKING: UserRole[] = [
   "user",

@@ -1,23 +1,7 @@
 import * as config from "config";
-import { UserSocketRequests } from "enums";
 import * as yup from "yup";
-
-export type UserRole = "user" | "moderator" | "administrator" | "operator";
-
-export interface User {
-  id: string;
-  createdAt: string;
-  changedAt: string;
-  avatar: string;
-  username: string;
-  chips: number;
-  sessionCount: number;
-  lastActive: string;
-  role: UserRole;
-  banDuration: number;
-  hash: string;
-  salt: string;
-}
+import { UserSocketRequests } from "./user.subscriptions";
+import { UserRole } from "./user.types";
 
 export const USER_ROLE_RANKING: UserRole[] = [
   "user",

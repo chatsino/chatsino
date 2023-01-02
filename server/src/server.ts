@@ -21,14 +21,6 @@ export async function startServer() {
     { environment: process.env.NODE_ENV, version: config.VERSION },
     "Chatsino-Server started up."
   );
-
-  SERVER_LOGGER.info(
-    {
-      cache: { host: config.REDIS_HOST, port: config.REDIS_PORT },
-      models: { host: config.MODELS_HOST, port: config.MODELS_PORT },
-    },
-    "Waiting for cache."
-  );
   await waitForCache();
 
   SERVER_LOGGER.info("Initializing redis.");

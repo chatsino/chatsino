@@ -1,17 +1,5 @@
-import { MessageSocketRequests } from "enums";
+import { MessageSocketRequests } from "./message.subscriptions";
 import * as yup from "yup";
-
-export interface Message {
-  id: string;
-  userId: string;
-  roomId: string;
-  createdAt: string;
-  changedAt: string;
-  content: string;
-  reactions: string[];
-  poll: string[];
-  mentions: string[];
-}
 
 const common = {
   entityId: yup.string().required(),

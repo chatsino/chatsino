@@ -1,5 +1,7 @@
 // Reusables
-declare type Nullable<T> = null | T;
+declare type Maybe<T> = T | undefined;
+
+declare type Nullable<T> = T | null;
 
 // Models
 declare type UserSession = {

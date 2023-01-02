@@ -1,9 +1,7 @@
-import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse } from "helpers";
 import { requiredRoleMiddleware } from "middleware";
-import { makeRequest } from "models";
-import { User, userValidators } from "validators";
+import { makeRequest, User, UserSocketRequests, userValidators } from "models";
 
 export function createAdminRouter() {
   const adminRouter = Router();

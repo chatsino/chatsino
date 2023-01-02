@@ -1,6 +1,5 @@
 import * as config from "config";
 import { now } from "helpers";
-import JWTRedis from "jwt-redis";
 import { createLogger } from "logger";
 import { createClient } from "redis";
 
@@ -16,10 +15,7 @@ export const CACHE_LOGGER = createLogger(config.LOGGER_NAMES.CACHE);
 export const REDIS = createClient({
   url: config.REDIS_CONNECTION_STRING,
 });
-export const PUBLISHER = REDIS.duplicate();
-export const SUBSCRIBER = REDIS.duplicate();
 
-export let JWT_REDIS: null | JWTRedis = null;
 export let CACHE_CONNECTION_STATUS: CacheConnectionStatus = "off";
 
 export async function initializeCache() {
@@ -30,22 +26,13 @@ export async function initializeCache() {
     REDIS.on("reconnecting", handleRedisReconnecting);
     REDIS.on("error", handleRedisError);
 
-    // Pub/Sub are duplicates so their errors will be handled from `redis`
-    PUBLISHER.on("error", ignoreError);
-    SUBSCRIBER.on("error", ignoreError);
-
     await REDIS.connect();
-    await PUBLISHER.connect();
-    await SUBSCRIBER.connect();
 
-    JWT_REDIS = new JWTRedis(REDIS as any);
     CACHE_CONNECTION_STATUS = "connected";
   }
 }
 
 export async function getCachedValue(key: string): Promise<unknown> {
-  ensureCacheConnected();
-
   let value = await REDIS.get(key);
 
   if (value) {
@@ -62,20 +49,12 @@ export async function setCachedValue(
   value: number | string,
   ttl?: number
 ) {
-  ensureCacheConnected();
   const options = ttl ? { EXAT: now() + ttl } : {};
   return REDIS.set(key, value, options);
 }
 
 export async function clearCachedValue(key: string) {
-  ensureCacheConnected();
   return REDIS.del(key);
-}
-
-export function ensureCacheConnected() {
-  if (CACHE_CONNECTION_STATUS !== "connected") {
-    throw new CacheNotConnectedError();
-  }
 }
 
 export function handleRedisConnection() {
@@ -98,7 +77,3 @@ export function handleRedisError(error: unknown) {
     CACHE_LOGGER.error({ error }, "Error.");
   }
 }
-
-export function ignoreError() {}
-
-export class CacheNotConnectedError extends Error {}

@@ -1,12 +1,10 @@
 import { clearCachedValue, getCachedValue, setCachedValue } from "cache";
 import * as config from "config";
-import { UserSocketRequests } from "enums";
 import { Request } from "express";
 import { decrypt, encrypt, now } from "helpers";
 import { createLogger } from "logger";
-import { makeRequest } from "models";
+import { makeRequest, User, UserSocketRequests } from "models";
 import querystring from "node:querystring";
-import { User } from "validators";
 
 export interface Ticket {
   issuedAt: number;

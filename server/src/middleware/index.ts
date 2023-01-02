@@ -1,2 +1,2 @@
-export * from "./required-role";
 export * from "./request-logging";
+export * from "./required-role";

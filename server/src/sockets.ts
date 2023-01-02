@@ -1,14 +1,15 @@
 import { initializeChat } from "chat";
 import * as config from "config";
-import {
-  CombinedRequests,
-  RoomSocketRequests,
-  UserSocketRequests,
-} from "enums";
 import { guid } from "helpers";
 import { Server } from "http";
 import { createLogger } from "logger";
-import { Room, User } from "validators";
+import {
+  CombinedRequests,
+  Room,
+  RoomSocketRequests,
+  User,
+  UserSocketRequests,
+} from "models";
 import { WebSocket, WebSocketServer } from "ws";
 
 export const SOCKETS_LOGGER = createLogger(config.LOGGER_NAMES.SOCKET_SERVER);

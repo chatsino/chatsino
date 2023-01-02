@@ -1,9 +1,8 @@
 import * as config from "config";
-import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { errorResponse, successResponse } from "helpers";
 import { createLogger } from "logger";
-import { makeRequest } from "models";
+import { makeRequest, UserSocketRequests } from "models";
 
 export const USER_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.USER_ROUTER);
 

@@ -1,11 +1,9 @@
 import * as config from "config";
-import { UserSocketRequests } from "enums";
 import { Request, Response, Router } from "express";
 import { handleGenericErrors, successResponse } from "helpers";
 import { createLogger } from "logger";
-import { makeRequest } from "models";
+import { makeRequest, User, UserSocketRequests, userValidators } from "models";
 import { issueTicket } from "tickets";
-import { User, userValidators } from "validators";
 
 export const AUTH_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.AUTH_ROUTER);
 
