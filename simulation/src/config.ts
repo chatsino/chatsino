@@ -1,6 +1,6 @@
 // General
 export const VERSION = process.env.VERSION as string;
-export const PORT = parseInt(process.env.PORT as string);
+export const PORT = process.env.PORT as string;
 
 // Redis
 export const API_HOST = "localhost";

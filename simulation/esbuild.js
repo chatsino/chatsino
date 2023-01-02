@@ -1,4 +1,3 @@
-require("./dotenv.config");
 const path = require("path");
 const { build } = require("esbuild");
 const package = require("./package.json");

@@ -34,7 +34,7 @@ export async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  SERVER_LOGGER.info("Initializing socket server.");
+  SERVER_LOGGER.info("Initializing WebSocket server.");
   initializeSocketServer(server);
 
   if (process.env.NODE_ENV === "production") {
@@ -42,7 +42,7 @@ export async function startServer() {
     handleUncaughtExceptionsAndRejections();
   }
 
-  server.listen(config.PORT, () =>
+  return server.listen(config.PORT, () =>
     SERVER_LOGGER.info(`Chatsino-Models listening on port ${config.PORT}.`)
   );
 }

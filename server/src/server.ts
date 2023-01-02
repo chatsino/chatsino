@@ -23,7 +23,7 @@ export async function startServer() {
   );
   await waitForCache();
 
-  SERVER_LOGGER.info("Initializing redis.");
+  SERVER_LOGGER.info("Initializing cache.");
   await initializeCache();
 
   SERVER_LOGGER.info("Initializing app.");
@@ -40,8 +40,8 @@ export async function startServer() {
     handleUncaughtExceptionsAndRejections();
   }
 
-  server.listen(config.PORT, () =>
-    SERVER_LOGGER.info(`Server listening on port ${config.PORT}.`)
+  return server.listen(config.PORT, () =>
+    SERVER_LOGGER.info(`Chatsino-Server listening on port ${config.PORT}.`)
   );
 }
 
