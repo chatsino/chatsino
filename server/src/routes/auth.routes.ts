@@ -47,13 +47,17 @@ export async function signupRoute(req: Request, res: Response) {
     const { avatar, username, password } = await userValidators[
       UserSocketRequests.CreateUser
     ].validate(req.body);
-    const { user } = (await makeRequest(UserSocketRequests.CreateUser, {
+    const result = (await makeRequest(UserSocketRequests.CreateUser, {
       avatar,
       username,
       password,
     })) as {
       user: Nullable<User>;
     };
+
+    AUTH_ROUTER_LOGGER.info({ result }, "Result.");
+
+    const { user } = result;
 
     if (!user) {
       throw new Error("Failed to create user.");
@@ -67,10 +71,7 @@ export async function signupRoute(req: Request, res: Response) {
       user,
     });
   } catch (error) {
-    AUTH_ROUTER_LOGGER.error(
-      { error: error.message },
-      "A request to sign up failed."
-    );
+    AUTH_ROUTER_LOGGER.error({ error }, "A request to sign up failed.");
 
     return handleGenericErrors(res, error, "Unable to sign up.");
   }
@@ -78,13 +79,16 @@ export async function signupRoute(req: Request, res: Response) {
 
 export async function signinRoute(req: Request, res: Response) {
   try {
-    const { userId, password } = await userValidators[
+    const { username, password } = await userValidators[
       UserSocketRequests.GetIsCorrectPassword
     ].validate(req.body);
-    const { isCorrect } = (await makeRequest(UserSocketRequests.CreateUser, {
-      userId,
-      password,
-    })) as {
+    const { isCorrect } = (await makeRequest(
+      UserSocketRequests.GetIsCorrectPassword,
+      {
+        username,
+        password,
+      }
+    )) as {
       isCorrect: boolean;
     };
 
@@ -92,16 +96,18 @@ export async function signinRoute(req: Request, res: Response) {
       throw new Error();
     }
 
-    const user = await makeRequest(UserSocketRequests.GetUser, {
-      userId,
-    });
+    const { user } = (await makeRequest(UserSocketRequests.GetUserByUsername, {
+      username,
+    })) as {
+      user: Nullable<User>;
+    };
 
     if (!user) {
       throw new Error();
     }
 
     const session = req.session as UserSession;
-    session.userId = userId;
+    session.userId = user.id;
 
     return successResponse(res, "Successfully signed in.", { user });
   } catch (error) {

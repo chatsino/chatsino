@@ -59,11 +59,15 @@ export const userQueries = {
       return false;
     }
   },
-  isCorrectPassword: async (userId: string, attempt: string) => {
+  isCorrectPassword: async (username: string, attempt: string) => {
     try {
-      const user = await userCrud.read(userId);
+      const userFields = await userQueries.userByUsername(username);
 
-      return user.checkPassword(attempt);
+      if (!userFields) {
+        return false;
+      }
+
+      return (await userCrud.read(userFields.id)!).checkPassword(attempt);
     } catch {
       return false;
     }

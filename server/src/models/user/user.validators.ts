@@ -54,7 +54,7 @@ export const userValidators = {
     .required(),
   [UserSocketRequests.GetIsCorrectPassword]: yup
     .object({
-      userId: common.userId,
+      username: common.username,
       password: common.password,
     })
     .noUnknown()
