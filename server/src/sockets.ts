@@ -5,8 +5,10 @@ import { Server } from "http";
 import {
   CombinedRequests,
   Room,
+  RoomSocketEvents,
   RoomSocketRequests,
   User,
+  UserSocketEvents,
   UserSocketRequests,
 } from "models";
 import { WebSocket, WebSocketServer } from "ws";
@@ -45,9 +47,15 @@ export function initializeSocketServer(server: Server) {
     SOCKETS_LOGGER.info("A new client connected.");
 
     const chat = await initializeChat({
+      // Requests
       [UserSocketRequests.GetAllUsers]: (data: { users: User[] }) =>
         sendMessage(websocket, {
           kind: UserSocketRequests.GetAllUsers,
+          data,
+        }),
+      [UserSocketRequests.GetUsersWithUsername]: (data: { users: User[] }) =>
+        sendMessage(websocket, {
+          kind: UserSocketRequests.GetUsersWithUsername,
           data,
         }),
       [RoomSocketRequests.AllPublicRooms]: (data: { rooms: Room[] }) =>
@@ -63,6 +71,27 @@ export function initializeSocketServer(server: Server) {
       [RoomSocketRequests.CreateRoom]: (data: { room: Room }) =>
         sendMessage(websocket, {
           kind: RoomSocketRequests.CreateRoom,
+          data,
+        }),
+      // Events
+      [UserSocketEvents.UserCreated]: (data: { user: User }) =>
+        sendMessage(websocket, {
+          kind: UserSocketEvents.UserCreated,
+          data,
+        }),
+      [UserSocketEvents.UserChanged]: (data: { user: User }) =>
+        sendMessage(websocket, {
+          kind: UserSocketEvents.UserChanged,
+          data,
+        }),
+      [RoomSocketEvents.RoomCreated]: (data: { room: Room }) =>
+        sendMessage(websocket, {
+          kind: RoomSocketEvents.RoomCreated,
+          data,
+        }),
+      [RoomSocketEvents.RoomChanged]: (data: { room: Room }) =>
+        sendMessage(websocket, {
+          kind: RoomSocketEvents.RoomChanged,
           data,
         }),
     });

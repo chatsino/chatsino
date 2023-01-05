@@ -122,7 +122,7 @@ export const userSchema = new Schema(User, {
     type: "string",
   },
   username: {
-    type: "string",
+    type: "text",
   },
   chips: {
     type: "number",

@@ -4,6 +4,7 @@ export enum UserRequests {
   GetAllUsers = "get-all-users",
   GetTotalUsers = "get-total-users",
   GetUserByUsername = "get-user-by-username",
+  GetUsersWithUsername = "get-users-with-username",
   GetUsersByUsernameList = "get-users-by-username-list",
   GetAllModerators = "get-all-moderators",
   GetAllAdministrators = "get-all-administrators",

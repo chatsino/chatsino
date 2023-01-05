@@ -18,9 +18,19 @@ export const userQueries = {
       createUserRepository(client)
         .search()
         .where("username")
-        .equals(username)
+        .matchExactly(username)
         .return.first()
     ).then((result: null | User) => (result ? result.fields : null)),
+  userUsernameContains: (text: string) =>
+    executeCommand((client) =>
+      createUserRepository(client)
+        .search()
+        .where("username")
+        .match(`${text}*`)
+        .return.all()
+    ).then((result: User[]) =>
+      result ? result.map((each) => each.fields) : null
+    ),
   usersByUsernameList: (...usernames: string[]) =>
     executeCommand((client) =>
       createUserRepository(client)

@@ -262,7 +262,7 @@ export const initializeRoomHandlers = () => {
     } catch (error) {
       return respondTo(socketId, kind, {
         error: true,
-        message: "Unable to create a room.",
+        message: `Unable to create a room: ${error.message}`,
         data: {
           room: null,
         },

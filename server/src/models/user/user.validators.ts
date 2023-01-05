@@ -44,6 +44,12 @@ export const userValidators = {
     })
     .noUnknown()
     .required(),
+  [UserSocketRequests.GetUsersWithUsername]: yup
+    .object({
+      username: common.username,
+    })
+    .noUnknown()
+    .required(),
   [UserSocketRequests.GetAllModerators]: null,
   [UserSocketRequests.GetAllAdministrators]: null,
   [UserSocketRequests.GetAllOperators]: null,

@@ -40,5 +40,5 @@ export type RoomCreate = {
   avatar: string;
   title: string;
   description: string;
-  password: string;
+  password?: string;
 };

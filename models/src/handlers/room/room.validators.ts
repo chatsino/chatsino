@@ -80,7 +80,7 @@ export const roomValidators = {
       avatar: common.avatar,
       title: common.title,
       description: common.description,
-      password: common.password,
+      password: common.optionalPassword,
     })
     .noUnknown()
     .required(),

@@ -104,7 +104,8 @@ export async function initializeChat(handlers: ChatHandlers) {
           );
 
           switch (kind) {
-            case UserSocketRequests.GetAllUsers: {
+            case UserSocketRequests.GetAllUsers:
+            case UserSocketRequests.GetUsersWithUsername: {
               return handlers[kind]?.({ users: requestData.users as User[] });
             }
             case RoomSocketRequests.AllPublicRooms: {

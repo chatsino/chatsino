@@ -37,6 +37,12 @@ export const userValidators = {
     })
     .noUnknown()
     .required(),
+  [UserRequests.GetUsersWithUsername]: yup
+    .object({
+      username: common.username,
+    })
+    .noUnknown()
+    .required(),
   [UserRequests.GetUsersByUsernameList]: yup
     .object({
       usernames: yup.array(common.username).required(),

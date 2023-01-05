@@ -105,6 +105,32 @@ export const initializeUserHandlers = () => {
       });
     }
   });
+  SUBSCRIBER.subscribe(UserRequests.GetUsersWithUsername, async (message) => {
+    const { socketId, kind, args } = parseRequest(message);
+
+    try {
+      const { username } = await userValidators[
+        UserRequests.GetUsersWithUsername
+      ].validate(args);
+      const users = await UserEntity.queries.userUsernameContains(username);
+
+      return respondTo(socketId, kind, {
+        error: false,
+        message: "Successfully retrieved users with username.",
+        data: {
+          users,
+        },
+      });
+    } catch (error) {
+      return respondTo(socketId, kind, {
+        error: true,
+        message: "Unable to get users with username.",
+        data: {
+          users: [],
+        },
+      });
+    }
+  });
   SUBSCRIBER.subscribe(UserRequests.GetUsersByUsernameList, async (message) => {
     const { socketId, kind, args } = parseRequest(message);
 
