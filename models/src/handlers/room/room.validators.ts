@@ -15,7 +15,6 @@ const common = {
 
 const modification = {
   roomId: common.entityId,
-  modifyingUserId: common.entityId,
   modifiedUserId: common.entityId,
 };
 
@@ -76,7 +75,6 @@ export const roomValidators = {
   // Mutations
   [RoomRequests.CreateRoom]: yup
     .object({
-      ownerId: common.entityId,
       avatar: common.avatar,
       title: common.title,
       description: common.description,
@@ -97,7 +95,6 @@ export const roomValidators = {
   [RoomRequests.JoinRoom]: yup
     .object({
       roomId: common.entityId,
-      userId: common.entityId,
       password: common.optionalPassword,
     })
     .noUnknown()
@@ -105,7 +102,6 @@ export const roomValidators = {
   [RoomRequests.LeaveRoom]: yup
     .object({
       roomId: common.entityId,
-      userId: common.entityId,
     })
     .noUnknown()
     .required(),
@@ -122,7 +118,6 @@ export const roomValidators = {
   [RoomRequests.SendMessage]: yup
     .object({
       roomId: common.entityId,
-      userId: common.entityId,
       content: common.content,
       password: common.optionalPassword,
     })
@@ -130,7 +125,6 @@ export const roomValidators = {
     .required(),
   [RoomRequests.SendDirectMessage]: yup
     .object({
-      sendingUserId: common.entityId,
       receivingUserId: common.entityId,
       content: common.content,
     })
@@ -139,7 +133,6 @@ export const roomValidators = {
   [RoomRequests.PinMessage]: yup
     .object({
       roomId: common.entityId,
-      userId: common.entityId,
       messageId: common.entityId,
     })
     .noUnknown()
@@ -147,7 +140,6 @@ export const roomValidators = {
   [RoomRequests.RemoveMessage]: yup
     .object({
       roomId: common.entityId,
-      userId: common.entityId,
       messageId: common.entityId,
     })
     .noUnknown()

@@ -10,6 +10,8 @@ export const initializeMessageHandlers = () => {
   SUBSCRIBER.subscribe(MessageRequests.GetMessage, async (message) => {
     const { socketId, kind, args } = parseRequest(message);
 
+    // TODO: Check if user has permission to retrieve a message prior to retrieval.
+
     try {
       const { messageId } = await messageValidators[
         MessageRequests.GetMessage
@@ -81,15 +83,16 @@ export const initializeMessageHandlers = () => {
   });
   // Mutations
   SUBSCRIBER.subscribe(MessageRequests.CreateMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
       const messageCreate = await messageValidators[
         MessageRequests.CreateMessage
       ].validate(args);
-      const message = await MessageEntity.mutations.createMessage(
-        messageCreate
-      );
+      const message = await MessageEntity.mutations.createMessage({
+        ...messageCreate,
+        userId: from,
+      });
 
       await publishEvent(MessageEvents.MessageCreated, {
         message,
@@ -113,15 +116,15 @@ export const initializeMessageHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(MessageRequests.EditMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { messageId, userId, content } = await messageValidators[
+      const { messageId, content } = await messageValidators[
         MessageRequests.EditMessage
       ].validate(args);
       const message = await MessageEntity.mutations.editMessage(
         messageId,
-        userId,
+        from,
         content
       );
 
@@ -147,15 +150,15 @@ export const initializeMessageHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(MessageRequests.DeleteMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { messageId, userId } = await messageValidators[
+      const { messageId } = await messageValidators[
         MessageRequests.DeleteMessage
       ].validate(args);
       const message = await MessageEntity.mutations.deleteMessage(
         messageId,
-        userId
+        from
       );
 
       await publishEvent(MessageEvents.MessageDeleted, {
@@ -180,15 +183,15 @@ export const initializeMessageHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(MessageRequests.ReactToMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { messageId, userId, reaction } = await messageValidators[
+      const { messageId, reaction } = await messageValidators[
         MessageRequests.ReactToMessage
       ].validate(args);
       const message = await MessageEntity.mutations.reactToMessage(
         messageId,
-        userId,
+        from,
         reaction
       );
 
@@ -214,15 +217,15 @@ export const initializeMessageHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(MessageRequests.VoteInMessagePoll, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { messageId, userId, option } = await messageValidators[
+      const { messageId, option } = await messageValidators[
         MessageRequests.VoteInMessagePoll
       ].validate(args);
       const message = await MessageEntity.mutations.voteInMessagePoll(
         messageId,
-        userId,
+        from,
         option
       );
 

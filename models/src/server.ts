@@ -94,6 +94,7 @@ export function initializeSocketServer(server: Server) {
       try {
         const text = data.toString();
         const message = JSON.parse(text) as {
+          from: string; // The ID of the user who sent the message.
           kind: string;
           args?: Record<string, unknown>;
         };
@@ -110,6 +111,7 @@ export function initializeSocketServer(server: Server) {
 
         return handleRequest(
           clients.toId.get(websocket) as string,
+          message.from,
           message.kind,
           message.args ?? {}
         );

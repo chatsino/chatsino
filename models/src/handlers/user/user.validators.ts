@@ -12,7 +12,6 @@ const common = {
 };
 
 const userModification = {
-  modifyingUserId: common.userId,
   modifiedUserId: common.userId,
 };
 

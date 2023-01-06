@@ -26,14 +26,12 @@ export const messageValidators = {
   [MessageRequests.CreateMessage]: yup
     .object({
       roomId: common.entityId,
-      userId: common.entityId,
       content: common.content,
     })
     .required(),
   [MessageRequests.EditMessage]: yup
     .object({
       messageId: common.entityId,
-      userId: common.entityId,
       content: common.content,
     })
     .noUnknown()
@@ -41,14 +39,12 @@ export const messageValidators = {
   [MessageRequests.DeleteMessage]: yup
     .object({
       messageId: common.entityId,
-      userId: common.entityId,
     })
     .noUnknown()
     .required(),
   [MessageRequests.ReactToMessage]: yup
     .object({
       messageId: common.entityId,
-      userId: common.entityId,
       reaction: common.reaction,
     })
     .noUnknown()
@@ -56,7 +52,6 @@ export const messageValidators = {
   [MessageRequests.VoteInMessagePoll]: yup
     .object({
       messageId: common.entityId,
-      userId: common.entityId,
       option: yup.string().required(),
     })
     .noUnknown()

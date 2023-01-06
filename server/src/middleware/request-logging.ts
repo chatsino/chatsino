@@ -9,7 +9,7 @@ export function requestLoggingMiddleware(
   _: Response,
   next: NextFunction
 ) {
-  const { userId } = req.session as UserSession;
+  const { userId = "(anonymouse)" } = req.session as UserSession;
 
   REQUEST_LOGGER.info(
     {

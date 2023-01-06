@@ -60,7 +60,13 @@ export const roomMutations = {
 
     return roomCrud.update(room.entityId, room);
   },
-  updateRoom: async (roomId: string, data: Partial<Room>) => {
+  updateRoom: async (roomId: string, userId: string, data: Partial<Room>) => {
+    const room = await roomCrud.read(roomId);
+
+    if (!room.meetsPermissionRequirement(userId, "C")) {
+      throw new roomErrors.UserNotAllowedError();
+    }
+
     if (data.title) {
       const existingRoomWithRoomTitle = await roomQueries.roomByRoomTitle(
         data.title
@@ -318,10 +324,10 @@ export const roomMutations = {
 
     return roomCrud.update(roomId, room);
   },
-  removeUserMessages: async (roomId: string, userId: string) => {
+  removeUserMessages: async (roomId: string, from: string, userId: string) => {
     const room = await roomCrud.read(roomId);
 
-    if (!room.meetsPermissionRequirement(userId, RoomPermission.Owner)) {
+    if (!room.meetsPermissionRequirement(from, RoomPermission.Owner)) {
       throw new roomErrors.UserForbiddenActionError();
     }
 

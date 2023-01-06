@@ -235,13 +235,16 @@ export const initializeRoomHandlers = () => {
   });
   // Mutations
   SUBSCRIBER.subscribe(RoomRequests.CreateRoom, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
       const roomCreate = await roomValidators[RoomRequests.CreateRoom].validate(
         args
       );
-      const room = await RoomEntity.mutations.createRoom(roomCreate);
+      const room = await RoomEntity.mutations.createRoom({
+        ownerId: from,
+        ...roomCreate,
+      });
 
       await publishEvent(RoomEvents.RoomCreated, { room });
 
@@ -270,12 +273,12 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.UpdateRoom, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
       const { roomId, avatar, title, description, password } =
         await roomValidators[RoomRequests.UpdateRoom].validate(args);
-      const room = await RoomEntity.mutations.updateRoom(roomId, {
+      const room = await RoomEntity.mutations.updateRoom(roomId, from, {
         avatar,
         title,
         description,
@@ -302,17 +305,13 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.JoinRoom, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, userId, password } = await roomValidators[
+      const { roomId, password } = await roomValidators[
         RoomRequests.JoinRoom
       ].validate(args);
-      const room = await RoomEntity.mutations.joinRoom(
-        roomId,
-        userId,
-        password
-      );
+      const room = await RoomEntity.mutations.joinRoom(roomId, from, password);
 
       await publishEvent(RoomEvents.RoomChanged, { room });
 
@@ -334,13 +333,13 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.LeaveRoom, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, userId } = await roomValidators[
-        RoomRequests.LeaveRoom
-      ].validate(args);
-      const room = await RoomEntity.mutations.leaveRoom(roomId, userId);
+      const { roomId } = await roomValidators[RoomRequests.LeaveRoom].validate(
+        args
+      );
+      const room = await RoomEntity.mutations.leaveRoom(roomId, from);
 
       await publishEvent(RoomEvents.RoomChanged, { room });
 
@@ -362,15 +361,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.ToggleCoOwner, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, modifyingUserId, modifiedUserId } = await roomValidators[
+      const { roomId, modifiedUserId } = await roomValidators[
         RoomRequests.ToggleCoOwner
       ].validate(args);
       const room = await RoomEntity.mutations.toggleCoOwner(
         roomId,
-        modifyingUserId,
+        from,
         modifiedUserId
       );
 
@@ -394,15 +393,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.ToggleBlacklisted, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, modifyingUserId, modifiedUserId } = await roomValidators[
+      const { roomId, modifiedUserId } = await roomValidators[
         RoomRequests.ToggleBlacklisted
       ].validate(args);
       const room = await RoomEntity.mutations.toggleBlacklisted(
         roomId,
-        modifyingUserId,
+        from,
         modifiedUserId
       );
 
@@ -426,15 +425,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.ToggleWhitelisted, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, modifyingUserId, modifiedUserId } = await roomValidators[
+      const { roomId, modifiedUserId } = await roomValidators[
         RoomRequests.ToggleWhitelisted
       ].validate(args);
       const room = await RoomEntity.mutations.toggleWhitelisted(
         roomId,
-        modifyingUserId,
+        from,
         modifiedUserId
       );
 
@@ -458,15 +457,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.ToggleMuted, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, modifyingUserId, modifiedUserId } = await roomValidators[
+      const { roomId, modifiedUserId } = await roomValidators[
         RoomRequests.ToggleMuted
       ].validate(args);
       const room = await RoomEntity.mutations.toggleMuted(
         roomId,
-        modifyingUserId,
+        from,
         modifiedUserId
       );
 
@@ -490,15 +489,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.SendMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, userId, content, password } = await roomValidators[
+      const { roomId, content, password } = await roomValidators[
         RoomRequests.SendMessage
       ].validate(args);
       const room = await RoomEntity.mutations.sendMessage(
         roomId,
-        userId,
+        from,
         content,
         password
       );
@@ -523,15 +522,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.SendDirectMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { sendingUserId, receivingUserId, content } = await roomValidators[
+      const { receivingUserId, content } = await roomValidators[
         RoomRequests.SendDirectMessage
       ].validate(args);
       const { room, alreadyExisted } =
         await RoomEntity.mutations.sendDirectMessage(
-          sendingUserId,
+          from,
           receivingUserId,
           content
         );
@@ -561,15 +560,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.PinMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, userId, messageId } = await roomValidators[
+      const { roomId, messageId } = await roomValidators[
         RoomRequests.PinMessage
       ].validate(args);
       const room = await RoomEntity.mutations.pinMessage(
         roomId,
-        userId,
+        from,
         messageId
       );
 
@@ -593,15 +592,15 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.RemoveMessage, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { roomId, userId, messageId } = await roomValidators[
+      const { roomId, messageId } = await roomValidators[
         RoomRequests.RemoveMessage
       ].validate(args);
       const room = await RoomEntity.mutations.removeMessage(
         roomId,
-        userId,
+        from,
         messageId
       );
 
@@ -625,7 +624,7 @@ export const initializeRoomHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(RoomRequests.RemoveUserMessages, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
       const { roomId, userId } = await roomValidators[
@@ -633,6 +632,7 @@ export const initializeRoomHandlers = () => {
       ].validate(args);
       const room = await RoomEntity.mutations.removeUserMessages(
         roomId,
+        from,
         userId
       );
 

@@ -13,6 +13,7 @@ export enum CommonHandlerRequests {
 
 export const handleRequest = (
   socketId: string,
+  from: string,
   kind: string,
   args: Record<string, unknown> = {}
 ) => {
@@ -20,6 +21,7 @@ export const handleRequest = (
     kind,
     JSON.stringify({
       socketId,
+      from,
       kind,
       args,
     })
@@ -29,7 +31,7 @@ export const handleRequest = (
 export const parseRequest = (message: string) =>
   JSON.parse(message) as {
     socketId: string;
-    userId: string;
+    from: string;
     kind: string;
     args: Record<string, unknown>;
   };

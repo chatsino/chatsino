@@ -336,14 +336,14 @@ export const initializeUserHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(UserRequests.ReassignUser, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { modifyingUserId, modifiedUserId, role } = await userValidators[
+      const { modifiedUserId, role } = await userValidators[
         UserRequests.ReassignUser
       ].validate(args);
       const user = await UserEntity.mutations.reassignUser(
-        modifyingUserId,
+        from,
         modifiedUserId,
         role as UserRole
       );
@@ -370,13 +370,14 @@ export const initializeUserHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(UserRequests.TempbanUser, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { modifyingUserId, modifiedUserId, duration } =
-        await userValidators[UserRequests.TempbanUser].validate(args);
+      const { modifiedUserId, duration } = await userValidators[
+        UserRequests.TempbanUser
+      ].validate(args);
       const user = await UserEntity.mutations.tempbanUser(
-        modifyingUserId,
+        from,
         modifiedUserId,
         duration
       );
@@ -403,14 +404,14 @@ export const initializeUserHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(UserRequests.PermabanUser, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { modifyingUserId, modifiedUserId } = await userValidators[
+      const { modifiedUserId } = await userValidators[
         UserRequests.TempbanUser
       ].validate(args);
       const user = await UserEntity.mutations.permabanUser(
-        modifyingUserId,
+        from,
         modifiedUserId
       );
 
@@ -496,13 +497,14 @@ export const initializeUserHandlers = () => {
     }
   });
   SUBSCRIBER.subscribe(UserRequests.ChangeUserPassword, async (message) => {
-    const { socketId, kind, args } = parseRequest(message);
+    const { socketId, from, kind, args } = parseRequest(message);
 
     try {
-      const { modifyingUserId, modifiedUserId, password } =
-        await userValidators[UserRequests.ChangeUserPassword].validate(args);
+      const { modifiedUserId, password } = await userValidators[
+        UserRequests.ChangeUserPassword
+      ].validate(args);
       const user = await UserEntity.mutations.changeUserPassword(
-        modifyingUserId,
+        from,
         modifiedUserId,
         password
       );
