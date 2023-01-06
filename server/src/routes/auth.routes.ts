@@ -22,12 +22,14 @@ export function createAuthRouter() {
 // Routes
 export async function validateRoute(req: Request, res: Response) {
   try {
-    const { userId } = req.session as UserSession;
-    const user = (await makeRequest(UserSocketRequests.GetUser, {
+    const { userId = "(anonymous)" } = req.session as UserSession;
+    const user = (await makeRequest(userId, UserSocketRequests.GetUser, {
       userId,
     })) as {
       user: Nullable<User>;
     };
+
+    AUTH_ROUTER_LOGGER.info({ user }, "Retrieved user.");
 
     return successResponse(res, "Validation request succeeded.", {
       user,
@@ -44,10 +46,11 @@ export async function validateRoute(req: Request, res: Response) {
 
 export async function signupRoute(req: Request, res: Response) {
   try {
+    const { userId = "(anonymous)" } = req.session as UserSession;
     const { avatar, username, password } = await userValidators[
       UserSocketRequests.CreateUser
     ].validate(req.body);
-    const result = (await makeRequest(UserSocketRequests.CreateUser, {
+    const result = (await makeRequest(userId, UserSocketRequests.CreateUser, {
       avatar,
       username,
       password,
@@ -79,10 +82,12 @@ export async function signupRoute(req: Request, res: Response) {
 
 export async function signinRoute(req: Request, res: Response) {
   try {
+    const { userId = "(anonymous)" } = req.session as UserSession;
     const { username, password } = await userValidators[
       UserSocketRequests.GetIsCorrectPassword
     ].validate(req.body);
     const { isCorrect } = (await makeRequest(
+      userId,
       UserSocketRequests.GetIsCorrectPassword,
       {
         username,
@@ -96,9 +101,13 @@ export async function signinRoute(req: Request, res: Response) {
       throw new Error();
     }
 
-    const { user } = (await makeRequest(UserSocketRequests.GetUserByUsername, {
-      username,
-    })) as {
+    const { user } = (await makeRequest(
+      userId,
+      UserSocketRequests.GetUserByUsername,
+      {
+        username,
+      }
+    )) as {
       user: Nullable<User>;
     };
 

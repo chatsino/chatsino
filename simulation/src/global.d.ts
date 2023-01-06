@@ -27,3 +27,15 @@ declare interface Room {
   messages: string[];
   pins: string[];
 }
+
+declare interface Message {
+  id: string;
+  userId: string;
+  roomId: string;
+  createdAt: string;
+  changedAt: string;
+  content: string;
+  reactions: string[];
+  poll: string[];
+  mentions: string[];
+}

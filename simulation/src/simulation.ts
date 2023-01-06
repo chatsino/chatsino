@@ -4,9 +4,8 @@ import * as config from "config";
 import {
   CombinedRequests,
   CombinedSubscriptions,
-  RoomSocketEvents,
+  MessageSocketRequests,
   RoomSocketRequests,
-  UserSocketEvents,
   UserSocketRequests,
 } from "enums";
 import { createLogger, sleep } from "helpers";
@@ -16,34 +15,152 @@ export type SimulatedUser = ReturnType<typeof createSimulatedUser>;
 
 export const SIMULATION_LOGGER = createLogger(config.LOGGER_NAMES.SIMULATION);
 
+export const SIGNED_IN = {} as Record<string, true>;
+
 const CHANCE = new Chance();
 
-export async function startSimulation() {
-  const connections = [] as SimulatedUser[];
-  const knownUsers = [] as SimulatedUser[];
+export async function runSimulation(user: User) {
+  const makeHttpRequest = makeHttpRequestable(user.username);
 
-  let mostRecentConnection: null | SimulatedUser = null;
-  let ticks = 0;
+  if (!SIGNED_IN[user.username]) {
+    // Sign in.
+    await makeHttpRequest("post", "/auth/signin", {
+      username: user.username,
+      password: config.SIMULATED_USER_PASSWORD,
+    });
 
-  const apiSocket = await connectToServer((kind, data) => {
-    switch (kind) {
-      case UserSocketEvents.UserCreated: {
-        console.log("user created", data);
-        return allUsers.push(data.user as User);
-      }
-      case RoomSocketEvents.RoomCreated: {
-        return publicRooms.push(data.room as Room);
+    SIGNED_IN[user.username] = true;
+
+    SIMULATION_LOGGER.info("Signed in.");
+  }
+
+  const { ticket } = await makeHttpRequest("get", "/auth/ticket");
+
+  SIMULATION_LOGGER.info({ ticket }, "Received a ticket.");
+
+  const socket = await connectToServer(ticket, () => {});
+  const makeSocketRequest = makeSocketRequestable(socket);
+
+  let iteration = 0;
+
+  while (++iteration) {
+    SIMULATION_LOGGER.info(
+      { user: user.username, iteration },
+      "Continuing simulation with user."
+    );
+
+    // Do other stuff.
+    const { users } = (await makeSocketRequest(
+      UserSocketRequests.GetAllUsers
+    )) as {
+      users: User[];
+    };
+    const { rooms } = (await makeSocketRequest(
+      RoomSocketRequests.AllPublicRooms
+    )) as {
+      rooms: Room[];
+    };
+
+    // Create the Lobby if no rooms exist.
+    if (rooms.length === 0) {
+      const lobby = createSimulatedRoom(user.id);
+      lobby.title = "Lobby";
+      lobby.description = "Make yourself comfortable.";
+
+      const { room } = (await makeSocketRequest(
+        RoomSocketRequests.CreateRoom,
+        lobby
+      )) as {
+        room: Room;
+      };
+
+      rooms.push(room);
+    }
+
+    const actionHandlers = {
+      sendMessage: {
+        will: CHANCE.bool({ likelihood: config.MESSAGE_SEND_CHANCE }),
+        handler: async () => {
+          SIMULATION_LOGGER.info("Sending a message.");
+
+          (await makeSocketRequest(MessageSocketRequests.CreateMessage, {
+            roomId: CHANCE.pickone(rooms).id,
+            content: CHANCE.sentence(),
+          })) as {
+            message: Message;
+          };
+        },
+      },
+      createRoom: {
+        will: CHANCE.bool({ likelihood: config.ROOM_CREATE_CHANCE }),
+        handler: async () => {
+          SIMULATION_LOGGER.info("Creating a room.");
+
+          // Pass
+        },
+      },
+      signout: {
+        will: CHANCE.bool({ likelihood: config.SESSION_CLOSE_CHANCE }),
+        handler: async () => {
+          SIMULATION_LOGGER.info("Signing out.");
+
+          await makeHttpRequest("post", "/auth/signout");
+
+          delete SIGNED_IN[user.username];
+        },
+      },
+    };
+    const actions = Object.keys(actionHandlers) as Array<
+      keyof typeof actionHandlers
+    >;
+
+    for (const action of actions) {
+      const { will, handler } = actionHandlers[action];
+
+      if (will) {
+        await handler();
+
+        const [minimumWait, maximumWait] = config.SESSION_TICK_RATES_MS;
+        const timeBetweenActions = CHANCE.integer({
+          min: minimumWait,
+          max: maximumWait,
+        });
+
+        await sleep(timeBetweenActions);
       }
     }
-  });
-  const makeSocketRequest = makeSocketRequestable(apiSocket);
 
-  const simulatedUsers = await requestSimulatedUsers(apiSocket);
+    if (!SIGNED_IN[user.username]) {
+      return true;
+    }
+  }
+}
+
+export async function seedSimulation() {
+  SIMULATION_LOGGER.info("Seeding simulation.");
+
+  await Promise.all(
+    Array.from({ length: config.MAX_SESSION_COUNT }, () => {
+      const simulatedUser = createSimulatedUser();
+      const makeHttpRequest = makeHttpRequestable(simulatedUser.username);
+
+      return makeHttpRequest("post", "/auth/signup", simulatedUser);
+    })
+  );
+
+  SIMULATION_LOGGER.info("Seeding complete.");
+}
+
+export async function startSimulation() {
+  const simulatedUsers = await requestSimulatedUsers();
 
   if (simulatedUsers.length === 0) {
     SIMULATION_LOGGER.info("No simulated users found.");
 
     // Create set of simulated users and restart simulation.
+    await seedSimulation();
+
+    startSimulation();
   } else {
     SIMULATION_LOGGER.info(
       { simulatedUserCount: simulatedUsers.length },
@@ -53,177 +170,15 @@ export async function startSimulation() {
     // Run simulation: starting with one connection, gradually open more connections.
     // During each iteration of the simulation, have each active connection perform zero
     // or more actions that touch various parts of the app.
-  }
+    await Promise.all(simulatedUsers.map((user) => runSimulation(user)));
 
-  return;
-
-  const { users: allUsers } = (await makeSocketRequest(
-    UserSocketRequests.GetAllUsers
-  )) as {
-    users: User[];
-  };
-  const { rooms: publicRooms } = (await makeSocketRequest(
-    RoomSocketRequests.AllPublicRooms
-  )) as {
-    rooms: Room[];
-  };
-
-  while (++ticks) {
-    // There's a chance a new session opens.
-    if (connections.length < config.MAX_SESSION_COUNT) {
-      const willOpenSession =
-        connections.length === 0 ||
-        CHANCE.bool({
-          likelihood: config.SESSION_OPEN_CHANCE,
-        });
-
-      if (willOpenSession) {
-        SIMULATION_LOGGER.info("Opening a session.");
-
-        const [availableUser] = knownUsers.filter(
-          (user) => !connections.some((each) => each.username === user.username)
-        );
-
-        if (availableUser) {
-          // Sign in.
-          await makePostRequest("/auth/signin", {
-            username: availableUser.username,
-            password: availableUser.password,
-          });
-
-          SIMULATION_LOGGER.info({ user: availableUser }, "Signed in.");
-
-          // Retrieve ticket.
-          const {
-            data: { ticket },
-          } = await makeGetRequest("/auth/ticket");
-
-          SIMULATION_LOGGER.info({ ticket }, "Received a ticket.");
-
-          mostRecentConnection = availableUser;
-
-          connections.push(availableUser);
-        } else {
-          // Sign up.
-          const newUser = createSimulatedUser();
-          const {
-            data: { user },
-          } = (await makePostRequest("/auth/signup", newUser)) as {
-            data: {
-              user: User;
-            };
-          };
-
-          SIMULATION_LOGGER.info({ user }, "Signed up.");
-
-          mostRecentConnection = availableUser;
-
-          connections.push(newUser);
-          allUsers.push(user);
-        }
-      }
-    }
-
-    // There's a chance a new session closes.
-    if (connections.length > 1) {
-      const willCloseSession = CHANCE.bool({
-        likelihood: config.SESSION_OPEN_CHANCE,
-      });
-
-      if (willCloseSession) {
-        SIMULATION_LOGGER.info("Closing a session.");
-
-        let signedOutUser = CHANCE.pickone(connections);
-
-        if (mostRecentConnection) {
-          while (signedOutUser.username === mostRecentConnection.username) {
-            signedOutUser = CHANCE.pickone(connections);
-          }
-        }
-
-        await makePostRequest("/auth/signout");
-
-        SIMULATION_LOGGER.info({ user: signedOutUser }, "Signed out.");
-      }
-    }
-
-    // Each connection takes a series of actions:
-    for (const connection of connections) {
-      const user = simulatedUsers.find(
-        (each) => each.username === connection.username
-      )!;
-
-      // ...sending a message to a room.
-      const willSendMessage = CHANCE.bool({
-        likelihood: config.MESSAGE_SEND_CHANCE,
-      });
-
-      if (willSendMessage) {
-        SIMULATION_LOGGER.info({ user }, "User will send a message...");
-
-        if (publicRooms.length === 0) {
-          // A room doesn't exist -- we need to create one.
-          SIMULATION_LOGGER.info(
-            { user },
-            "...no rooms exist -- creating one."
-          );
-
-          apiSocket.send(
-            JSON.stringify({
-              kind: RoomSocketRequests.CreateRoom,
-              args: createSimulatedRoom(user.id),
-            })
-          );
-        } else {
-          const room = CHANCE.pickone(publicRooms);
-
-          SIMULATION_LOGGER.info({ room }, "...to a room.");
-
-          apiSocket.send(
-            JSON.stringify({
-              kind: RoomSocketRequests.SendMessage,
-              args: {
-                roomId: room.id,
-                userId: user.id,
-                content: CHANCE.sentence(),
-              },
-            })
-          );
-        }
-      }
-
-      // ...creating a new room.
-      // const willCreateRoom = CHANCE.bool({
-      //   likelihood: config.ROOM_CREATE_CHANCE,
-      // });
-
-      // if (willCreateRoom) {
-      //   SIMULATION_LOGGER.info({ user }, "User will create a room.");
-
-      //   apiSocket.send(
-      //     JSON.stringify({
-      //       kind: RoomSocketRequests.CreateRoom,
-      //       args: createSimulatedRoom(user.id),
-      //     })
-      //   );
-      // }
-    }
-
-    // Done: wait for the next tick.
-    SIMULATION_LOGGER.info(
-      { ticks, connections: connections.length },
-      "Tick complete."
-    );
-
-    const [minimumWait, maximumWait] = config.SESSION_TICK_RATES_MS;
-    const timetoWait = CHANCE.integer({ min: minimumWait, max: maximumWait });
-
-    await sleep(timetoWait);
+    SIMULATION_LOGGER.info("Simulation complete.");
   }
 }
 
 // Setup
 export async function connectToServer(
+  ticket: string,
   onReceiveMessage: (
     kind: CombinedSubscriptions,
     data: Record<string, unknown>
@@ -231,7 +186,9 @@ export async function connectToServer(
 ) {
   SIMULATION_LOGGER.info("Starting up.");
 
-  const apiSocket = new WebSocket(config.API_CONNECTION_STRING);
+  const apiSocket = new WebSocket(
+    `${config.API_CONNECTION_STRING}?ticket=${ticket}`
+  );
 
   apiSocket.on("open", () => {
     SIMULATION_LOGGER.info("Socket connection to Chatsino-Server established.");
@@ -272,19 +229,19 @@ export async function connectToServer(
 // Simulated Entities
 export function createSimulatedUser() {
   return {
-    username: `${CHANCE.word({ length: 6 })}`,
+    username: config.SIMULATED_ENTITY_PREFIX + CHANCE.word({ length: 6 }),
     avatar: CHANCE.avatar(),
-    password: CHANCE.word({ length: 8 }),
+    password: config.SIMULATED_USER_PASSWORD,
   };
 }
 
-export async function requestSimulatedUsers(socket: WebSocket) {
+export async function requestSimulatedUsers() {
   SIMULATION_LOGGER.info("Requesting simulated users.");
 
-  const makeSocketRequest = makeSocketRequestable(socket);
-  const { users } = (await makeSocketRequest(
-    UserSocketRequests.GetUsersWithUsername,
-    { username: config.SIMULATED_ENTITY_PREFIX }
+  const makeHttpRequest = makeHttpRequestable();
+  const { users } = (await makeHttpRequest(
+    "get",
+    `/users?username=${config.SIMULATED_ENTITY_PREFIX}`
   )) as { users: User[] };
 
   return users;
@@ -300,21 +257,25 @@ export function createSimulatedRoom(ownerId: string) {
 }
 
 // Requests
-export async function makeHttpRequest(
-  method: "get" | "post",
-  url: string,
-  body: Record<string, unknown> = {}
-) {
-  const { data } = await axios[method](
-    [config.API_REQUEST_URL, url].join(""),
-    body
-  );
+export function makeHttpRequestable(token = "") {
+  return async (
+    method: "get" | "post",
+    url: string,
+    body: Record<string, unknown> = {}
+  ) => {
+    const { data } = await axios[method](
+      [config.API_REQUEST_URL, url].join(""),
+      body,
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    );
 
-  return data;
+    return data;
+  };
 }
-
-export const makeGetRequest = makeHttpRequest.bind(null, "get");
-export const makePostRequest = makeHttpRequest.bind(null, "post");
 
 export function makeSocketRequestable(socket: WebSocket) {
   return (kind: CombinedRequests, args: Record<string, unknown> = {}) =>

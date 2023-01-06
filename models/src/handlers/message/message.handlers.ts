@@ -1,4 +1,4 @@
-import { PUBLISHER, SUBSCRIBER } from "cache";
+import { SUBSCRIBER } from "cache";
 import { MessageEntity } from "entities";
 import { parseRequest, publishEvent, respondTo } from "../common";
 import { MessageEvents } from "./message.events";

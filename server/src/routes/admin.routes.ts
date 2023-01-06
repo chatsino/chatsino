@@ -21,13 +21,19 @@ export function createAdminRouter() {
 // Routes
 export async function chargeUserRoute(req: Request, res: Response) {
   try {
+    const { userId: sessionUserId = "(anonymous)" } =
+      req.session as UserSession;
     const { userId, amount } = await userValidators[
       UserSocketRequests.ChargeUser
     ].validate(req.body);
-    const { user } = (await makeRequest(UserSocketRequests.ChargeUser, {
-      userId,
-      amount,
-    })) as {
+    const { user } = (await makeRequest(
+      sessionUserId,
+      UserSocketRequests.ChargeUser,
+      {
+        userId,
+        amount,
+      }
+    )) as {
       user: Nullable<User>;
     };
 
@@ -43,13 +49,19 @@ export async function chargeUserRoute(req: Request, res: Response) {
 
 export async function payUserRoute(req: Request, res: Response) {
   try {
+    const { userId: sessionUserId = "(anonymous)" } =
+      req.session as UserSession;
     const { userId, amount } = await userValidators[
       UserSocketRequests.PayUser
     ].validate(req.body);
-    const { user } = (await makeRequest(UserSocketRequests.PayUser, {
-      userId,
-      amount,
-    })) as {
+    const { user } = (await makeRequest(
+      sessionUserId,
+      UserSocketRequests.PayUser,
+      {
+        userId,
+        amount,
+      }
+    )) as {
       user: Nullable<User>;
     };
 
@@ -65,15 +77,20 @@ export async function payUserRoute(req: Request, res: Response) {
 
 export async function changeUserRoleRoute(req: Request, res: Response) {
   try {
-    const { userId: modifyingUserId } = req.session as UserSession;
+    const { userId: modifyingUserId = "anonymous" } =
+      req.session as UserSession;
     const { userId: modifiedUserId, role } = await userValidators[
       UserSocketRequests.ReassignUser
     ].validate(req.body);
-    const { user } = (await makeRequest(UserSocketRequests.ReassignUser, {
+    const { user } = (await makeRequest(
       modifyingUserId,
-      modifiedUserId,
-      role,
-    })) as {
+      UserSocketRequests.ReassignUser,
+      {
+        modifyingUserId,
+        modifiedUserId,
+        role,
+      }
+    )) as {
       user: Nullable<User>;
     };
 

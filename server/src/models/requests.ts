@@ -17,23 +17,21 @@ export type CombinedEvents =
 export type CombinedSubscriptions = CombinedRequests | CombinedEvents;
 
 export function makeRequest(
+  from: string,
   kind: CombinedRequests,
   args: Record<string, unknown> = {}
 ) {
   return new Promise<Record<string, unknown>>((resolve, reject) =>
-    makeModelRequest({ kind, args }, { onSuccess: resolve, onError: reject })
-  )
-    .then((result) => {
-      console.log("\n\n", result, "\n\n");
-      return result;
-    })
-    .catch((err) => {
-      console.log("\n\n", err, "\n\n");
-    });
+    makeModelRequest(
+      { from, kind, args },
+      { onSuccess: resolve, onError: reject }
+    )
+  );
 }
 
 export async function makeModelRequest(
   request: {
+    from: string;
     kind: CombinedRequests;
     args: Record<string, unknown>;
   },
@@ -88,8 +86,6 @@ export async function makeModelRequest(
         }
       }
     } catch (error) {
-      console.log("\n\n", error, "\n\n");
-
       return handlers.onError?.(
         "Failed to properly handle an incoming message."
       );

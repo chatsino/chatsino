@@ -2,6 +2,8 @@ import * as config from "config";
 import { createLogger, guid, sleep } from "helpers";
 import {
   CombinedSubscriptions,
+  Message,
+  MessageSocketEvents,
   Room,
   RoomSocketEvents,
   RoomSocketRequests,
@@ -20,7 +22,7 @@ export const CHAT_LOGGER = createLogger(config.LOGGER_NAMES.CHAT);
 
 export const ROLLOFF_INDICES: Record<string, number> = {};
 
-export async function initializeChat(handlers: ChatHandlers) {
+export async function initializeChat(userId: string, handlers: ChatHandlers) {
   const chatId = guid();
   const modelSocket = new WebSocket(config.MODELS_CONNECTION_STRING);
 
@@ -51,7 +53,7 @@ export async function initializeChat(handlers: ChatHandlers) {
           "Attempting to reconnect to Chatsino-Models."
         );
 
-        return initializeChat(handlers);
+        return initializeChat(userId, handlers);
       }
     });
     modelSocket.on("error", (error) => {
@@ -82,6 +84,7 @@ export async function initializeChat(handlers: ChatHandlers) {
 
           const user = data.user as User;
           const room = data.room as Room;
+          const message = data.room as Message;
 
           switch (kind) {
             case UserSocketEvents.UserCreated:
@@ -91,6 +94,11 @@ export async function initializeChat(handlers: ChatHandlers) {
             case RoomSocketEvents.RoomCreated:
             case RoomSocketEvents.RoomChanged: {
               return handlers[kind]?.({ room });
+            }
+            case MessageSocketEvents.MessageCreated:
+            case MessageSocketEvents.MessageChanged:
+            case MessageSocketEvents.MessageDeleted: {
+              return handlers[kind]?.({ message });
             }
             default:
               return;
@@ -133,6 +141,7 @@ export async function initializeChat(handlers: ChatHandlers) {
     ) =>
       modelSocket.send(
         JSON.stringify({
+          from: userId,
           kind,
           args,
         })

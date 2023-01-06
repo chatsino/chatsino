@@ -153,7 +153,7 @@ export function initializeSocketServer(server: Server) {
     const websocket = clients.toWebSocket.get(socketId);
 
     if (websocket) {
-      SERVER_LOGGER.info({ socketId, kind }, "Responding to socket.");
+      SERVER_LOGGER.info({ socketId, kind, result }, "Responding to socket.");
 
       sendMessage(websocket, {
         kind,

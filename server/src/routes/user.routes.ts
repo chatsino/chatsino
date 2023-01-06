@@ -1,7 +1,8 @@
 import * as config from "config";
 import { Request, Response, Router } from "express";
 import { createLogger, errorResponse, successResponse } from "helpers";
-import { makeRequest, UserSocketRequests } from "models";
+import querystring from "node:querystring";
+import { makeRequest, User, UserSocketRequests } from "models";
 
 export const USER_ROUTER_LOGGER = createLogger(config.LOGGER_NAMES.USER_ROUTER);
 
@@ -15,13 +16,43 @@ export function createUserRouter() {
 }
 
 // Routes
-export async function getUsersRoute(_: Request, res: Response) {
+export async function getUsersRoute(req: Request, res: Response) {
   try {
-    const { users } = await makeRequest(UserSocketRequests.GetAllUsers);
+    const { userId = "(anonymous)" } = req.session as UserSession;
+    const { "/users?username": usernameQueryParam } = querystring.parse(
+      req.url
+    );
 
-    return successResponse(res, "Successfully retrieved users.", {
-      users,
-    });
+    if (typeof usernameQueryParam === "string") {
+      const { users } = (await makeRequest(
+        userId,
+        UserSocketRequests.GetUsersWithUsername,
+        {
+          username: usernameQueryParam,
+        }
+      )) as {
+        users: User[];
+      };
+
+      return successResponse(
+        res,
+        "Successfully retrieved users with username.",
+        {
+          users,
+        }
+      );
+    } else {
+      const { users } = (await makeRequest(
+        userId,
+        UserSocketRequests.GetAllUsers
+      )) as {
+        users: User[];
+      };
+
+      return successResponse(res, "Successfully retrieved users.", {
+        users,
+      });
+    }
   } catch (error) {
     return errorResponse(res, "Unable to retrieve users.");
   }

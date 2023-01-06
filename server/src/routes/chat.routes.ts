@@ -64,9 +64,11 @@ export function createChatRouter() {
 }
 
 // Routes
-export async function getRoomsRoute(_: Request, res: Response) {
+export async function getRoomsRoute(req: Request, res: Response) {
   try {
+    const { userId = "(anonymous)" } = req.session as UserSession;
     const { rooms } = (await makeRequest(
+      userId,
       RoomSocketRequests.AllPublicRooms
     )) as {
       rooms: Room[];
@@ -80,9 +82,10 @@ export async function getRoomsRoute(_: Request, res: Response) {
   }
 }
 
-export async function getRoomRoute(_: Request, res: Response) {
+export async function getRoomRoute(req: Request, res: Response) {
   try {
-    const { room } = (await makeRequest(RoomSocketRequests.Room)) as {
+    const { userId = "(anonymous)" } = req.session as UserSession;
+    const { room } = (await makeRequest(userId, RoomSocketRequests.Room)) as {
       room: Room;
     };
 
@@ -113,22 +116,25 @@ export async function changeRoomAvatarRoute(req: Request, res: Response) {
     }
 
     // Ensure the user is actually allowed to change the avatar.
-    const { userId } = req.session as UserSession;
-    const { meetsRequirement } = await makeRequest(
+    const { userId = "(anonymous)" } = req.session as UserSession;
+    const { meetsRequirement } = (await makeRequest(
+      userId,
       RoomSocketRequests.MeetsRoomPermissionRequirement,
       {
         roomId,
         userId,
         requirement: RoomPermission.CoOwner,
       }
-    );
+    )) as {
+      meetsRequirement: boolean;
+    };
 
     if (!meetsRequirement) {
       return errorResponse(res, "User does not have permission to do that.");
     }
 
     // Reference the current avatar for later.
-    const { room } = (await makeRequest(RoomSocketRequests.Room, {
+    const { room } = (await makeRequest(userId, RoomSocketRequests.Room, {
       roomId,
     })) as {
       room: Room;
@@ -136,13 +142,16 @@ export async function changeRoomAvatarRoute(req: Request, res: Response) {
     const previousFilePath = room.avatar;
 
     // Change the avatar in the database.
-    const { room: updatedRoom } = await makeRequest(
+    const { room: updatedRoom } = (await makeRequest(
+      userId,
       RoomSocketRequests.UpdateRoom,
       {
         roomId,
         avatar,
       }
-    );
+    )) as {
+      room: Room;
+    };
 
     if (!updatedRoom) {
       throw new Error("Room was not returned.");
@@ -190,16 +199,20 @@ export async function changeRoomAvatarRoute(req: Request, res: Response) {
 
 export async function sendChatMessageRoute(req: Request, res: Response) {
   try {
-    const { userId } = req.session as UserSession;
+    const { userId = "(anonymous)" } = req.session as UserSession;
     const { roomId, content, password } = await roomValidators[
       RoomSocketRequests.SendMessage
     ].validate(req.body);
-    const { room } = (await makeRequest(RoomSocketRequests.SendMessage, {
-      roomId,
+    const { room } = (await makeRequest(
       userId,
-      content,
-      password,
-    })) as {
+      RoomSocketRequests.SendMessage,
+      {
+        roomId,
+        userId,
+        content,
+        password,
+      }
+    )) as {
       room: Room;
     };
 
@@ -219,15 +232,21 @@ export async function editChatMessageRoute(req: Request, res: Response) {
       return errorResponse(res, "Parameter `messageId` is required.");
     }
 
-    const { userId } = req.session as UserSession;
+    const { userId = "(anonymous)" } = req.session as UserSession;
     const { content } = await messageValidators[
       MessageSocketRequests.EditMessage
     ].validate(req.body);
-    const { message } = await makeRequest(MessageSocketRequests.EditMessage, {
-      messageId,
+    const { message } = (await makeRequest(
       userId,
-      content,
-    });
+      MessageSocketRequests.EditMessage,
+      {
+        messageId,
+        userId,
+        content,
+      }
+    )) as {
+      message: Message;
+    };
 
     return successResponse(res, "Successfully edited chat message.", {
       message,
@@ -245,11 +264,12 @@ export async function reactToChatMessageRoute(req: Request, res: Response) {
       return errorResponse(res, "Parameter `messageId` is required.");
     }
 
-    const { userId } = req.session as UserSession;
+    const { userId = "(anonymous)" } = req.session as UserSession;
     const { reaction } = await messageValidators[
       MessageSocketRequests.ReactToMessage
     ].validate(req.body);
     const { message } = (await makeRequest(
+      userId,
       MessageSocketRequests.ReactToMessage,
       {
         messageId,
@@ -280,8 +300,8 @@ export async function pinChatMessageRoute(req: Request, res: Response) {
       return errorResponse(res, "Parameter `messageId` is required.");
     }
 
-    const { userId } = req.session as UserSession;
-    const { room } = (await makeRequest(RoomSocketRequests.PinMessage, {
+    const { userId = "(anonymous)" } = req.session as UserSession;
+    const { room } = (await makeRequest(userId, RoomSocketRequests.PinMessage, {
       roomId,
       userId,
       messageId,
@@ -305,11 +325,12 @@ export async function voteInPollRoute(req: Request, res: Response) {
       return errorResponse(res, "Parameter `messageId` is required.");
     }
 
-    const { userId } = req.session as UserSession;
+    const { userId = "(anonymous)" } = req.session as UserSession;
     const { option } = await messageValidators[
       MessageSocketRequests.VoteInMessagePoll
     ].validate(req.body);
     const { message } = (await makeRequest(
+      userId,
       MessageSocketRequests.VoteInMessagePoll,
       {
         messageId,
@@ -340,12 +361,18 @@ export async function deleteChatMessageRoute(req: Request, res: Response) {
       return errorResponse(res, "Parameter `messageId` is required.");
     }
 
-    const { userId } = req.session as UserSession;
-    const { room } = await makeRequest(RoomSocketRequests.RemoveMessage, {
-      roomId,
+    const { userId = "(anonymous)" } = req.session as UserSession;
+    const { room } = (await makeRequest(
       userId,
-      messageId,
-    });
+      RoomSocketRequests.RemoveMessage,
+      {
+        roomId,
+        userId,
+        messageId,
+      }
+    )) as {
+      room: Room;
+    };
 
     return successResponse(res, "Successfully deleted chat message.", {
       room,

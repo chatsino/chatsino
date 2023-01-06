@@ -12,7 +12,7 @@ export const USER_ROLE_RANKING: UserRole[] = [
 export function requiredRoleMiddleware(roleRequirement: UserRole) {
   return async function (req: Request, res: Response, next: NextFunction) {
     const { userId } = req.session as UserSession;
-    const { user } = (await makeRequest(UserSocketRequests.GetUser, {
+    const { user } = (await makeRequest("SERVER", UserSocketRequests.GetUser, {
       userId,
     })) as {
       user: User;

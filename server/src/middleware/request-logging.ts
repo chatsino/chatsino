@@ -13,6 +13,7 @@ export function requestLoggingMiddleware(
 
   REQUEST_LOGGER.info(
     {
+      token: req.headers.authorization,
       userId,
       ip: req.ip,
       path: req.path,

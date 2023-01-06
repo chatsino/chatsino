@@ -279,11 +279,11 @@ export const initializeUserHandlers = () => {
     const { socketId, kind, args } = parseRequest(message);
 
     try {
-      const { userId, password } = await userValidators[
+      const { username, password } = await userValidators[
         UserRequests.GetIsCorrectPassword
       ].validate(args);
       const isCorrect = await UserEntity.queries.isCorrectPassword(
-        userId,
+        username,
         password
       );
 

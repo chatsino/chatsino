@@ -25,6 +25,7 @@ export const messageValidators = {
   // Mutations
   [MessageSocketRequests.CreateMessage]: yup
     .object({
+      roomId: common.entityId,
       content: common.content,
     })
     .required(),
