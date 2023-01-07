@@ -9,12 +9,12 @@ export function requestLoggingMiddleware(
   _: Response,
   next: NextFunction
 ) {
-  const { userId = "(anonymouse)" } = req.session as UserSession;
+  const { userId = "(anonymous)" } = req.session as UserSession;
 
   REQUEST_LOGGER.info(
     {
       token: req.headers.authorization,
-      userId,
+      from: userId,
       ip: req.ip,
       path: req.path,
       query: req.query,

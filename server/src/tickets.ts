@@ -14,7 +14,13 @@ export interface Ticket {
 export const TICKET_LOGGER = createLogger(config.LOGGER_NAMES.TICKET);
 
 export async function issueTicket(userId: string, remoteAddress: string) {
-  const { user } = (await makeRequest(UserSocketRequests.GetUser)) as {
+  const { user } = (await makeRequest(
+    "(anonymous)",
+    UserSocketRequests.GetUser,
+    {
+      userId,
+    }
+  )) as {
     user: Nullable<User>;
   };
 

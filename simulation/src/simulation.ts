@@ -20,21 +20,48 @@ export const SIGNED_IN = {} as Record<string, true>;
 const CHANCE = new Chance();
 
 export async function runSimulation(user: User) {
-  const makeHttpRequest = makeHttpRequestable(user.username);
+  let token: string;
 
-  if (!SIGNED_IN[user.username]) {
+  if (SIGNED_IN[user.username]) {
+    // Validate.
+    const makeHttpRequest = makeHttpRequestable();
+    const { token: validateToken } = (await makeHttpRequest(
+      "get",
+      "/auth/validate"
+    )) as {
+      user: User;
+      token: string;
+    };
+
+    SIMULATION_LOGGER.info("Validated.");
+
+    token = validateToken;
+  } else {
     // Sign in.
-    await makeHttpRequest("post", "/auth/signin", {
-      username: user.username,
-      password: config.SIMULATED_USER_PASSWORD,
-    });
+    const makeHttpRequest = makeHttpRequestable();
+    const { token: signinToken } = (await makeHttpRequest(
+      "post",
+      "/auth/signin",
+      {
+        username: user.username,
+        password: config.SIMULATED_USER_PASSWORD,
+      }
+    )) as {
+      user: User;
+      token: string;
+    };
 
     SIGNED_IN[user.username] = true;
 
     SIMULATION_LOGGER.info("Signed in.");
+
+    token = signinToken;
   }
 
-  const { ticket } = await makeHttpRequest("get", "/auth/ticket");
+  const makeHttpRequest = makeHttpRequestable(token);
+  const { ticket } = (await makeHttpRequest("get", "/auth/ticket")) as {
+    ticket: string;
+  };
 
   SIMULATION_LOGGER.info({ ticket }, "Received a ticket.");
 
@@ -95,7 +122,6 @@ export async function runSimulation(user: User) {
         will: CHANCE.bool({ likelihood: config.ROOM_CREATE_CHANCE }),
         handler: async () => {
           SIMULATION_LOGGER.info("Creating a room.");
-
           // Pass
         },
       },
@@ -152,27 +178,36 @@ export async function seedSimulation() {
 }
 
 export async function startSimulation() {
-  const simulatedUsers = await requestSimulatedUsers();
+  try {
+    const simulatedUsers = await requestSimulatedUsers();
 
-  if (simulatedUsers.length === 0) {
-    SIMULATION_LOGGER.info("No simulated users found.");
+    if (simulatedUsers.length === 0) {
+      SIMULATION_LOGGER.info("No simulated users found.");
 
-    // Create set of simulated users and restart simulation.
-    await seedSimulation();
+      // Create set of simulated users and restart simulation.
+      await seedSimulation();
 
-    startSimulation();
-  } else {
-    SIMULATION_LOGGER.info(
-      { simulatedUserCount: simulatedUsers.length },
-      "Loaded simulated users."
+      startSimulation();
+    } else {
+      SIMULATION_LOGGER.info(
+        { simulatedUserCount: simulatedUsers.length },
+        "Loaded simulated users."
+      );
+
+      // Run simulation: starting with one connection, gradually open more connections.
+      // During each iteration of the simulation, have each active connection perform zero
+      // or more actions that touch various parts of the app.
+      await Promise.all(simulatedUsers.map((user) => runSimulation(user)));
+
+      SIMULATION_LOGGER.info("Simulation complete.");
+    }
+  } catch (error) {
+    SIMULATION_LOGGER.error(
+      { error: error.message },
+      "Simulation experienced an error."
     );
 
-    // Run simulation: starting with one connection, gradually open more connections.
-    // During each iteration of the simulation, have each active connection perform zero
-    // or more actions that touch various parts of the app.
-    await Promise.all(simulatedUsers.map((user) => runSimulation(user)));
-
-    SIMULATION_LOGGER.info("Simulation complete.");
+    throw error;
   }
 }
 
@@ -263,17 +298,36 @@ export function makeHttpRequestable(token = "") {
     url: string,
     body: Record<string, unknown> = {}
   ) => {
-    const { data } = await axios[method](
-      [config.API_REQUEST_URL, url].join(""),
-      body,
-      {
+    const fullUrl = [config.API_REQUEST_URL, url].join("");
+
+    type Response = {
+      data: {
+        error: boolean;
+        result: "OK" | "Error";
+        message: string;
+        data: Record<string, unknown>;
+      };
+    };
+
+    if (method === "get") {
+      const {
+        data: { data },
+      } = (await axios.get(fullUrl, {
         headers: {
           Authorization: token,
         },
-      }
-    );
-
-    return data;
+      })) as Response;
+      return data;
+    } else {
+      const {
+        data: { data },
+      } = (await axios.post(fullUrl, body, {
+        headers: {
+          Authorization: token,
+        },
+      })) as Response;
+      return data;
+    }
   };
 }
 

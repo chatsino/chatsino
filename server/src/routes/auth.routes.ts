@@ -1,6 +1,12 @@
+import { clearCachedValue, getCachedValue, setCachedValue } from "cache";
 import * as config from "config";
 import { Request, Response, Router } from "express";
-import { createLogger, handleGenericErrors, successResponse } from "helpers";
+import {
+  createLogger,
+  guid,
+  handleGenericErrors,
+  successResponse,
+} from "helpers";
 import { makeRequest, User, UserSocketRequests, userValidators } from "models";
 import { issueTicket } from "tickets";
 
@@ -31,8 +37,11 @@ export async function validateRoute(req: Request, res: Response) {
 
     AUTH_ROUTER_LOGGER.info({ user }, "Retrieved user.");
 
+    const token = await getCachedValue(`Session:${userId}`);
+
     return successResponse(res, "Validation request succeeded.", {
       user,
+      token,
     });
   } catch (error) {
     AUTH_ROUTER_LOGGER.error(
@@ -58,20 +67,19 @@ export async function signupRoute(req: Request, res: Response) {
       user: Nullable<User>;
     };
 
-    AUTH_ROUTER_LOGGER.info({ result }, "Result.");
-
     const { user } = result;
 
     if (!user) {
       throw new Error("Failed to create user.");
     }
 
-    const session = req.session as UserSession;
-
-    session.userId = user.id;
+    const token = guid();
+    await setCachedValue(`Token:${token}`, user.id);
+    await setCachedValue(`Session:${user.id}`, token);
 
     return successResponse(res, "Successfully signed up.", {
       user,
+      token,
     });
   } catch (error) {
     AUTH_ROUTER_LOGGER.error({ error }, "A request to sign up failed.");
@@ -115,10 +123,11 @@ export async function signinRoute(req: Request, res: Response) {
       throw new Error();
     }
 
-    const session = req.session as UserSession;
-    session.userId = user.id;
+    const token = guid();
+    await setCachedValue(`Token:${token}`, user.id);
+    await setCachedValue(`Session:${user.id}`, token);
 
-    return successResponse(res, "Successfully signed in.", { user });
+    return successResponse(res, "Successfully signed in.", { user, token });
   } catch (error) {
     AUTH_ROUTER_LOGGER.error(
       { error: error.message },
@@ -141,6 +150,10 @@ export async function signoutRoute(req: Request, res: Response) {
       req.session.destroy((err) => (err ? reject(err) : resolve()))
     );
 
+    const token = await getCachedValue(`Session:${userId}`);
+    await clearCachedValue(`Session:${userId}`);
+    await clearCachedValue(`Token:${token}`);
+
     return successResponse(res, "Successfully signed out.");
   } catch (error) {
     AUTH_ROUTER_LOGGER.error(
@@ -157,8 +170,12 @@ export async function ticketRoute(req: Request, res: Response) {
     const { userId } = req.session as UserSession;
     const { remoteAddress } = req.socket;
 
-    if (!userId || !remoteAddress) {
-      throw new Error("Invalid ticket request.");
+    if (!userId) {
+      throw new Error("Invalid ticket request: missing userId");
+    }
+
+    if (!remoteAddress) {
+      throw new Error("Invalid ticket request: missing remote address");
     }
 
     return successResponse(res, "Ticket assigned.", {
