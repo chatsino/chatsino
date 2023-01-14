@@ -4,6 +4,7 @@ import {
   CombinedSubscriptions,
   Message,
   MessageSocketEvents,
+  MessageSocketRequests,
   Room,
   RoomSocketEvents,
   RoomSocketRequests,
@@ -77,6 +78,7 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
         };
 
         if (data) {
+          // Handle events
           CHAT_LOGGER.info(
             { kind },
             "Received a published event from Chatsino-Models."
@@ -104,6 +106,7 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
               return;
           }
         } else if (result) {
+          // Handle requests
           const { error, message, data: requestData } = result;
 
           CHAT_LOGGER.info(
@@ -118,6 +121,16 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
             }
             case RoomSocketRequests.AllPublicRooms: {
               return handlers[kind]?.({ rooms: requestData.rooms as Room[] });
+            }
+            case MessageSocketRequests.CreateMessage:
+            case MessageSocketRequests.DeleteMessage:
+            case MessageSocketRequests.EditMessage:
+            case MessageSocketRequests.GetMessage:
+            case MessageSocketRequests.ReactToMessage:
+            case MessageSocketRequests.VoteInMessagePoll: {
+              return handlers[kind]?.({
+                message: requestData.message as Message,
+              });
             }
             default:
               return;

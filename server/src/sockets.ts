@@ -173,9 +173,7 @@ export function initializeSocketServer(server: Server) {
     return socketServer.emit("connection", websocket);
   });
 
-  let checkingForDisconnectedClients: NodeJS.Timeout;
-
-  checkingForDisconnectedClients = setTimeout(
+  let checkingForDisconnectedClients = setTimeout(
     checkForDisconnectedClients,
     config.CONNECTION_STATUS_CHECK_RATE_MS
   );

@@ -14,12 +14,15 @@ export const SIMULATED_USER_PASSWORD = "SIM_ABC123";
 export const MAX_SESSION_COUNT = 1; // How many simulated users can be active at once?
 export const SESSION_TICK_RATES_MS = [1000, 3000]; // Minimum/maximum time between actions taken.
 export const SESSION_OPEN_CHANCE = 20; // %
-export const SESSION_CLOSE_CHANCE = 10; // %
-export const MESSAGE_SEND_CHANCE = 50; // %
+export const SESSION_CLOSE_CHANCE = 5; // %
+export const MESSAGE_SEND_CHANCE = 12; // %
 export const ROOM_CREATE_CHANCE = 3; // %
 
+// Logging
 export enum LOGGER_NAMES {
   SERVER = "Server",
   SIMULATION = "Simulation",
   SOCKETS = "Sockets",
 }
+
+export const LOG_RESPONSE_DATA = false;

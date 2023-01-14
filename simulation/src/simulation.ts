@@ -144,6 +144,8 @@ export async function runSimulation(user: User) {
       const { will, handler } = actionHandlers[action];
 
       if (will) {
+        SIMULATION_LOGGER.info({ action }, "Will perform action.");
+
         await handler();
 
         const [minimumWait, maximumWait] = config.SESSION_TICK_RATES_MS;
@@ -153,10 +155,16 @@ export async function runSimulation(user: User) {
         });
 
         await sleep(timeBetweenActions);
+      } else {
+        SIMULATION_LOGGER.info({ action }, "Won't perform action.");
       }
     }
 
     if (!SIGNED_IN[user.username]) {
+      SIMULATION_LOGGER.info(
+        "No longer signed in -- no more actions will be taken."
+      );
+
       return true;
     }
   }
@@ -243,7 +251,9 @@ export async function connectToServer(
         data: Record<string, unknown>;
       };
 
-      SIMULATION_LOGGER.info({ kind, data }, "Received a socket message.");
+      if (config.LOG_RESPONSE_DATA) {
+        SIMULATION_LOGGER.info({ kind, data }, "Received a socket message.");
+      }
 
       return onReceiveMessage(kind, data);
     } catch (error) {
