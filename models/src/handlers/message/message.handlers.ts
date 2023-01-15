@@ -81,6 +81,36 @@ export const initializeMessageHandlers = () => {
       });
     }
   });
+  SUBSCRIBER.subscribe(
+    MessageRequests.GetMessagesByMessageIds,
+    async (message) => {
+      const { socketId, kind, args } = parseRequest(message);
+
+      try {
+        const { messageIds } = await messageValidators[
+          MessageRequests.GetMessagesByMessageIds
+        ].validate(args);
+
+        return respondTo(socketId, kind, {
+          error: false,
+          message: "Successfully got messages by message IDs.",
+          data: {
+            messages: await MessageEntity.queries.messagesByMessageIds(
+              ...messageIds
+            ),
+          },
+        });
+      } catch (error) {
+        return respondTo(socketId, kind, {
+          error: true,
+          message: "Unable to get messages by message IDs.",
+          data: {
+            messages: [],
+          },
+        });
+      }
+    }
+  );
   // Mutations
   SUBSCRIBER.subscribe(MessageRequests.CreateMessage, async (message) => {
     const { socketId, from, kind, args } = parseRequest(message);

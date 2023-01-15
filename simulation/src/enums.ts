@@ -24,6 +24,7 @@ export enum UserSocketRequests {
   GetBannedUsers = "get-banned-users",
   GetCanUserAfford = "get-can-user-afford",
   GetIsCorrectPassword = "get-is-correct-password",
+  GetUsersByUserIds = "get-users-by-user-ids",
 
   // Mutations
   CreateUser = "create-user",
@@ -78,6 +79,7 @@ export enum MessageSocketRequests {
   GetMessage = "get-message",
   GetTotalMessages = "get-total-messages",
   GetUserMessages = "get-user-messages",
+  GetMessagesByMessageIds = "get-messages-by-message-ids",
 
   // Mutations
   CreateMessage = "create-message",

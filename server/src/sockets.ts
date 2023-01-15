@@ -5,6 +5,7 @@ import { createLogger } from "helpers";
 import { Server } from "http";
 import {
   CombinedRequests,
+  HydratedMessage,
   Message,
   MessageSocketEvents,
   MessageSocketRequests,
@@ -107,17 +108,23 @@ export function initializeSocketServer(server: Server) {
             kind: RoomSocketEvents.RoomChanged,
             data,
           }),
-        [MessageSocketEvents.MessageCreated]: (data: { message: Message }) =>
+        [MessageSocketEvents.MessageCreated]: (data: {
+          message: HydratedMessage;
+        }) =>
           sendMessage(websocket, {
             kind: MessageSocketEvents.MessageCreated,
             data,
           }),
-        [MessageSocketEvents.MessageChanged]: (data: { message: Message }) =>
+        [MessageSocketEvents.MessageChanged]: (data: {
+          message: HydratedMessage;
+        }) =>
           sendMessage(websocket, {
             kind: MessageSocketEvents.MessageChanged,
             data,
           }),
-        [MessageSocketEvents.MessageDeleted]: (data: { message: Message }) =>
+        [MessageSocketEvents.MessageDeleted]: (data: {
+          message: HydratedMessage;
+        }) =>
           sendMessage(websocket, {
             kind: MessageSocketEvents.MessageDeleted,
             data,

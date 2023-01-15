@@ -1,3 +1,6 @@
+import { HydratedMessage } from "models/message";
+import { User } from "models/user";
+
 export enum RoomPermission {
   Owner = "O",
   CoOwner = "C",
@@ -21,6 +24,12 @@ export interface Room {
   permissions: string[];
   messages: string[];
   pins: string[];
+}
+
+export interface HydratedRoom extends Omit<Room, "users" | "messages"> {
+  owner: User;
+  users: User[];
+  messages: HydratedMessage[];
 }
 
 export enum RoomSocketRequests {

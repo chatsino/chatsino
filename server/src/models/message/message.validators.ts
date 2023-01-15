@@ -23,6 +23,13 @@ export const messageValidators = {
     .noUnknown()
     .required(),
   // Mutations
+  [MessageSocketRequests.GetMessagesByMessageIds]: yup
+    .object({
+      messageIds: yup.array(common.entityId).required(),
+    })
+    .noUnknown()
+    .required(),
+  // Mutations
   [MessageSocketRequests.CreateMessage]: yup
     .object({
       roomId: common.entityId,

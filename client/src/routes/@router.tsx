@@ -1,6 +1,6 @@
 import {
   chatRedirectLoader,
-  chatroomListLoader,
+  roomListLoader,
   chatroomLoader,
   chatroomSettingsLoader,
   requireAdminLoader,
@@ -37,7 +37,7 @@ export const router = createBrowserRouter([
     element: <RootRoute />,
     errorElement: <ErrorRoute />,
     loader: async () => {
-      const { chatrooms } = await chatroomListLoader();
+      const { chatrooms } = await roomListLoader();
       const users = await userListLoader();
 
       return {

@@ -2,6 +2,8 @@ import * as config from "config";
 import { createLogger, guid, sleep } from "helpers";
 import {
   CombinedSubscriptions,
+  hydrateMessage,
+  hydrateRoom,
   Message,
   MessageSocketEvents,
   MessageSocketRequests,
@@ -63,7 +65,7 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
         "Socket connection to Chatsino-Models experienced an error."
       );
     });
-    modelSocket.on("message", (event) => {
+    modelSocket.on("message", async (event) => {
       try {
         const { kind, result, data } = JSON.parse(event.toString()) as {
           kind: CombinedSubscriptions;
@@ -84,23 +86,27 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
             "Received a published event from Chatsino-Models."
           );
 
-          const user = data.user as User;
-          const room = data.room as Room;
-          const message = data.room as Message;
-
           switch (kind) {
             case UserSocketEvents.UserCreated:
             case UserSocketEvents.UserChanged: {
+              const user = data.user as User;
+
               return handlers[kind]?.({ user });
             }
             case RoomSocketEvents.RoomCreated:
             case RoomSocketEvents.RoomChanged: {
-              return handlers[kind]?.({ room });
+              const room = data.room as Room;
+
+              return handlers[kind]?.({ room: await hydrateRoom(room) });
             }
             case MessageSocketEvents.MessageCreated:
             case MessageSocketEvents.MessageChanged:
             case MessageSocketEvents.MessageDeleted: {
-              return handlers[kind]?.({ message });
+              const message = data.message as Message;
+
+              return handlers[kind]?.({
+                message: await hydrateMessage(message),
+              });
             }
             default:
               return;
@@ -115,17 +121,56 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
           );
 
           switch (kind) {
+            // Users
+            case UserSocketRequests.GetUser: {
+              return handlers[kind]?.({ user: requestData.user as User });
+            }
             case UserSocketRequests.GetAllUsers:
+            case UserSocketRequests.GetUsersByUserIds:
+            case UserSocketRequests.GetAllOperators:
+            case UserSocketRequests.GetAllAdministrators:
+            case UserSocketRequests.GetAllModerators:
+            case UserSocketRequests.GetBannedUsers:
             case UserSocketRequests.GetUsersWithUsername: {
               return handlers[kind]?.({ users: requestData.users as User[] });
+            }
+            // Rooms
+            // -- Hydrated
+            case RoomSocketRequests.Room: {
+              const room = requestData.room as Room;
+
+              return handlers[kind]?.({ room: await hydrateRoom(room) });
+            }
+
+            // -- Not Hydrated
+            case RoomSocketRequests.CreateRoom: {
+              return handlers[kind]?.({ room: requestData.room as Room });
             }
             case RoomSocketRequests.AllPublicRooms: {
               return handlers[kind]?.({ rooms: requestData.rooms as Room[] });
             }
+
+            // Messages
+            // -- Hydrated
+            case MessageSocketRequests.GetMessage: {
+              const message = requestData.message as Message;
+
+              return handlers[kind]?.({
+                message: await hydrateMessage(message),
+              });
+            }
+            case MessageSocketRequests.GetMessagesByMessageIds: {
+              const messages = requestData.messages as Message[];
+
+              return handlers[kind]?.({
+                messages: await Promise.all(messages.map(hydrateMessage)),
+              });
+            }
+
+            // -- Not Hydrated
             case MessageSocketRequests.CreateMessage:
             case MessageSocketRequests.DeleteMessage:
             case MessageSocketRequests.EditMessage:
-            case MessageSocketRequests.GetMessage:
             case MessageSocketRequests.ReactToMessage:
             case MessageSocketRequests.VoteInMessagePoll: {
               return handlers[kind]?.({

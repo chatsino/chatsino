@@ -1,3 +1,6 @@
+import type { Room } from "models/room";
+import type { User } from "models/user";
+
 export interface Message {
   id: string;
   userId: string;
@@ -10,11 +13,17 @@ export interface Message {
   mentions: string[];
 }
 
+export interface HydratedMessage extends Message {
+  user: User;
+  room: Room;
+}
+
 export enum MessageSocketRequests {
   // Queries
   GetMessage = "get-message",
   GetTotalMessages = "get-total-messages",
   GetUserMessages = "get-user-messages",
+  GetMessagesByMessageIds = "get-messages-by-message-ids",
 
   // Mutations
   CreateMessage = "create-message",

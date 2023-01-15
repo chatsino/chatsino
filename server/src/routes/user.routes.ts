@@ -22,6 +22,7 @@ export async function getUsersRoute(req: Request, res: Response) {
     const { "/users?username": usernameQueryParam } = querystring.parse(
       req.url
     );
+    const { "/users?ids": userIdsQueryParam } = querystring.parse(req.url);
 
     if (typeof usernameQueryParam === "string") {
       const { users } = (await makeRequest(
@@ -41,6 +42,21 @@ export async function getUsersRoute(req: Request, res: Response) {
           users,
         }
       );
+    } else if (typeof userIdsQueryParam === "string") {
+      const userIds = JSON.parse(userIdsQueryParam) as string[];
+      const { users } = (await makeRequest(
+        userId,
+        UserSocketRequests.GetUsersByUserIds,
+        {
+          userIds,
+        }
+      )) as {
+        users: User[];
+      };
+
+      return successResponse(res, "Successfully retrieved users with ids.", {
+        users,
+      });
     } else {
       const { users } = (await makeRequest(
         userId,

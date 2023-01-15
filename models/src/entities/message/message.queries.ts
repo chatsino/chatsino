@@ -20,4 +20,5 @@ export const messageQueries = {
         .equals(userId)
         .return.all()
     ) as Promise<Message[]>,
+  messagesByMessageIds: messageCrud.readList,
 };

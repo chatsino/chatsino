@@ -22,6 +22,12 @@ export const messageValidators = {
     })
     .noUnknown()
     .required(),
+  [MessageRequests.GetMessagesByMessageIds]: yup
+    .object({
+      messageIds: yup.array(common.entityId).required(),
+    })
+    .noUnknown()
+    .required(),
   // Mutations
   [MessageRequests.CreateMessage]: yup
     .object({

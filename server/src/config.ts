@@ -25,6 +25,7 @@ export const COOKIE_SECRET = process.env.COOKIE_SECRET as string;
 export const TICKET_SECRET = process.env.TICKET_SECRET as string;
 
 // Sockets
+export const HYDRATOR_REQUEST_NAME = "Hydrator";
 export const CONNECTION_STATUS_CHECK_RATE_MS = 1000 * 30;
 
 // Auth

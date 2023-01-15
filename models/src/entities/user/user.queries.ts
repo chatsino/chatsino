@@ -31,6 +31,7 @@ export const userQueries = {
     ).then((result: User[]) =>
       result ? result.map((each) => each.fields) : null
     ),
+  usersByUserIds: userCrud.readList,
   usersByUsernameList: (...usernames: string[]) =>
     executeCommand((client) =>
       createUserRepository(client)

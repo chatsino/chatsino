@@ -3,6 +3,7 @@ export enum MessageRequests {
   GetMessage = "get-message",
   GetTotalMessages = "get-total-messages",
   GetUserMessages = "get-user-messages",
+  GetMessagesByMessageIds = "get-messages-by-message-ids",
 
   // Mutations
   CreateMessage = "create-message",

@@ -131,6 +131,32 @@ export const initializeUserHandlers = () => {
       });
     }
   });
+  SUBSCRIBER.subscribe(UserRequests.GetUsersByUserIds, async (message) => {
+    const { socketId, kind, args } = parseRequest(message);
+
+    try {
+      const { userIds } = await userValidators[
+        UserRequests.GetUsersByUserIds
+      ].validate(args);
+      const users = await UserEntity.queries.usersByUserIds(...userIds);
+
+      return respondTo(socketId, kind, {
+        error: false,
+        message: "Successfully got users by user IDs.",
+        data: {
+          users,
+        },
+      });
+    } catch (error) {
+      return respondTo(socketId, kind, {
+        error: true,
+        message: "Unable to get users by user IDs.",
+        data: {
+          users: [],
+        },
+      });
+    }
+  });
   SUBSCRIBER.subscribe(UserRequests.GetUsersByUsernameList, async (message) => {
     const { socketId, kind, args } = parseRequest(message);
 
