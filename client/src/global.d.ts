@@ -1,9 +1,9 @@
 declare interface ChatsinoMessage {
   id: string;
-  // userId: string;
-  user: ChatsinoUser;
-  // roomId: string;
-  room: ChatsinoRoom;
+  userId: string;
+  user?: ChatsinoUser;
+  roomId: string;
+  room?: ChatsinoRoom;
   createdAt: string;
   changedAt: string;
   content: string;
@@ -14,17 +14,17 @@ declare interface ChatsinoMessage {
 
 declare interface ChatsinoRoom {
   id: string;
-  // ownerId: string;
-  owner: ChatsinoUser;
+  ownerId: string;
+  owner?: ChatsinoUser;
   createdAt: string;
   changedAt: string;
   avatar: string;
   title: string;
   description: string;
   password: string;
-  users: ChatsinoUser[];
+  users: string[] | ChatsinoUser[];
   permissions: string[];
-  messages: ChatsinoMessage[];
+  messages: string[] | ChatsinoMessage[];
   pins: string[];
 }
 
@@ -34,7 +34,7 @@ declare interface ChatsinoRoulette {
   status: RouletteStatus;
   bets: string[];
   results: string[];
-  participants: ChatsinoUser[];
+  participants: string[] | ChatsinoUser[];
   outcome: number;
 }
 
@@ -43,10 +43,16 @@ declare interface ChatsinoSniper {
   startedAt: string;
   status: SniperStatus;
   snipes: string[];
-  participants: ChatsinoUser[];
+  participants: string[] | ChatsinoUser[];
   pot: number;
-  winner: null | ChatsinoUser;
+  winner: null | string | ChatsinoUser;
 }
+
+declare type ChatsinoUserRole =
+  | "user"
+  | "moderator"
+  | "administrator"
+  | "operator";
 
 declare interface ChatsinoUser {
   id: string;
@@ -57,6 +63,6 @@ declare interface ChatsinoUser {
   chips: number;
   sessionCount: number;
   lastActive: string;
-  role: UserRole;
+  role: ChatsinoUserRole;
   banDuration: number;
 }

@@ -1,66 +1,53 @@
 import { makeHttpRequest } from "helpers";
 import { LoaderFunctionArgs, redirect } from "react-router-dom";
-import { SafeClient } from "schemas";
 import { message as showMessage } from "ui";
 import { requireClientLoader } from "./client.loader";
 
-export interface ChatroomLoaderData {
-  client: SafeClient;
-  chatroom: ChatroomData;
-  messages: ChatMessageData[];
-  users: ChatUserData[];
+export interface RoomLoaderData {
+  client: ChatsinoUser;
+  room: ChatsinoRoom;
   sendMessage(message: string): Promise<unknown>;
   pinMessage(messageId: number): Promise<unknown>;
   deleteMessage(messageId: number): Promise<unknown>;
 }
 
-export async function chatroomLoader(
+export async function roomLoader(
   loader: LoaderFunctionArgs
-): Promise<ChatroomLoaderData> {
-  const chatroomId = parseInt(loader.params.chatroomId as string);
+): Promise<RoomLoaderData> {
+  const { roomId } = loader.params;
   const { client } = await requireClientLoader(loader);
 
   try {
-    const { chatroom, messages, users } = (await makeHttpRequest(
+    const { room } = (await makeHttpRequest(
       "get",
-      `/chat/chatrooms/${chatroomId}`
+      `/chat/rooms/${roomId}`
     )) as {
-      chatroom: ChatroomData;
-      messages: ChatMessageData[];
-      users: ChatUserData[];
+      room: ChatsinoRoom;
     };
 
     return {
       client,
-      chatroom,
-      messages,
-      users,
+      room,
       async sendMessage(message: string) {
         try {
-          await makeHttpRequest(
-            "post",
-            `/chat/chatrooms/${chatroomId}/messages`,
-            {
-              chatroomId,
-              message,
-            }
-          );
+          await makeHttpRequest("post", `/chat/rooms/${roomId}/messages`, {
+            roomId,
+            message,
+          });
         } catch (error) {
           showMessage.error(`Unable to send message.`);
         }
       },
       async pinMessage(messageId: number) {
         try {
-          const {
-            message: { pinned },
-          } = (await makeHttpRequest(
+          (await makeHttpRequest(
             "post",
-            `/chat/chatrooms/${chatroomId}/messages/${messageId}/pin`
+            `/chat/rooms/${roomId}/messages/${messageId}/pin`
           )) as {
-            message: ChatMessageData;
+            message: ChatsinoMessage;
           };
 
-          showMessage.success(`Message ${pinned ? "pinned" : "unpinned"}.`);
+          showMessage.success(`Message pinned.`);
         } catch (error) {
           showMessage.error("Unable to pin message.");
         }
@@ -69,7 +56,7 @@ export async function chatroomLoader(
         try {
           await makeHttpRequest(
             "delete",
-            `/chat/chatrooms/${chatroomId}/messages/${messageId}`
+            `/chat/rooms/${roomId}/messages/${messageId}`
           );
 
           showMessage.success("Message deleted.");

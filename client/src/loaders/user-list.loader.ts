@@ -1,18 +1,15 @@
 import { makeHttpRequest } from "helpers";
 
 export interface UserListLoaderData {
-  active: ChatUserData[];
-  inactive: ChatUserData[];
+  users: ChatsinoUser[];
 }
 
 export async function userListLoader(): Promise<UserListLoaderData> {
-  const { active, inactive } = (await makeHttpRequest("get", "/users")) as {
-    active: ChatUserData[];
-    inactive: ChatUserData[];
+  const { users } = (await makeHttpRequest("get", "/users")) as {
+    users: ChatsinoUser[];
   };
 
   return {
-    active,
-    inactive,
+    users,
   };
 }

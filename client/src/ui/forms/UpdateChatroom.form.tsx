@@ -14,7 +14,7 @@ import {
 } from "antd";
 import { useFormFields } from "hooks";
 import { useState } from "react";
-import type { ChatroomUpdate } from "loaders";
+import type { RoomUpdate } from "loaders";
 import { FaListAlt, FaRegListAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { updateChatroomSchema } from "schemas";
@@ -23,11 +23,11 @@ import { AvatarUpload } from "../AvatarUpload";
 interface Props {
   form: FormInstance;
   chatroom: ChatroomData;
-  onSubmit(update: ChatroomUpdate): Promise<unknown>;
+  onSubmit(update: RoomUpdate): Promise<unknown>;
   onCancel(): unknown;
 }
 
-export type UpdateChatroomFormValues = ChatroomUpdate;
+export type UpdateChatroomFormValues = RoomUpdate;
 
 export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
   const [showingSecurity, setShowingSecurity] = useState(false);

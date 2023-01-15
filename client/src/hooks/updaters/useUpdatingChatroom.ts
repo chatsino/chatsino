@@ -1,5 +1,5 @@
 import { useSocket } from "hooks";
-import { ChatroomLoaderData } from "loaders";
+import { RoomLoaderData } from "loaders";
 import { useEffect, useRef, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 import { CHATROOM_SUBSCRIPTIONS } from "subscriptions";
@@ -8,7 +8,7 @@ import uuid from "uuid4";
 export function useUpdatingChatroom() {
   const identifier = useRef(uuid());
   const { chatroom: initialChatroom, messages: initialMessages } =
-    useLoaderData() as ChatroomLoaderData;
+    useLoaderData() as RoomLoaderData;
   const { subscribe, unsubscribe } = useSocket();
   const [chatroom, setChatroom] = useState(initialChatroom);
   const [messages, setMessages] = useState(initialMessages);

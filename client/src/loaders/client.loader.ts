@@ -1,14 +1,13 @@
 import { makeHttpRequest } from "helpers";
 import { LoaderFunctionArgs, redirect } from "react-router-dom";
-import { SafeClient } from "schemas";
 
 export async function clientLoader() {
   try {
-    const { client } = (await makeHttpRequest("get", "/auth/validate")) as {
-      client: SafeClient;
+    const { user } = (await makeHttpRequest("get", "/auth/validate")) as {
+      user: ChatsinoUser;
     };
 
-    return { client };
+    return { client: user };
   } catch (error) {
     return null;
   }
@@ -40,7 +39,7 @@ export async function requireClientLoader(loader: LoaderFunctionArgs) {
       throw redirect(redirectRoute);
     }
 
-    return { client: loaded.client };
+    return loaded;
   } catch (error) {
     throw redirect(redirectRoute);
   }
@@ -49,8 +48,9 @@ export async function requireClientLoader(loader: LoaderFunctionArgs) {
 export async function requireAdminLoader(loader: LoaderFunctionArgs) {
   try {
     const { client } = await requireClientLoader(loader);
+    const adminRoles: ChatsinoUserRole[] = ["operator", "administrator"];
 
-    if (!client.permissionLevel.includes("admin")) {
+    if (!adminRoles.includes(client.role)) {
       throw redirect("/chat");
     }
 

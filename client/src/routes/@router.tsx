@@ -1,8 +1,8 @@
 import {
   chatRedirectLoader,
   roomListLoader,
-  chatroomLoader,
-  chatroomSettingsLoader,
+  roomLoader,
+  roomSettingsLoader,
   requireAdminLoader,
   requireClientLoader,
   userListLoader,
@@ -57,22 +57,22 @@ export const router = createBrowserRouter([
         children: [
           {
             path: ":chatroomId",
-            loader: chatroomLoader,
+            loader: roomLoader,
             element: <ChatroomRoute />,
             children: [
               {
                 path: "settings",
-                loader: chatroomSettingsLoader,
+                loader: roomSettingsLoader,
                 element: <ChatroomSettingsRoute />,
                 children: [
                   {
                     path: "blacklist",
-                    loader: chatroomSettingsLoader,
+                    loader: roomSettingsLoader,
                     element: <ChatroomBlacklistRoute />,
                   },
                   {
                     path: "whitelist",
-                    loader: chatroomSettingsLoader,
+                    loader: roomSettingsLoader,
                     element: <ChatroomWhitelistRoute />,
                   },
                 ],

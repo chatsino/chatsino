@@ -1,5 +1,5 @@
 import { useChatroomHeaderHeight, useUpdatingChatroom } from "hooks";
-import { ChatroomSettingsLoaderData } from "loaders";
+import { RoomSettingsLoaderData } from "loaders";
 import { Outlet, useLoaderData, useNavigate } from "react-router-dom";
 import {
   Button,
@@ -15,7 +15,7 @@ import {
 } from "ui";
 
 export function ChatroomSettingsRoute() {
-  const { updateChatroom } = useLoaderData() as ChatroomSettingsLoaderData;
+  const { updateChatroom } = useLoaderData() as RoomSettingsLoaderData;
   const { chatroom } = useUpdatingChatroom();
   const [form] = Form.useForm();
   const navigate = useNavigate();
