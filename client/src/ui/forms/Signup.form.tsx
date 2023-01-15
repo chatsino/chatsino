@@ -1,6 +1,5 @@
 import { Button, Divider, Form, Input } from "antd";
 import { useFormFields } from "hooks";
-import { clientSignupSchema } from "schemas";
 
 interface Props {
   onSubmit(
@@ -33,8 +32,7 @@ export function SignupForm({ onSubmit }: Props) {
 
   async function onFinish(values: typeof SIGNUP_INITIAL_VALUES) {
     try {
-      const { username, password, passwordAgain } =
-        await clientSignupSchema.validate(values);
+      const { username, password, passwordAgain } = values;
       return onSubmit(username, password, passwordAgain);
     } catch (error) {
       return handleError(error);

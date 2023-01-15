@@ -1,6 +1,5 @@
 import { Button, Form, Input, Select } from "antd";
 import { useFormFields } from "hooks";
-import { purchaseChipsSchema } from "schemas";
 
 interface Props {
   onSubmit(amount: number, paymentMethod: string): Promise<unknown>;
@@ -26,9 +25,8 @@ export function PurchaseChipsForm({ onSubmit }: Props) {
 
   async function onFinish(values: PurchaseChipsFormValues) {
     try {
-      const { amount, paymentMethod } = await purchaseChipsSchema.validate(
-        values
-      );
+      const { amount, paymentMethod } = values;
+
       return onSubmit(amount, paymentMethod);
     } catch (error) {
       return handleError(error);

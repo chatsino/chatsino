@@ -3,28 +3,28 @@ import { RoomSettingsLoaderData } from "loaders";
 import { Outlet, useLoaderData, useNavigate } from "react-router-dom";
 import {
   Button,
-  ChatroomAvatarStrip,
-  ChatroomReadonlyData,
   CloseOutlined,
   Divider,
   Drawer,
   Form,
   Grid,
+  RoomAvatarStrip,
+  RoomReadonlyData,
   Space,
   UpdateChatroomForm,
 } from "ui";
 
-export function ChatroomSettingsRoute() {
-  const { updateChatroom } = useLoaderData() as RoomSettingsLoaderData;
-  const { chatroom } = useUpdatingRoom();
+export function RoomSettingsRoute() {
+  const { updateRoom } = useLoaderData() as RoomSettingsLoaderData;
+  const room = useUpdatingRoom();
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const chatroomHeaderHeight = useRoomHeaderHeight(chatroom.id);
+  const roomHeaderHeight = useRoomHeaderHeight(room.id);
   const { sm } = Grid.useBreakpoint();
   const isMobile = !sm;
 
   function handleClose() {
-    return navigate(`/chat/${chatroom.id}`);
+    return navigate(`/chat/${room.id}`);
   }
 
   return (
@@ -34,7 +34,7 @@ export function ChatroomSettingsRoute() {
         placement="right"
         title={
           <Space>
-            <ChatroomAvatarStrip chatroom={chatroom} size="small" />
+            <RoomAvatarStrip room={room} size="small" />
             <Divider type="vertical" />
             Settings
           </Space>
@@ -59,17 +59,17 @@ export function ChatroomSettingsRoute() {
         width={isMobile ? "100%" : "50%"}
         style={{
           position: "relative",
-          top: chatroomHeaderHeight,
-          height: `calc(100% - ${chatroomHeaderHeight}px)`,
+          top: roomHeaderHeight,
+          height: `calc(100% - ${roomHeaderHeight}px)`,
         }}
       >
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
-          <ChatroomReadonlyData chatroom={chatroom} />
+          <RoomReadonlyData room={room} />
           <UpdateChatroomForm
             form={form}
-            chatroom={chatroom}
-            onSubmit={updateChatroom}
-            onCancel={() => navigate(`/chat/${chatroom.id}`)}
+            room={room}
+            onSubmit={updateRoom}
+            onCancel={() => navigate(`/chat/${room.id}`)}
           />
         </Space>
       </Drawer>

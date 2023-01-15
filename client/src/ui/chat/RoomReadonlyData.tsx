@@ -1,30 +1,29 @@
 import { Descriptions, Typography } from "antd";
 import { ClientAvatarStrip } from "ui";
 
-export function ChatroomReadonlyData({ chatroom }: { chatroom: ChatroomData }) {
+export function RoomReadonlyData({ room }: { room: ChatsinoRoom }) {
   return (
     <Descriptions
       bordered={true}
       layout="vertical"
       column={{ xs: 24, sm: 12, md: 8 }}
     >
-      <Descriptions.Item label="ID">{chatroom.id}</Descriptions.Item>
+      <Descriptions.Item label="ID">{room.id}</Descriptions.Item>
       <Descriptions.Item label="Created By">
-        <ClientAvatarStrip client={chatroom.createdBy} size="small" />
+        <ClientAvatarStrip client={room.owner} size="small" />
         <Typography.Text type="secondary" style={{ display: "block" }}>
           {new Intl.DateTimeFormat("en-us", {
             timeStyle: "medium",
             dateStyle: "medium",
-          }).format(new Date(chatroom.createdAt))}
+          }).format(new Date(room.createdAt))}
         </Typography.Text>
       </Descriptions.Item>
       <Descriptions.Item label="Updated By">
-        <ClientAvatarStrip client={chatroom.updatedBy} size="small" />
         <Typography.Text type="secondary" style={{ display: "block" }}>
           {new Intl.DateTimeFormat("en-us", {
             timeStyle: "medium",
             dateStyle: "medium",
-          }).format(new Date(chatroom.updatedAt))}
+          }).format(new Date(room.changedAt))}
         </Typography.Text>
       </Descriptions.Item>
     </Descriptions>

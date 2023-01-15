@@ -1,23 +1,21 @@
 import { useRoomHeaderHeight, useUpdatingRoom } from "hooks";
-import { RoomSettingsLoaderData } from "loaders";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
-  ChatroomAvatarStrip,
   CloseOutlined,
   Divider,
   Drawer,
+  RoomAvatarStrip,
   Space,
 } from "ui";
 
-export function ChatroomWhitelistRoute() {
-  const { updateChatroom } = useLoaderData() as RoomSettingsLoaderData;
-  const { chatroom } = useUpdatingRoom();
+export function RoomWhitelistRoute() {
+  const room = useUpdatingRoom();
   const navigate = useNavigate();
-  const chatroomHeaderHeight = useRoomHeaderHeight(chatroom.id);
+  const chatroomHeaderHeight = useRoomHeaderHeight(room.id);
 
   function handleClose() {
-    return navigate(`/chat/${chatroom.id}/settings`);
+    return navigate(`/chat/${room.id}/settings`);
   }
 
   return (
@@ -26,7 +24,7 @@ export function ChatroomWhitelistRoute() {
       placement="right"
       title={
         <Space>
-          <ChatroomAvatarStrip chatroom={chatroom} size="small" />
+          <RoomAvatarStrip room={room} size="small" />
           <Divider type="vertical" />
           Whitelist
         </Space>

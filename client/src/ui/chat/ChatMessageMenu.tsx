@@ -7,10 +7,10 @@ export function ChatMessageMenu({
   onPin,
   onDelete,
 }: {
-  message: ChatMessageData;
+  message: ChatsinoMessage;
   onMention: (username: string) => unknown;
-  onPin: (messageId: number) => unknown;
-  onDelete: (messageId: number) => unknown;
+  onPin: (messageId: string) => unknown;
+  onDelete: (messageId: string) => unknown;
 }) {
   return (
     <Typography.Text>
@@ -28,11 +28,12 @@ export function ChatMessageMenu({
             {
               key: "mention",
               label: "Mention",
-              onClick: () => onMention(message.author.username),
+              onClick: () => message.user && onMention(message.user.username),
             },
             {
               key: "pin",
-              label: message.pinned ? "Unpin" : "Pin",
+              label: "Pin",
+              // label: message.pinned ? "Unpin" : "Pin",
               onClick: () => onPin(message.id),
             },
             {

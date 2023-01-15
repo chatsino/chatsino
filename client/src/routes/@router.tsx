@@ -1,18 +1,17 @@
 import {
   chatRedirectLoader,
+  requireAdminLoader,
+  requireClientLoader,
   roomListLoader,
   roomLoader,
   roomSettingsLoader,
-  requireAdminLoader,
-  requireClientLoader,
   userListLoader,
 } from "loaders";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { AdminRoute } from "./Admin.route";
-import { ChatroomRoute } from "./Chatroom.route";
-import { ChatroomBlacklistRoute } from "./ChatroomBlacklist.route";
-import { ChatroomSettingsRoute } from "./ChatroomSettings.route";
-import { ChatroomWhitelistRoute } from "./ChatroomWhitelist.route";
+import { RoomBlacklistRoute } from "./RoomBlacklist.route";
+import { RoomSettingsRoute } from "./RoomSettings.route";
+import { RoomWhitelistRoute } from "./ChatroomWhitelist.route";
 import { ErrorRoute } from "./Error.route";
 import {
   BlackjackRoute,
@@ -24,6 +23,7 @@ import {
 import { GamesRoute } from "./Games.route";
 import { HelpRoute } from "./Help.route";
 import { MeRoute } from "./Me.route";
+import { ChatroomRoute } from "./Room.route";
 import { RootRoute } from "./Root.route";
 import { SigninRoute } from "./Signin.route";
 import { SignoutRoute } from "./Signout.route";
@@ -37,11 +37,11 @@ export const router = createBrowserRouter([
     element: <RootRoute />,
     errorElement: <ErrorRoute />,
     loader: async () => {
-      const { chatrooms } = await roomListLoader();
+      const { rooms } = await roomListLoader();
       const users = await userListLoader();
 
       return {
-        chatrooms,
+        rooms,
         users,
       };
     },
@@ -63,17 +63,17 @@ export const router = createBrowserRouter([
               {
                 path: "settings",
                 loader: roomSettingsLoader,
-                element: <ChatroomSettingsRoute />,
+                element: <RoomSettingsRoute />,
                 children: [
                   {
                     path: "blacklist",
                     loader: roomSettingsLoader,
-                    element: <ChatroomBlacklistRoute />,
+                    element: <RoomBlacklistRoute />,
                   },
                   {
                     path: "whitelist",
                     loader: roomSettingsLoader,
-                    element: <ChatroomWhitelistRoute />,
+                    element: <RoomWhitelistRoute />,
                   },
                 ],
               },

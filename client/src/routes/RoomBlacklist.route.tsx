@@ -1,6 +1,6 @@
 import { Drawer } from "ui";
 
-export function ChatroomBlacklistRoute() {
+export function RoomBlacklistRoute() {
   return (
     <Drawer open={true} placement="right" getContainer={false}>
       Blacklist

@@ -1,13 +1,12 @@
 import { List, Popover, Typography } from "antd";
 import { useClient } from "hooks";
 import { BsPinAngle } from "react-icons/bs";
-import { SafeClient } from "schemas";
 import { ChatMessageMenu } from "./ChatMessageMenu";
 
 export type ChatMessageActions = {
   onMentionUser: (username: string) => unknown;
-  onPinMessage: (messageId: number) => unknown;
-  onDeleteMessage: (messageId: number) => unknown;
+  onPinMessage: (messageId: string) => unknown;
+  onDeleteMessage: (messageId: string) => unknown;
 };
 
 export const getMessageBackgroundClass = (
@@ -30,30 +29,25 @@ export const getMessageBackgroundClass = (
 };
 
 export const mentionsClient = (
-  message: ChatMessageData,
-  client: null | SafeClient
-) => {
-  const mention = `@${client?.username} `;
-  const startsWithMention = message.content.startsWith(mention);
-  const includesMention = new RegExp(` ${mention}`).test(message.content);
-
-  return Boolean(client && (startsWithMention || includesMention));
-};
+  message: ChatsinoMessage,
+  client: ChatsinoUser
+) => message.mentions.includes(client.username);
 
 export function ChatMessage({
   message,
   onMentionUser,
   onPinMessage,
   onDeleteMessage,
-}: ChatMessageActions & { message: ChatMessageData }) {
+}: ChatMessageActions & { message: ChatsinoMessage }) {
   const { client } = useClient();
 
   return (
     <List.Item
       key={message.id}
       className={getMessageBackgroundClass(
-        message.pinned,
-        mentionsClient(message, client)
+        false,
+        // message.pinned,
+        Boolean(client && mentionsClient(message, client))
       )}
       style={{
         position: "relative",
@@ -70,7 +64,8 @@ export function ChatMessage({
         </div>
       }
     >
-      {message.pinned && (
+      {false && (
+        // {message.pinned && (
         <Popover content="Pinned.">
           <Typography.Text
             type="danger"

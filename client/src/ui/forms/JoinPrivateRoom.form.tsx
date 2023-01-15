@@ -1,6 +1,5 @@
 import { Button, Form, Input } from "antd";
 import { useFormFields } from "hooks";
-import { joinPrivateRoomSchema } from "schemas";
 
 interface Props {
   onSubmit(username: string, password: string): Promise<unknown>;
@@ -26,7 +25,8 @@ export function JoinPrivateRoomForm({ onSubmit }: Props) {
 
   async function onFinish(values: JoinPrivateRoomFormValues) {
     try {
-      const { room, password } = await joinPrivateRoomSchema.validate(values);
+      const { room, password } = values;
+
       return onSubmit(room, password);
     } catch (error) {
       return handleError(error);

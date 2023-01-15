@@ -2,13 +2,13 @@ import { Typography } from "antd";
 import { Link } from "react-router-dom";
 import { AvatarStrip, AvatarStripSize } from "../AvatarStrip";
 
-export function ChatroomAvatarStrip({
-  chatroom: { id, avatar, title },
+export function RoomAvatarStrip({
+  room: { id, avatar, title },
   link = "",
   size = "default",
   active = false,
 }: {
-  chatroom: ChatroomData;
+  room: ChatsinoRoom;
   link?: string | false;
   size?: AvatarStripSize;
   active?: boolean;

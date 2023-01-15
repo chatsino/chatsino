@@ -23,36 +23,39 @@ import { GoMention } from "react-icons/go";
 import { Link } from "react-router-dom";
 import { ClientAvatarStrip } from "../client";
 import { mentionsClient } from "./ChatMessage";
-import { ChatroomAvatarStrip } from "./ChatroomAvatarStrip";
+import { RoomAvatarStrip } from "./RoomAvatarStrip";
 
-export function ChatroomHeader({
-  chatroom,
-  messages,
+export function RoomHeader({
+  room,
   search,
   showingMentions,
   showingPinned,
   onShowMentions,
   onShowPinned,
 }: {
-  chatroom: ChatroomData;
-  messages: ChatMessageData[];
+  room: ChatsinoRoom;
   search: UseChatSearch;
   showingMentions: boolean;
   showingPinned: boolean;
   onShowMentions(): unknown;
   onShowPinned(): unknown;
 }) {
+  const messages = room.messages as ChatsinoMessage[];
   const { client } = useClient();
   const mentionedMessages = useMemo(
-    () => messages.filter((message) => mentionsClient(message, client)),
+    () =>
+      messages.filter((message) =>
+        mentionsClient(message, client as ChatsinoUser)
+      ),
     [messages, client]
   );
   const pinnedMessages = useMemo(
-    () => messages.filter(({ pinned }) => pinned),
+    () => messages.filter(() => false),
+    // () => messages.filter(({ pinned }) => pinned),
     [messages]
   );
 
-  let flavorText = chatroom.description as ReactNode;
+  let flavorText = room.description as ReactNode;
 
   if (showingMentions && client) {
     flavorText = (
@@ -79,8 +82,7 @@ export function ChatroomHeader({
     flavorText = (
       <>
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-          Searching for messages in #{chatroom.title} containing "{search.query}
-          " --
+          Searching for messages in #{room.title} containing "{search.query}" --
           {search.noResults ? (
             <> no results found.</>
           ) : (
@@ -100,7 +102,7 @@ export function ChatroomHeader({
 
   return (
     <div
-      id={`RoomHeader#${chatroom.id}`}
+      id={`RoomHeader#${room.id}`}
       style={{
         display: "flex",
         alignItems: "center",
@@ -115,24 +117,20 @@ export function ChatroomHeader({
                 <Typography.Text type="secondary" style={{ display: "block" }}>
                   Created by
                 </Typography.Text>
-                <ClientAvatarStrip client={chatroom.createdBy} size="small" />
+                <ClientAvatarStrip client={room.owner} size="small" />
               </Space>
               <Typography.Text type="secondary" style={{ display: "block" }}>
-                <small>on {fromDateString(chatroom.createdAt)}</small>
+                <small>on {fromDateString(room.createdAt)}</small>
               </Typography.Text>
               <Typography.Text type="secondary" style={{ display: "block" }}>
-                <small>(updated at {fromDateString(chatroom.updatedAt)})</small>
+                <small>(updated at {fromDateString(room.changedAt)})</small>
               </Typography.Text>
             </Space>
           }
           placement="bottomLeft"
         >
           <div style={{ cursor: "pointer" }}>
-            <ChatroomAvatarStrip
-              chatroom={chatroom}
-              size="large"
-              link={false}
-            />
+            <RoomAvatarStrip room={room} size="large" link={false} />
           </div>
         </Popover>
         <Divider type="vertical" />
@@ -143,7 +141,7 @@ export function ChatroomHeader({
           <Input
             type="text"
             prefix={<SearchOutlined />}
-            placeholder={`Search #${chatroom.title}`}
+            placeholder={`Search #${room.title}`}
             value={search.query}
             onChange={(event) => search.setQuery(event.target.value)}
             style={{
@@ -155,20 +153,20 @@ export function ChatroomHeader({
           )}
         </Input.Group>
         <MentionButton
-          chatroom={chatroom}
+          room={room}
           active={showingMentions}
           mentions={mentionedMessages.length}
           onShowMentions={onShowMentions}
         />
         <PinButton
-          chatroom={chatroom}
+          room={room}
           active={showingPinned}
           pinned={pinnedMessages.length}
           onShowPinned={onShowPinned}
         />
-        <LockButton chatroom={chatroom} />
-        <UserButton chatroom={chatroom} />
-        <SettingsButton chatroom={chatroom} />
+        <LockButton room={room} />
+        <UserButton room={room} />
+        <SettingsButton room={room} />
       </Space>
     </div>
   );
@@ -176,12 +174,12 @@ export function ChatroomHeader({
 
 // #region Buttons
 function MentionButton({
-  chatroom,
+  room,
   active,
   mentions,
   onShowMentions,
 }: {
-  chatroom: ChatroomData;
+  room: ChatsinoRoom;
   active: boolean;
   mentions: number;
   onShowMentions(): unknown;
@@ -190,8 +188,8 @@ function MentionButton({
     <Popover
       content={
         mentions === 0
-          ? `You do not have any mentions in #${chatroom.title}.`
-          : `You have ${mentions} mentions in #${chatroom.title}.`
+          ? `You do not have any mentions in #${room.title}.`
+          : `You have ${mentions} mentions in #${room.title}.`
       }
       placement="bottomRight"
     >
@@ -208,12 +206,12 @@ function MentionButton({
 }
 
 function PinButton({
-  chatroom,
+  room,
   active,
   pinned,
   onShowPinned,
 }: {
-  chatroom: ChatroomData;
+  room: ChatsinoRoom;
   active: boolean;
   pinned: number;
   onShowPinned(): unknown;
@@ -222,8 +220,8 @@ function PinButton({
     <Popover
       content={
         pinned === 0
-          ? `#${chatroom.title} does not have any pinned messages.`
-          : `#${chatroom.title} has ${pinned} pinned messages.`
+          ? `#${room.title} does not have any pinned messages.`
+          : `#${room.title} has ${pinned} pinned messages.`
       }
       placement="bottomRight"
     >
@@ -239,41 +237,43 @@ function PinButton({
   );
 }
 
-function LockButton({ chatroom }: { chatroom: ChatroomData }) {
+function LockButton({ room }: { room: ChatsinoRoom }) {
   return (
     <Popover
       content={
-        chatroom.public
-          ? `#${chatroom.title} is public.`
-          : `#${chatroom.title} is not public.`
+        true
+          ? // room.public
+            `#${room.title} is public.`
+          : `#${room.title} is not public.`
       }
       placement="bottomRight"
     >
       <Button
         type="text"
-        icon={chatroom.public ? <UnlockOutlined /> : <LockOutlined />}
+        icon={true ? <UnlockOutlined /> : <LockOutlined />}
+        // icon={room.public ? <UnlockOutlined /> : <LockOutlined />}
       />
     </Popover>
   );
 }
 
-function SettingsButton({ chatroom }: { chatroom: ChatroomData }) {
+function SettingsButton({ room }: { room: ChatsinoRoom }) {
   return (
     <Popover
-      content={`Make modifications to #${chatroom.title}.`}
+      content={`Make modifications to #${room.title}.`}
       placement="bottomRight"
     >
-      <Link to={`/chat/${chatroom.id}/settings`}>
+      <Link to={`/chat/${room.id}/settings`}>
         <Button type="text" icon={<SettingOutlined />} />
       </Link>
     </Popover>
   );
 }
 
-function UserButton({ chatroom }: { chatroom: ChatroomData }) {
+function UserButton({ room }: { room: ChatsinoRoom }) {
   return (
     <Popover
-      content={`0 users are currently in #${chatroom.title}.`}
+      content={`0 users are currently in #${room.title}.`}
       placement="bottomRight"
     >
       <Button type="text" icon={<UserOutlined />} onClick={() => {}}>

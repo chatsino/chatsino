@@ -24,7 +24,7 @@ import { Outlet, useLoaderData } from "react-router-dom";
 import { SafeClient } from "schemas";
 import {
   ChatGameList,
-  ChatroomList,
+  RoomList,
   ChatUserList,
   Col,
   Collapse,
@@ -169,7 +169,7 @@ function Inner() {
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <ChatroomList chatrooms={chatrooms} />
+            <RoomList chatrooms={chatrooms} />
           </div>
           <ChatGameList games={games} />
         </div>

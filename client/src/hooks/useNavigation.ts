@@ -1,8 +1,7 @@
-import { SafeClient } from "schemas";
 import { useClient } from "./client";
 
 export function useNavigation() {
-  const { client } = useClient() as { client: SafeClient };
+  const { client } = useClient() as { client: ChatsinoUser };
 
   if (client) {
     return [

@@ -1,17 +1,18 @@
-export function groupMessages(messages: ChatMessageData[]) {
+export function groupMessages(messages: ChatsinoMessage[]) {
   const messageGroups = [] as Array<{
-    author: ChatMessageData["author"];
-    messages: ChatMessageData[];
+    author: ChatsinoUser;
+    messages: ChatsinoMessage[];
   }>;
 
   for (const message of messages) {
     const lastMessageGroup = messageGroups[messageGroups.length - 1] ?? null;
 
-    if (!lastMessageGroup || message.author.id !== lastMessageGroup.author.id) {
+    if (!lastMessageGroup || message.userId !== lastMessageGroup.author.id) {
       messageGroups.push({
-        author: message.author,
+        author: message.user as ChatsinoUser,
         messages: [message],
       });
+
       continue;
     }
 

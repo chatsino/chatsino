@@ -6,7 +6,7 @@ export function ClientAvatarStrip({
   link = "",
   size = "default",
 }: {
-  client: ChatUserData;
+  client: ChatsinoUser;
   link?: string | false;
   size?: AvatarStripSize;
 }) {

@@ -13,23 +13,22 @@ import {
   Typography,
 } from "antd";
 import { useFormFields } from "hooks";
-import { useState } from "react";
 import type { RoomUpdate } from "loaders";
+import { useState } from "react";
 import { FaListAlt, FaRegListAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { updateChatroomSchema } from "schemas";
 import { AvatarUpload } from "../AvatarUpload";
 
 interface Props {
   form: FormInstance;
-  chatroom: ChatroomData;
+  room: ChatsinoRoom;
   onSubmit(update: RoomUpdate): Promise<unknown>;
   onCancel(): unknown;
 }
 
 export type UpdateChatroomFormValues = RoomUpdate;
 
-export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
+export function UpdateChatroomForm({ form, room, onSubmit }: Props) {
   const [showingSecurity, setShowingSecurity] = useState(false);
   const { clearErrors, handleError } = useFormFields<UpdateChatroomFormValues>(
     form,
@@ -40,8 +39,7 @@ export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
 
   async function onFinish(values: UpdateChatroomFormValues) {
     try {
-      const update = await updateChatroomSchema.validate(values);
-      return onSubmit(update);
+      return onSubmit(values);
     } catch (error) {
       return handleError(error);
     }
@@ -51,8 +49,8 @@ export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
     <Form
       form={form}
       initialValues={{
-        description: chatroom.description,
-        title: chatroom.title,
+        description: room.description,
+        title: room.title,
         password: "",
       }}
       name="update-chatroom"
@@ -66,8 +64,8 @@ export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
         <Col xs={24} sm={4}>
           <Form.Item label="Avatar">
             <AvatarUpload
-              original={chatroom.avatar}
-              action={`/chat/chatrooms/${chatroom.id}/avatar`}
+              original={room.avatar}
+              action={`/chat/chatrooms/${room.id}/avatar`}
             />
           </Form.Item>
         </Col>
@@ -134,7 +132,7 @@ export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
           <Row gutter={24}>
             <Col span={12}>
               <Form.Item label="Blacklist">
-                <Link to={`/chat/${chatroom.id}/settings/whitelist`}>
+                <Link to={`/chat/${room.id}/settings/whitelist`}>
                   <Button
                     block={true}
                     style={{
@@ -150,7 +148,7 @@ export function UpdateChatroomForm({ form, chatroom, onSubmit }: Props) {
             </Col>
             <Col span={12}>
               <Form.Item label="Whitelist">
-                <Link to={`/chat/${chatroom.id}/settings/whitelist`}>
+                <Link to={`/chat/${room.id}/settings/whitelist`}>
                   <Button
                     block={true}
                     style={{

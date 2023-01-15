@@ -1,6 +1,6 @@
 import { Empty, Grid, List } from "antd";
 import { toUniversalVh } from "helpers";
-import { useRoomAutoscroll, useRoomSearch, useClient } from "hooks";
+import { useClient, useRoomAutoscroll, useRoomSearch } from "hooks";
 import cloneDeep from "lodash.clonedeep";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import key from "weak-key";
@@ -8,23 +8,21 @@ import { ChatroomDrawer, UserListDrawer } from "../drawers";
 import { ChatInput } from "./ChatInput";
 import { mentionsClient } from "./ChatMessage";
 import { ChatMessageGroup } from "./ChatMessageGroup";
-import { ChatroomHeader } from "./ChatroomHeader";
 import { groupMessages } from "./group-messages";
+import { RoomHeader } from "./RoomHeader";
 
-export function Chatroom({
+export function Room({
   id,
-  chatroom,
-  messages,
+  room,
   onSendMessage,
   onPinMessage,
   onDeleteMessage,
 }: {
   id: string;
-  chatroom: ChatroomData;
-  messages: ChatMessageData[];
+  room: ChatsinoRoom;
   onSendMessage: (message: string) => unknown;
-  onPinMessage: (messageId: number) => unknown;
-  onDeleteMessage: (messageId: number) => unknown;
+  onPinMessage: (messageId: string) => unknown;
+  onDeleteMessage: (messageId: string) => unknown;
 }) {
   const { client } = useClient();
   const { sm } = Grid.useBreakpoint();
@@ -44,16 +42,18 @@ export function Chatroom({
   const [draftUpdate, setDraftUpdate] = useState("");
   const clearDraftUpdate = useCallback(() => setDraftUpdate(""), []);
   const listBodyRef = useRef<null | HTMLDivElement>(null);
-  const search = useRoomSearch(messages);
+  const roomMessages = room.messages as ChatsinoMessage[];
+  const search = useRoomSearch(roomMessages);
   const renderedMessages = useMemo(() => {
-    let messagesToSort = search.isSearching ? search.results : messages;
+    let messagesToSort = search.isSearching ? search.results : roomMessages;
 
     if (showingMentions) {
       messagesToSort = messagesToSort.filter((message) =>
-        mentionsClient(message, client)
+        mentionsClient(message, client as ChatsinoUser)
       );
     } else if (showingPinned) {
-      messagesToSort = messagesToSort.filter(({ pinned }) => pinned);
+      messagesToSort = messagesToSort.filter(() => false);
+      // messagesToSort = messagesToSort.filter(({ pinned }) => pinned);
     }
 
     return cloneDeep(messagesToSort).sort(
@@ -63,9 +63,9 @@ export function Chatroom({
   }, [
     search.isSearching,
     search.results,
-    messages,
     showingPinned,
     showingMentions,
+    roomMessages,
     client,
   ]);
   const groupedMessages = useMemo(
@@ -87,7 +87,7 @@ export function Chatroom({
     setDraftUpdate(`@${username}`);
   }
 
-  useRoomAutoscroll(id, messages);
+  useRoomAutoscroll(room.id, roomMessages);
 
   useEffect(() => {
     if (showingMentions) {
@@ -120,9 +120,8 @@ export function Chatroom({
           overflow: "auto",
         }}
         header={
-          <ChatroomHeader
-            chatroom={chatroom}
-            messages={messages}
+          <RoomHeader
+            room={room}
             search={search}
             showingMentions={showingMentions}
             showingPinned={showingPinned}

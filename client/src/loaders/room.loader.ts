@@ -7,8 +7,8 @@ export interface RoomLoaderData {
   client: ChatsinoUser;
   room: ChatsinoRoom;
   sendMessage(message: string): Promise<unknown>;
-  pinMessage(messageId: number): Promise<unknown>;
-  deleteMessage(messageId: number): Promise<unknown>;
+  pinMessage(messageId: string): Promise<unknown>;
+  deleteMessage(messageId: string): Promise<unknown>;
 }
 
 export async function roomLoader(
@@ -38,7 +38,7 @@ export async function roomLoader(
           showMessage.error(`Unable to send message.`);
         }
       },
-      async pinMessage(messageId: number) {
+      async pinMessage(messageId: string) {
         try {
           (await makeHttpRequest(
             "post",
@@ -52,7 +52,7 @@ export async function roomLoader(
           showMessage.error("Unable to pin message.");
         }
       },
-      async deleteMessage(messageId: number) {
+      async deleteMessage(messageId: string) {
         try {
           await makeHttpRequest(
             "delete",

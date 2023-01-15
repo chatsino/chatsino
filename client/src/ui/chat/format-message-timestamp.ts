@@ -1,4 +1,4 @@
-export function formatMessageTimestamp(message: ChatMessageData) {
+export function formatMessageTimestamp(message: ChatsinoMessage) {
   const messageCreatedDate = new Date(message.createdAt);
   const formattedMessageCreatedDate = new Intl.DateTimeFormat("en-us").format(
     messageCreatedDate
@@ -7,7 +7,7 @@ export function formatMessageTimestamp(message: ChatMessageData) {
     timeStyle: "short",
   }).format(messageCreatedDate);
 
-  const messageUpdatedDate = new Date(message.updatedAt);
+  const messageUpdatedDate = new Date(message.changedAt);
   const formattedMessageUpdatedDate = new Intl.DateTimeFormat("en-us").format(
     messageUpdatedDate
   );
@@ -29,7 +29,7 @@ export function formatMessageTimestamp(message: ChatMessageData) {
   const isToday = formattedMessageCreatedDate === formattedCurrentDate;
   const wasYesterday = formattedMessageCreatedDate === formattedYesterdaysDate;
 
-  const wasUpdated = message.updatedAt !== message.createdAt;
+  const wasUpdated = message.changedAt !== message.createdAt;
   const updatedToday =
     wasUpdated && formattedMessageUpdatedDate === formattedCurrentDate;
   const updatedYesterday =

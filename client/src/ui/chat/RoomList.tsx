@@ -1,20 +1,20 @@
 import { PlusOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
-import { Button, Input, List, Space, Tooltip, Typography } from "antd";
+import { Button, Input, List, Tooltip, Typography } from "antd";
 import { BsDoorOpen } from "react-icons/bs";
 import { Link, useParams } from "react-router-dom";
-import { ChatroomAvatarStrip } from "./ChatroomAvatarStrip";
+import { RoomAvatarStrip } from "./RoomAvatarStrip";
 
 export const CHATROOM_DESCRIPTION_TRUNCATION_LIMIT = 40;
 
-export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
-  const { chatroomId } = useParams();
+export function RoomList({ rooms }: { rooms: ChatsinoRoom[] }) {
+  const { roomId } = useParams();
 
   return (
     <List
       id="ChatroomList"
       itemLayout="vertical"
       bordered={true}
-      dataSource={chatrooms}
+      dataSource={rooms}
       size="small"
       header={
         <Typography.Title
@@ -31,7 +31,7 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
           </span>
           <span>
             <small style={{ marginRight: "0.5rem" }}>
-              {chatrooms.length} total
+              {rooms.length} total
             </small>
             <Button
               type="text"
@@ -67,12 +67,10 @@ export function ChatroomList({ chatrooms }: { chatrooms: ChatroomData[] }) {
             <Tooltip title={item.description}>
               <List.Item.Meta
                 title={
-                  <ChatroomAvatarStrip
-                    chatroom={item}
+                  <RoomAvatarStrip
+                    room={item}
                     size="small"
-                    active={Boolean(
-                      chatroomId && parseInt(chatroomId) === item.id
-                    )}
+                    active={Boolean(roomId && roomId === item.id)}
                   />
                 }
               />

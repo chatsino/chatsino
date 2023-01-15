@@ -1,6 +1,5 @@
 import { Button, Divider, Form, Input } from "antd";
 import { useFormFields } from "hooks";
-import { clientSigninSchema } from "schemas";
 
 interface Props {
   onSubmit(username: string, password: string): Promise<unknown>;
@@ -26,7 +25,7 @@ export function SigninForm({ onSubmit }: Props) {
 
   async function onFinish(values: typeof SIGNIN_INITIAL_VALUES) {
     try {
-      const { username, password } = await clientSigninSchema.validate(values);
+      const { username, password } = values;
       return onSubmit(username, password);
     } catch (error) {
       return handleError(error);

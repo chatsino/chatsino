@@ -1,6 +1,5 @@
 import { makeHttpRequest } from "helpers";
 import { LoaderFunctionArgs, redirect } from "react-router-dom";
-import { SafeClient } from "schemas";
 import { message as showMessage } from "ui";
 import { requireClientLoader } from "./client.loader";
 
@@ -11,9 +10,9 @@ export type RoomUpdate = Pick<ChatsinoRoom, "title" | "description"> & {
 };
 
 export interface RoomSettingsLoaderData {
-  client: SafeClient;
+  client: ChatsinoUser;
   room: ChatsinoRoom;
-  updateChatroom(update: RoomUpdate): Promise<unknown>;
+  updateRoom(update: RoomUpdate): Promise<unknown>;
 }
 
 export async function roomSettingsLoader(loader: LoaderFunctionArgs) {
