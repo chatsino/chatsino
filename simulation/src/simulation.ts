@@ -2,8 +2,8 @@ import axios from "axios";
 import { Chance } from "chance";
 import * as config from "config";
 import {
-  CombinedRequests,
-  CombinedSubscriptions,
+  CombinedSocketRequests,
+  CombinedSocketSubscriptions,
   MessageSocketRequests,
   RoomSocketRequests,
   UserSocketRequests,
@@ -223,7 +223,7 @@ export async function startSimulation() {
 export async function connectToServer(
   ticket: string,
   onReceiveMessage: (
-    kind: CombinedSubscriptions,
+    kind: CombinedSocketSubscriptions,
     data: Record<string, unknown>
   ) => unknown
 ) {
@@ -247,7 +247,7 @@ export async function connectToServer(
   apiSocket.on("message", async (message) => {
     try {
       const { kind, data } = JSON.parse(message.toString()) as {
-        kind: CombinedRequests;
+        kind: CombinedSocketRequests;
         data: Record<string, unknown>;
       };
 
@@ -342,11 +342,11 @@ export function makeHttpRequestable(token = "") {
 }
 
 export function makeSocketRequestable(socket: WebSocket) {
-  return (kind: CombinedRequests, args: Record<string, unknown> = {}) =>
+  return (kind: CombinedSocketRequests, args: Record<string, unknown> = {}) =>
     new Promise<Record<string, unknown>>((resolve) => {
       const handleRequest = (message: RawData) => {
         const response = JSON.parse(message.toString()) as {
-          kind: CombinedRequests;
+          kind: CombinedSocketRequests;
           data: Record<string, unknown>;
         };
 

@@ -1,5 +1,6 @@
 import { Chance } from "chance";
 import * as config from "config";
+import { CombinedSocketRequests } from "enums";
 import {
   createContext,
   PropsWithChildren,
@@ -12,15 +13,23 @@ import {
 } from "react";
 import { useAuthenticationRequests, useClient } from "./client";
 
-type Response = {
-  data?: unknown;
-  error?: string;
-  message: string;
+export type SocketResponse = {
+  kind: CombinedSocketRequests;
+  data: {
+    error?: boolean;
+    _message?: string;
+    [value: string]: unknown;
+  };
 };
 
-type SubscriberData = Record<string, (response: Response) => unknown>; // Message Kind -> Message Handler
+export type SocketResponseData = SocketResponse["data"];
 
-type SubscriberLookup = Record<string, SubscriberData>; // Subscriber Name -> Subscriber Data
+export type SocketSubscriberData = Record<
+  CombinedSocketRequests,
+  (response: SocketResponseData) => unknown
+>;
+
+export type SocketSubscriberLookup = Record<string, SocketSubscriberData>;
 
 export interface SocketContextType {
   socket: null | WebSocket;
@@ -31,11 +40,11 @@ export interface SocketContextType {
   oneTimeRequest: (
     kind: string,
     args?: Record<string, unknown>
-  ) => Promise<Response>;
+  ) => Promise<SocketResponseData>;
   subscribe: (
     name: string,
     kind: string,
-    onResponse: (response: Response) => unknown
+    onResponse: (response: SocketResponseData) => unknown
   ) => unknown;
   unsubscribe: (name: string, kind?: string) => unknown;
 }
@@ -60,8 +69,7 @@ export function SocketProvider({ children }: PropsWithChildren) {
   const [initialized, setInitialized] = useState(false);
   const shouldAttemptReconnect = useRef(false);
   const attemptingToReconnect = useRef<null | NodeJS.Timeout>(null);
-  const subscriberLookup = useRef<SubscriberLookup>({});
-
+  const subscriberLookup = useRef<SocketSubscriberLookup>({});
   const initialize = useCallback(async () => {
     try {
       shouldAttemptReconnect.current = true;
@@ -112,17 +120,16 @@ export function SocketProvider({ children }: PropsWithChildren) {
       socket.current.onmessage = function handleSocketMessage(event) {
         console.info("Received message.", event);
 
-        const { kind, data, error, message = "" } = JSON.parse(event.data);
+        const response = JSON.parse(event.data) as SocketResponse;
 
         for (const subscriberData of Object.values(subscriberLookup.current)) {
-          subscriberData[kind]?.({ data, error, message });
+          subscriberData[response.kind]?.(response);
         }
       };
     } catch (error) {
       console.error("Unable to connect -- retrying soon.", error);
     }
   }, [requestTicket]);
-
   const shutdown = useCallback(() => {
     console.log("Shutting down socket connection.");
 
@@ -133,7 +140,6 @@ export function SocketProvider({ children }: PropsWithChildren) {
       socket.current = null;
     }
   }, []);
-
   const makeRequest = useCallback(
     (kind: string, args: Record<string, unknown> = {}) => {
       if (client) {
@@ -147,47 +153,51 @@ export function SocketProvider({ children }: PropsWithChildren) {
     },
     [client]
   );
-
   const subscribe = useCallback(
     (
       name: string,
-      kind: string,
-      onResponse: (response: Response) => unknown
+      kind: CombinedSocketRequests,
+      onResponse: (response: SocketResponseData) => unknown
     ) => {
       if (!subscriberLookup.current[name]) {
-        subscriberLookup.current[name] = {};
+        subscriberLookup.current[name] = {} as SocketSubscriberData;
       }
 
-      subscriberLookup.current[name][kind] = onResponse;
+      subscriberLookup.current[name][kind] = (response: SocketResponse) =>
+        onResponse(response.data);
     },
     []
   );
+  const unsubscribe = useCallback(
+    (name: string, kind?: CombinedSocketRequests) => {
+      if (kind) {
+        if (subscriberLookup.current[name]) {
+          delete subscriberLookup.current[name][kind];
 
-  const unsubscribe = useCallback((name: string, kind?: string) => {
-    if (kind) {
-      if (subscriberLookup.current[name]) {
-        delete subscriberLookup.current[name][kind];
-
-        if (Object.keys(subscriberLookup.current[name]).length === 0) {
-          delete subscriberLookup.current[name];
+          if (Object.keys(subscriberLookup.current[name]).length === 0) {
+            delete subscriberLookup.current[name];
+          }
         }
+      } else {
+        delete subscriberLookup.current[name];
       }
-    } else {
-      delete subscriberLookup.current[name];
-    }
-  }, []);
-
+    },
+    []
+  );
   const oneTimeRequest = useCallback(
-    async (kind: string, args: Record<string, unknown> = {}) => {
+    async (
+      kind: CombinedSocketRequests,
+      args: Record<string, unknown> = {}
+    ) => {
       const subscriberName = CHANCE.guid();
       const response = (await new Promise((resolve) => {
         makeRequest(kind, args);
         subscribe(subscriberName, kind, resolve);
-      })) as unknown as Response;
+      })) as unknown as SocketResponse;
 
       unsubscribe(subscriberName, kind);
 
-      return response;
+      return response.data;
     },
     [makeRequest, subscribe, unsubscribe]
   );
@@ -195,7 +205,7 @@ export function SocketProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
       const windowWithSubscriberLookup = window as unknown as Window & {
-        SUBSCRIBER_LOOKUP: SubscriberLookup;
+        SUBSCRIBER_LOOKUP: SocketSubscriberLookup;
       };
       windowWithSubscriberLookup.SUBSCRIBER_LOOKUP = subscriberLookup.current;
     }

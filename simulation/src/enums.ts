@@ -1,14 +1,16 @@
-export type CombinedRequests =
+export type CombinedSocketRequests =
   | UserSocketRequests
   | RoomSocketRequests
   | MessageSocketRequests;
 
-export type CombinedEvents =
+export type CombinedSocketEvents =
   | UserSocketEvents
   | RoomSocketEvents
   | MessageSocketEvents;
 
-export type CombinedSubscriptions = CombinedRequests | CombinedEvents;
+export type CombinedSocketSubscriptions =
+  | CombinedSocketRequests
+  | CombinedSocketEvents;
 
 export enum UserSocketRequests {
   // Queries

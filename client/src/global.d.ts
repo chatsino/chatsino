@@ -22,9 +22,9 @@ declare interface ChatsinoRoom {
   title: string;
   description: string;
   password: string;
-  users: string[] | ChatsinoUser[];
+  users: Array<string | ChatsinoUser>;
   permissions: string[];
-  messages: string[] | ChatsinoMessage[];
+  messages: Array<string | ChatsinoMessage>;
   pins: string[];
 }
 
@@ -34,7 +34,7 @@ declare interface ChatsinoRoulette {
   status: RouletteStatus;
   bets: string[];
   results: string[];
-  participants: string[] | ChatsinoUser[];
+  participants: Array<string | ChatsinoUser>;
   outcome: number;
 }
 
@@ -43,7 +43,7 @@ declare interface ChatsinoSniper {
   startedAt: string;
   status: SniperStatus;
   snipes: string[];
-  participants: string[] | ChatsinoUser[];
+  participants: Array<string | ChatsinoUser>;
   pot: number;
   winner: null | string | ChatsinoUser;
 }

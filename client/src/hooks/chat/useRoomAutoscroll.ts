@@ -2,22 +2,22 @@ import { useEffect, useRef } from "react";
 
 export const DISTANCE_AT_WHICH_AUTOSCROLL_IS_DISABLED = 250;
 
-export function getChatContainer(id: string) {
+export function getRoomContainer(id: string) {
   return document.querySelector(`#${id} > .ant-spin-nested-loading`);
 }
 
 export function scrollToBottom(id: string) {
-  const chatContainer = getChatContainer(id);
+  const roomContainer = getRoomContainer(id);
 
-  if (chatContainer) {
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+  if (roomContainer) {
+    roomContainer.scrollTop = roomContainer.scrollHeight;
     return true;
   }
 
   return false;
 }
 
-export function useChatroomAutoscroll(id: string, messages: unknown[]) {
+export function useRoomAutoscroll(id: string, messages: unknown[]) {
   const initiallyScrolledDown = useRef(false);
 
   // When messages first load, scroll to the bottom of the container.
@@ -35,7 +35,7 @@ export function useChatroomAutoscroll(id: string, messages: unknown[]) {
   // only if the user hasn't manually scrolled up.
   useEffect(() => {
     if (initiallyScrolledDown.current) {
-      const chatContainer = getChatContainer(id);
+      const chatContainer = getRoomContainer(id);
 
       if (chatContainer) {
         const scrolledDistance =

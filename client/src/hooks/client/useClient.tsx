@@ -6,11 +6,10 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { SafeClient } from "schemas";
 
 export interface ClientContextType {
-  client: null | SafeClient;
-  setClient: Dispatch<React.SetStateAction<null | SafeClient>>;
+  client: null | ChatsinoUser;
+  setClient: Dispatch<React.SetStateAction<null | ChatsinoUser>>;
 }
 
 export const ClientContext = createContext<ClientContextType>({
@@ -19,7 +18,7 @@ export const ClientContext = createContext<ClientContextType>({
 });
 
 export function ClientProvider({ children }: PropsWithChildren) {
-  const [client, setClient] = useState<null | SafeClient>(null);
+  const [client, setClient] = useState<null | ChatsinoUser>(null);
   const value = useMemo(
     () => ({
       client,

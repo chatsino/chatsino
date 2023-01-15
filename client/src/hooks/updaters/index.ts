@@ -1,3 +1,2 @@
-export * from "./useUpdatingChatroom";
-export * from "./useUpdatingChatroomList";
-export * from "./useUpdatingUserList";
+export * from "./useUpdatingRoom";
+export * from "./useUpdatingRoomList";

@@ -17,7 +17,7 @@ import {
 import { WebSocket } from "ws";
 
 export type ChatHandlers = Record<
-  string, // CombinedSubscriptions
+  CombinedSubscriptions,
   Maybe<(data: Record<string, unknown>) => unknown>
 >;
 
@@ -78,6 +78,8 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
           // For Events:
           data?: Record<string, unknown>;
         };
+        const respond = (properties: Record<string, unknown>) =>
+          handlers[kind]?.(properties);
 
         if (data) {
           // Handle events
@@ -88,26 +90,17 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
 
           switch (kind) {
             case UserSocketEvents.UserCreated:
-            case UserSocketEvents.UserChanged: {
-              const user = data.user as User;
-
-              return handlers[kind]?.({ user });
-            }
+            case UserSocketEvents.UserChanged:
+              return respond({ user: data.user as User });
             case RoomSocketEvents.RoomCreated:
-            case RoomSocketEvents.RoomChanged: {
-              const room = data.room as Room;
-
-              return handlers[kind]?.({ room: await hydrateRoom(room) });
-            }
+            case RoomSocketEvents.RoomChanged:
+              return respond({ room: await hydrateRoom(data.room as Room) });
             case MessageSocketEvents.MessageCreated:
             case MessageSocketEvents.MessageChanged:
-            case MessageSocketEvents.MessageDeleted: {
-              const message = data.message as Message;
-
-              return handlers[kind]?.({
-                message: await hydrateMessage(message),
+            case MessageSocketEvents.MessageDeleted:
+              return respond({
+                message: await hydrateMessage(data.message as Message),
               });
-            }
             default:
               return;
           }
@@ -120,68 +113,60 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
             "Received a response from Chatsino-Models."
           );
 
+          if (error) {
+            return respond({ error, message });
+          }
+
           switch (kind) {
             // Users
-            case UserSocketRequests.GetUser: {
-              return handlers[kind]?.({ user: requestData.user as User });
-            }
+            case UserSocketRequests.GetUser:
+              return respond({ user: requestData.user as User });
             case UserSocketRequests.GetAllUsers:
             case UserSocketRequests.GetUsersByUserIds:
             case UserSocketRequests.GetAllOperators:
             case UserSocketRequests.GetAllAdministrators:
             case UserSocketRequests.GetAllModerators:
             case UserSocketRequests.GetBannedUsers:
-            case UserSocketRequests.GetUsersWithUsername: {
-              return handlers[kind]?.({ users: requestData.users as User[] });
-            }
+            case UserSocketRequests.GetUsersWithUsername:
+              return respond({ users: requestData.users as User[] });
             // Rooms
             // -- Hydrated
-            case RoomSocketRequests.Room: {
-              const room = requestData.room as Room;
-
-              return handlers[kind]?.({ room: await hydrateRoom(room) });
-            }
+            case RoomSocketRequests.Room:
+              return respond({
+                room: await hydrateRoom(requestData.room as Room),
+              });
 
             // -- Not Hydrated
-            case RoomSocketRequests.CreateRoom: {
-              return handlers[kind]?.({ room: requestData.room as Room });
-            }
-            case RoomSocketRequests.AllPublicRooms: {
-              return handlers[kind]?.({ rooms: requestData.rooms as Room[] });
-            }
+            case RoomSocketRequests.CreateRoom:
+              return respond({ room: requestData.room as Room });
+            case RoomSocketRequests.AllPublicRooms:
+              return respond({ rooms: requestData.rooms as Room[] });
 
             // Messages
             // -- Hydrated
-            case MessageSocketRequests.GetMessage: {
-              const message = requestData.message as Message;
-
-              return handlers[kind]?.({
-                message: await hydrateMessage(message),
+            case MessageSocketRequests.GetMessage:
+              return respond({
+                message: await hydrateMessage(requestData.message as Message),
               });
-            }
-            case MessageSocketRequests.GetMessagesByMessageIds: {
-              const messages = requestData.messages as Message[];
-
-              return handlers[kind]?.({
-                messages: await Promise.all(messages.map(hydrateMessage)),
+            case MessageSocketRequests.GetMessagesByMessageIds:
+              return respond({
+                messages: await Promise.all(
+                  (requestData.messages as Message[]).map(hydrateMessage)
+                ),
               });
-            }
 
             // -- Not Hydrated
             case MessageSocketRequests.CreateMessage:
             case MessageSocketRequests.DeleteMessage:
             case MessageSocketRequests.EditMessage:
             case MessageSocketRequests.ReactToMessage:
-            case MessageSocketRequests.VoteInMessagePoll: {
-              return handlers[kind]?.({
+            case MessageSocketRequests.VoteInMessagePoll:
+              return respond({
                 message: requestData.message as Message,
               });
-            }
             default:
               return;
           }
-        } else {
-          CHAT_LOGGER.info({ kind });
         }
       } catch (error) {
         CHAT_LOGGER.error(

@@ -1,37 +1,34 @@
 import { makeHttpRequest } from "helpers";
 import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { SafeClient } from "schemas";
 import { useClient } from "./useClient";
 
 export function useAuthenticationRequests() {
   const { setClient } = useClient();
   const navigate = useNavigate();
-
   const validate = useCallback(async () => {
     try {
-      const { client } = (await makeHttpRequest("get", "/auth/validate")) as {
-        client: null | SafeClient;
+      const { user } = (await makeHttpRequest("get", "/auth/validate")) as {
+        user: null | ChatsinoUser;
       };
 
-      setClient(client);
+      setClient(user);
     } catch (error) {
       console.error({ error }, "Unable to validate.");
       throw error;
     }
   }, [setClient]);
-
   const signin = useCallback(
     async (username: string, password: string) => {
       try {
-        const { client } = (await makeHttpRequest("post", "/auth/signin", {
+        const { user } = (await makeHttpRequest("post", "/auth/signin", {
           username,
           password,
         })) as {
-          client: null | SafeClient;
+          user: ChatsinoUser;
         };
 
-        setClient(client);
+        setClient(user);
       } catch (error) {
         console.error({ error }, "Unable to sign in.");
         throw error;
@@ -55,15 +52,15 @@ export function useAuthenticationRequests() {
   const signup = useCallback(
     async (username: string, password: string, passwordAgain: string) => {
       try {
-        const { client } = (await makeHttpRequest("post", "/auth/signup", {
+        const { user } = (await makeHttpRequest("post", "/auth/signup", {
           username,
           password,
           passwordAgain,
         })) as {
-          client: null | SafeClient;
+          user: null | ChatsinoUser;
         };
 
-        setClient(client);
+        setClient(user);
       } catch (error) {
         console.error({ error }, "Unable to sign up.");
         throw error;
@@ -74,10 +71,9 @@ export function useAuthenticationRequests() {
 
   const requestTicket = useCallback(async () => {
     try {
-      const { ticket } = await makeHttpRequest<{ ticket: string }>(
-        "get",
-        "/auth/ticket"
-      );
+      const { ticket } = (await makeHttpRequest("get", "/auth/ticket")) as {
+        ticket: string;
+      };
 
       return ticket;
     } catch (error) {

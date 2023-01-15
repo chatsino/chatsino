@@ -1,4 +1,4 @@
-import { useChatroomHeaderHeight, useUpdatingChatroom } from "hooks";
+import { useRoomHeaderHeight, useUpdatingRoom } from "hooks";
 import { RoomSettingsLoaderData } from "loaders";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import {
@@ -12,9 +12,9 @@ import {
 
 export function ChatroomWhitelistRoute() {
   const { updateChatroom } = useLoaderData() as RoomSettingsLoaderData;
-  const { chatroom } = useUpdatingChatroom();
+  const { chatroom } = useUpdatingRoom();
   const navigate = useNavigate();
-  const chatroomHeaderHeight = useChatroomHeaderHeight(chatroom.id);
+  const chatroomHeaderHeight = useRoomHeaderHeight(chatroom.id);
 
   function handleClose() {
     return navigate(`/chat/${chatroom.id}/settings`);

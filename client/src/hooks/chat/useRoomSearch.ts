@@ -1,11 +1,11 @@
 import React, { useMemo, useRef, useState } from "react";
 import debounce from "lodash.debounce";
 
-export type UseChatSearch = ReturnType<typeof useChatroomSearch>;
+export type UseChatSearch = ReturnType<typeof useRoomSearch>;
 
 export const CHAT_SEARCH_DEBOUNCE_RATE = 1000;
 
-export function useChatroomSearch(messages: ChatMessageData[]) {
+export function useRoomSearch(messages: ChatsinoMessage[]) {
   const [query, setQuery] = useState("");
   const debouncedChangeQuery = useRef(
     debounce(

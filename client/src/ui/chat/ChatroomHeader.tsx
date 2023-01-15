@@ -100,7 +100,7 @@ export function ChatroomHeader({
 
   return (
     <div
-      id={`ChatroomHeader#${chatroom.id}`}
+      id={`RoomHeader#${chatroom.id}`}
       style={{
         display: "flex",
         alignItems: "center",

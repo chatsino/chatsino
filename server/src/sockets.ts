@@ -1,4 +1,4 @@
-import { initializeChat } from "chat";
+import { ChatHandlers, initializeChat } from "chat";
 import * as config from "config";
 import { Request } from "express";
 import { createLogger } from "helpers";
@@ -129,7 +129,7 @@ export function initializeSocketServer(server: Server) {
             kind: MessageSocketEvents.MessageDeleted,
             data,
           }),
-      });
+      } as ChatHandlers);
 
       websocket.on("pong", () => heartbeat(websocket));
       websocket.on("close", () => {

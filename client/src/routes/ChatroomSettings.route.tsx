@@ -1,4 +1,4 @@
-import { useChatroomHeaderHeight, useUpdatingChatroom } from "hooks";
+import { useRoomHeaderHeight, useUpdatingRoom } from "hooks";
 import { RoomSettingsLoaderData } from "loaders";
 import { Outlet, useLoaderData, useNavigate } from "react-router-dom";
 import {
@@ -16,10 +16,10 @@ import {
 
 export function ChatroomSettingsRoute() {
   const { updateChatroom } = useLoaderData() as RoomSettingsLoaderData;
-  const { chatroom } = useUpdatingChatroom();
+  const { chatroom } = useUpdatingRoom();
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const chatroomHeaderHeight = useChatroomHeaderHeight(chatroom.id);
+  const chatroomHeaderHeight = useRoomHeaderHeight(chatroom.id);
   const { sm } = Grid.useBreakpoint();
   const isMobile = !sm;
 

@@ -1,6 +1,6 @@
 import { toUniversalVh } from "helpers";
 import {
-  ChatroomProvider,
+  RoomProvider,
   ClientProvider,
   SocketProvider,
   useAuthenticationRequests,
@@ -8,7 +8,7 @@ import {
   useSocket,
   useTokenExpiration,
   useUniversalVhUnit,
-  useUpdatingChatroomList,
+  useUpdatingRoomList,
   useUpdatingUserList,
 } from "hooks";
 import { useEffect, useRef } from "react";
@@ -39,11 +39,11 @@ export function RootRoute() {
   return (
     <ClientProvider>
       <SocketProvider>
-        <ChatroomProvider>
+        <RoomProvider>
           <SiteLayout>
             <Inner />
           </SiteLayout>
-        </ChatroomProvider>
+        </RoomProvider>
       </SocketProvider>
     </ClientProvider>
   );
@@ -51,7 +51,7 @@ export function RootRoute() {
 
 function Inner() {
   const users = useUpdatingUserList();
-  const { chatrooms } = useUpdatingChatroomList();
+  const { chatrooms } = useUpdatingRoomList();
   const { validate } = useAuthenticationRequests();
   const { client, setClient } = useClient();
   const { initialize, shutdown } = useSocket();
