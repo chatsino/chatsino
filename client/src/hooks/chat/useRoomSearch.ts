@@ -16,8 +16,10 @@ export function useRoomSearch(messages: ChatsinoMessage[]) {
   );
   const results = useMemo(
     () =>
-      messages.filter((message) =>
-        message.content.toLowerCase().includes(query.toLowerCase())
+      messages.filter(
+        (message) =>
+          typeof message === "object" &&
+          message.content.toLowerCase().includes(query.toLowerCase())
       ),
     [query, messages]
   );

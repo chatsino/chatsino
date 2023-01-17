@@ -1,4 +1,6 @@
 import { executeCommand } from "cache";
+import { HydratedMessage, MessageEntity } from "entities/message";
+import { User, UserEntity } from "entities/user";
 import { Client, Entity, Schema } from "redis-om";
 import { roomErrors } from "./room.errors";
 import {
@@ -21,6 +23,12 @@ export interface Room {
   permissions: string[];
   messages: string[];
   pins: string[];
+}
+
+export interface HydratedRoom extends Omit<Room, "users" | "messages"> {
+  owner: User;
+  users: User[];
+  messages: HydratedMessage[];
 }
 
 export class Room extends Entity {
@@ -65,7 +73,7 @@ export class Room extends Entity {
       permissions: this.permissions,
       messages: this.messages,
       pins: this.pins,
-    };
+    } as Room;
   }
 
   public get permissionLookup(): RoomPermissionLookup {
@@ -112,6 +120,24 @@ export class Room extends Entity {
     return Object.values(this.permissionLookup).some(
       (permissions) => permissions[RoomPermission.Whitelisted]
     );
+  }
+
+  public async hydrate() {
+    const { users: _, messages: __, ...rest } = this.fields;
+    const [owner, ...users] = await UserEntity.queries.usersByUserIds(
+      this.ownerId,
+      ...this.users
+    );
+    const messages = await MessageEntity.queries.messagesByMessageIds(
+      ...this.messages
+    );
+
+    return {
+      ...rest,
+      owner,
+      users,
+      messages,
+    } as HydratedRoom;
   }
 
   public getUserPermissions(userId: string): RoomUserPermissions {

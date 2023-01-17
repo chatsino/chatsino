@@ -85,7 +85,10 @@ export async function getRoomsRoute(req: Request, res: Response) {
 export async function getRoomRoute(req: Request, res: Response) {
   try {
     const { userId = "(anonymous)" } = req.session as UserSession;
-    const { room } = (await makeRequest(userId, RoomSocketRequests.Room)) as {
+    const { roomId } = req.params;
+    const { room } = (await makeRequest(userId, RoomSocketRequests.Room, {
+      roomId,
+    })) as {
       room: Room;
     };
 
@@ -208,7 +211,6 @@ export async function sendChatMessageRoute(req: Request, res: Response) {
       RoomSocketRequests.SendMessage,
       {
         roomId,
-        userId,
         content,
         password,
       }

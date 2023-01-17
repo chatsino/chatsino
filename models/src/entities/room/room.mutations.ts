@@ -234,7 +234,7 @@ export const roomMutations = {
     const room = await roomCrud.read(roomId);
 
     if (
-      password !== room.password ||
+      (room.password && password !== room.password) ||
       !room.meetsPermissionRequirement(userId, RoomPermission.Talk)
     ) {
       throw new roomErrors.UserForbiddenActionError();

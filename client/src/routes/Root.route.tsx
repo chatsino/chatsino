@@ -1,15 +1,13 @@
 import { toUniversalVh } from "helpers";
 import {
-  RoomProvider,
   ClientProvider,
+  RoomProvider,
   SocketProvider,
   useAuthenticationRequests,
   useClient,
   useSocket,
-  useTokenExpiration,
   useUniversalVhUnit,
   useUpdatingRoomList,
-  useUpdatingUserList,
 } from "hooks";
 import { useEffect, useRef } from "react";
 import { BiCoinStack } from "react-icons/bi";
@@ -21,16 +19,15 @@ import {
   GiVendingMachine,
 } from "react-icons/gi";
 import { Outlet, useLoaderData } from "react-router-dom";
-import { SafeClient } from "schemas";
 import {
   ChatGameList,
-  RoomList,
   ChatUserList,
   Col,
   Collapse,
   JoinPrivateRoomForm,
   LockFilled,
   PurchaseChipsForm,
+  RoomList,
   Row,
   SiteLayout,
 } from "ui";
@@ -50,12 +47,14 @@ export function RootRoute() {
 }
 
 function Inner() {
-  const users = useUpdatingUserList();
-  const { chatrooms } = useUpdatingRoomList();
+  const { rooms } = useUpdatingRoomList();
   const { validate } = useAuthenticationRequests();
   const { client, setClient } = useClient();
   const { initialize, shutdown } = useSocket();
-  const data = useLoaderData() as { client: SafeClient };
+  const data = useLoaderData() as {
+    client: ChatsinoUser;
+    users: ChatsinoUser[];
+  };
   const initiallyValidated = useRef(false);
   const initializedSocket = useRef(false);
   const games = [
@@ -98,7 +97,6 @@ function Inner() {
   ];
 
   useUniversalVhUnit();
-  useTokenExpiration();
 
   useEffect(() => {
     if (data?.client && !client) {
@@ -130,7 +128,7 @@ function Inner() {
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <ChatUserList active={users.active} inactive={users.inactive} />
+            <ChatUserList users={data.users} />
           </div>
           <div style={{ flex: 1 }}>
             <Collapse accordion={true} ghost={true}>
@@ -169,7 +167,7 @@ function Inner() {
           style={{ display: "flex", flexDirection: "column", height: "100%" }}
         >
           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <RoomList chatrooms={chatrooms} />
+            <RoomList rooms={rooms} />
           </div>
           <ChatGameList games={games} />
         </div>

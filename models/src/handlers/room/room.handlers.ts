@@ -512,6 +512,8 @@ export const initializeRoomHandlers = () => {
         },
       });
     } catch (error) {
+      console.error("Error", error);
+
       return respondTo(socketId, kind, {
         error: true,
         message: "Unable to send a message to a room.",

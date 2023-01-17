@@ -77,6 +77,8 @@ export async function signupRoute(req: Request, res: Response) {
     await setCachedValue(`Token:${token}`, user.id);
     await setCachedValue(`Session:${user.id}`, token);
 
+    (req.session as UserSession).userId = user.id;
+
     return successResponse(res, "Successfully signed up.", {
       user,
       token,
@@ -126,6 +128,8 @@ export async function signinRoute(req: Request, res: Response) {
     const token = guid();
     await setCachedValue(`Token:${token}`, user.id);
     await setCachedValue(`Session:${user.id}`, token);
+
+    (req.session as UserSession).userId = user.id;
 
     return successResponse(res, "Successfully signed in.", { user, token });
   } catch (error) {

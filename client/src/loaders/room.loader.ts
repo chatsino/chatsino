@@ -28,11 +28,11 @@ export async function roomLoader(
     return {
       client,
       room,
-      async sendMessage(message: string) {
+      async sendMessage(content: string) {
         try {
           await makeHttpRequest("post", `/chat/rooms/${roomId}/messages`, {
             roomId,
-            message,
+            content,
           });
         } catch (error) {
           showMessage.error(`Unable to send message.`);

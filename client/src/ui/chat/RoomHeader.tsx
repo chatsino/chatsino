@@ -117,7 +117,9 @@ export function RoomHeader({
                 <Typography.Text type="secondary" style={{ display: "block" }}>
                   Created by
                 </Typography.Text>
-                <ClientAvatarStrip client={room.owner} size="small" />
+                {room.owner && (
+                  <ClientAvatarStrip client={room.owner} size="small" />
+                )}
               </Space>
               <Typography.Text type="secondary" style={{ display: "block" }}>
                 <small>on {fromDateString(room.createdAt)}</small>

@@ -1,6 +1,6 @@
 import { executeCommand } from "cache";
 import { Client, Entity, Schema } from "redis-om";
-import { UserEntity } from "../user";
+import { User, UserEntity } from "../user";
 import { MessagePollOption, MessageReaction } from "./message.types";
 
 export interface Message {
@@ -13,6 +13,10 @@ export interface Message {
   reactions: string[];
   poll: string[];
   mentions: string[];
+}
+
+export interface HydratedMessage extends Message {
+  user: User;
 }
 
 export class Message extends Entity {
@@ -72,11 +76,20 @@ export class Message extends Entity {
       reactions: this.reactions,
       poll: this.poll,
       mentions: this.mentions,
-    };
+    } as Message;
   }
 
   public get isPoll() {
     return this.poll.length > 0;
+  }
+
+  public async hydrate() {
+    const user = await UserEntity.queries.user(this.userId);
+
+    return {
+      ...this.fields,
+      user,
+    } as HydratedMessage;
   }
 
   public getFormattedAuthor() {

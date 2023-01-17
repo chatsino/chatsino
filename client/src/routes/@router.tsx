@@ -9,9 +9,6 @@ import {
 } from "loaders";
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import { AdminRoute } from "./Admin.route";
-import { RoomBlacklistRoute } from "./RoomBlacklist.route";
-import { RoomSettingsRoute } from "./RoomSettings.route";
-import { RoomWhitelistRoute } from "./ChatroomWhitelist.route";
 import { ErrorRoute } from "./Error.route";
 import {
   BlackjackRoute,
@@ -24,6 +21,9 @@ import { GamesRoute } from "./Games.route";
 import { HelpRoute } from "./Help.route";
 import { MeRoute } from "./Me.route";
 import { ChatroomRoute } from "./Room.route";
+import { RoomBlacklistRoute } from "./RoomBlacklist.route";
+import { RoomSettingsRoute } from "./RoomSettings.route";
+import { RoomWhitelistRoute } from "./RoomWhitelist.route";
 import { RootRoute } from "./Root.route";
 import { SigninRoute } from "./Signin.route";
 import { SignoutRoute } from "./Signout.route";
@@ -38,7 +38,7 @@ export const router = createBrowserRouter([
     errorElement: <ErrorRoute />,
     loader: async () => {
       const { rooms } = await roomListLoader();
-      const users = await userListLoader();
+      const { users } = await userListLoader();
 
       return {
         rooms,
@@ -56,7 +56,7 @@ export const router = createBrowserRouter([
         element: <Outlet />,
         children: [
           {
-            path: ":chatroomId",
+            path: ":roomId",
             loader: roomLoader,
             element: <ChatroomRoute />,
             children: [

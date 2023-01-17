@@ -6,7 +6,7 @@ export function UserListDrawer({
   users,
 }: {
   onClose: () => void;
-  users: ChatUserData[];
+  users: ChatsinoUser[];
 }) {
   return (
     <Drawer
@@ -15,7 +15,7 @@ export function UserListDrawer({
       onClose={onClose}
       getContainer={false}
     >
-      <ChatUserList active={[]} inactive={[]} />
+      <ChatUserList users={users} />
     </Drawer>
   );
 }

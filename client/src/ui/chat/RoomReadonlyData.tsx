@@ -10,7 +10,7 @@ export function RoomReadonlyData({ room }: { room: ChatsinoRoom }) {
     >
       <Descriptions.Item label="ID">{room.id}</Descriptions.Item>
       <Descriptions.Item label="Created By">
-        <ClientAvatarStrip client={room.owner} size="small" />
+        {room.owner && <ClientAvatarStrip client={room.owner} size="small" />}
         <Typography.Text type="secondary" style={{ display: "block" }}>
           {new Intl.DateTimeFormat("en-us", {
             timeStyle: "medium",
