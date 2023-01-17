@@ -48,9 +48,9 @@ export function Room({
     let messagesToSort = search.isSearching ? search.results : roomMessages;
 
     if (showingMentions) {
-      messagesToSort = messagesToSort.filter((message) =>
-        mentionsClient(message, client as ChatsinoUser)
-      );
+      // messagesToSort = messagesToSort.filter((message) =>
+      //   mentionsClient(message, client as ChatsinoUser)
+      // );
     } else if (showingPinned) {
       messagesToSort = messagesToSort.filter(() => false);
       // messagesToSort = messagesToSort.filter(({ pinned }) => pinned);
@@ -112,7 +112,7 @@ export function Room({
   return (
     <>
       <List
-        id={id}
+        id={`__${id}`}
         bordered={true}
         itemLayout="vertical"
         style={{

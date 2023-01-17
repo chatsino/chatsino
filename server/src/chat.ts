@@ -2,9 +2,8 @@ import * as config from "config";
 import { createLogger, guid, sleep } from "helpers";
 import {
   CombinedSubscriptions,
-  hydrateMessage,
-  hydrateRoom,
-  Message,
+  HydratedMessage,
+  HydratedRoom,
   MessageSocketEvents,
   MessageSocketRequests,
   Room,
@@ -94,12 +93,12 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
               return respond({ user: data.user as User });
             case RoomSocketEvents.RoomCreated:
             case RoomSocketEvents.RoomChanged:
-              return respond({ room: await hydrateRoom(data.room as Room) });
+              return respond({ room: data.room as HydratedRoom });
             case MessageSocketEvents.MessageCreated:
             case MessageSocketEvents.MessageChanged:
             case MessageSocketEvents.MessageDeleted:
               return respond({
-                message: await hydrateMessage(data.message as Message),
+                message: data.message as HydratedMessage,
               });
             default:
               return;
@@ -133,7 +132,7 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
             // -- Hydrated
             case RoomSocketRequests.Room:
               return respond({
-                room: await hydrateRoom(requestData.room as Room),
+                room: requestData.room as HydratedRoom,
               });
 
             // -- Not Hydrated
@@ -146,13 +145,11 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
             // -- Hydrated
             case MessageSocketRequests.GetMessage:
               return respond({
-                message: await hydrateMessage(requestData.message as Message),
+                message: requestData.message as HydratedMessage,
               });
             case MessageSocketRequests.GetMessagesByMessageIds:
               return respond({
-                messages: await Promise.all(
-                  (requestData.messages as Message[]).map(hydrateMessage)
-                ),
+                messages: requestData.messages as HydratedMessage[],
               });
 
             // -- Not Hydrated
@@ -162,7 +159,7 @@ export async function initializeChat(userId: string, handlers: ChatHandlers) {
             case MessageSocketRequests.ReactToMessage:
             case MessageSocketRequests.VoteInMessagePoll:
               return respond({
-                message: requestData.message as Message,
+                message: requestData.message as HydratedMessage,
               });
             default:
               return;

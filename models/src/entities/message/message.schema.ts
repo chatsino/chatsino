@@ -76,7 +76,7 @@ export class Message extends Entity {
       reactions: this.reactions,
       poll: this.poll,
       mentions: this.mentions,
-    } as Message;
+    };
   }
 
   public get isPoll() {
@@ -89,7 +89,7 @@ export class Message extends Entity {
     return {
       ...this.fields,
       user,
-    } as HydratedMessage;
+    };
   }
 
   public getFormattedAuthor() {

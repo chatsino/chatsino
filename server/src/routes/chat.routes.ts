@@ -85,9 +85,12 @@ export async function getRoomsRoute(req: Request, res: Response) {
 export async function getRoomRoute(req: Request, res: Response) {
   try {
     const { userId = "(anonymous)" } = req.session as UserSession;
-    const { roomId } = req.params;
+    const { roomId } = await roomValidators[RoomSocketRequests.Room].validate(
+      req.params
+    );
     const { room } = (await makeRequest(userId, RoomSocketRequests.Room, {
       roomId,
+      hydrate: true,
     })) as {
       room: Room;
     };

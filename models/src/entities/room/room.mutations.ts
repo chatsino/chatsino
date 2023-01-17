@@ -270,10 +270,10 @@ export const roomMutations = {
     const alreadyExisted = Boolean(existingDirectMessageRoom);
 
     if (!existingDirectMessageRoom) {
-      existingDirectMessageRoom = await roomMutations.createDirectMessageRoom(
+      existingDirectMessageRoom = (await roomMutations.createDirectMessageRoom(
         sendingUserId,
         receivingUserId
-      );
+      )) as unknown as Room;
     }
 
     const message = await MessageEntity.mutations.createMessage({

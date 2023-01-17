@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 export const DISTANCE_AT_WHICH_AUTOSCROLL_IS_DISABLED = 250;
 
 export function getRoomContainer(id: string) {
-  return document.querySelector(`#${id} > .ant-spin-nested-loading`);
+  return document.querySelector(`#__${id} > .ant-spin-nested-loading`);
 }
 
 export function scrollToBottom(id: string) {

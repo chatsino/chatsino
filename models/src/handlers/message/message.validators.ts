@@ -5,6 +5,7 @@ const common = {
   entityId: yup.string().required(),
   content: yup.string().min(1).required(),
   reaction: yup.string().required(),
+  optionalBoolean: yup.boolean().optional().default(false),
 };
 
 export const messageValidators = {
@@ -12,6 +13,7 @@ export const messageValidators = {
   [MessageRequests.GetMessage]: yup
     .object({
       messageId: common.entityId,
+      hydrate: common.optionalBoolean,
     })
     .noUnknown()
     .required(),

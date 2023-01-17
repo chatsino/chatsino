@@ -13,7 +13,7 @@ export const initializeMessageHandlers = () => {
     // TODO: Check if user has permission to retrieve a message prior to retrieval.
 
     try {
-      const { messageId } = await messageValidators[
+      const { messageId, hydrate } = await messageValidators[
         MessageRequests.GetMessage
       ].validate(args);
       const message = await MessageEntity.queries.message(messageId);
@@ -22,7 +22,7 @@ export const initializeMessageHandlers = () => {
         error: false,
         message: "Successfully got message.",
         data: {
-          message: message.fields,
+          message: hydrate ? await message.hydrate() : message.fields,
         },
       });
     } catch (error) {

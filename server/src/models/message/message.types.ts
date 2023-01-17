@@ -1,4 +1,3 @@
-import type { Room } from "models/room";
 import type { User } from "models/user";
 
 export interface Message {
@@ -15,7 +14,6 @@ export interface Message {
 
 export interface HydratedMessage extends Message {
   user: User;
-  room: Room;
 }
 
 export enum MessageSocketRequests {

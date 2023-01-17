@@ -43,10 +43,10 @@ export function RoomHeader({
   const messages = room.messages as ChatsinoMessage[];
   const { client } = useClient();
   const mentionedMessages = useMemo(
-    () =>
-      messages.filter((message) =>
-        mentionsClient(message, client as ChatsinoUser)
-      ),
+    () => messages,
+    // messages.filter((message) =>
+    //   mentionsClient(message, client as ChatsinoUser)
+    // ),
     [messages, client]
   );
   const pinnedMessages = useMemo(

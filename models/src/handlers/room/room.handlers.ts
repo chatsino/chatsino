@@ -11,14 +11,16 @@ export const initializeRoomHandlers = () => {
     const { socketId, kind, args } = parseRequest(message);
 
     try {
-      const { roomId } = await roomValidators[RoomRequests.Room].validate(args);
+      const { roomId, hydrate } = await roomValidators[
+        RoomRequests.Room
+      ].validate(args);
       const room = await RoomEntity.queries.room(roomId);
 
       return respondTo(socketId, kind, {
         error: false,
         message: "Successfully got room.",
         data: {
-          room: room.fields,
+          room: hydrate ? await room.hydrate() : room.fields,
         },
       });
     } catch (error) {

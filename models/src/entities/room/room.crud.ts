@@ -1,7 +1,7 @@
 import { rightNow } from "helpers";
 import { executeCommand } from "cache";
 import { roomErrors } from "./room.errors";
-import { createRoomRepository, Room } from "./room.schema";
+import { createRoomRepository, HydratedRoom, Room } from "./room.schema";
 import { RoomCreate } from "./room.types";
 
 export const roomCrud = {
@@ -51,8 +51,8 @@ export const roomCrud = {
 
       await createRoomRepository(client).save(room);
 
-      return room;
-    }) as Promise<Room>,
+      return room.hydrate();
+    }) as Promise<HydratedRoom>,
   delete: (id: string) =>
     executeCommand(async (client) => createRoomRepository(client).remove(id)),
 };

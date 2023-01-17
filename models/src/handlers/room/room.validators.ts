@@ -10,6 +10,7 @@ const common = {
   description: yup.string().min(4).required(),
   password: yup.string().min(config.MINIMUM_PASSWORD_SIZE).required(),
   optionalPassword: yup.string().min(config.MINIMUM_PASSWORD_SIZE).optional(),
+  optionalBoolean: yup.boolean().optional().default(false),
   content: yup.string().min(1).required(),
 };
 
@@ -23,6 +24,7 @@ export const roomValidators = {
   [RoomRequests.Room]: yup
     .object({
       roomId: common.entityId,
+      hydrate: common.optionalBoolean,
     })
     .noUnknown()
     .required(),

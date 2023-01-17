@@ -73,7 +73,7 @@ export class Room extends Entity {
       permissions: this.permissions,
       messages: this.messages,
       pins: this.pins,
-    } as Room;
+    };
   }
 
   public get permissionLookup(): RoomPermissionLookup {
@@ -136,8 +136,8 @@ export class Room extends Entity {
       ...rest,
       owner,
       users,
-      messages,
-    } as HydratedRoom;
+      messages: await Promise.all(messages.map((each) => each.hydrate())),
+    };
   }
 
   public getUserPermissions(userId: string): RoomUserPermissions {

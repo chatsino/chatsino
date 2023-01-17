@@ -1,7 +1,11 @@
 import { rightNow } from "helpers";
 import { executeCommand } from "cache";
 import { messageErrors } from "./message.errors";
-import { createMessageRepository, Message } from "./message.schema";
+import {
+  createMessageRepository,
+  HydratedMessage,
+  Message,
+} from "./message.schema";
 import { MessageCreate } from "./message.types";
 
 export const messageCrud = {
@@ -21,8 +25,8 @@ export const messageCrud = {
 
       await repository.save(message);
 
-      return message;
-    }) as Promise<Message>,
+      return message.hydrate();
+    }) as Promise<HydratedMessage>,
   readList: (...ids: string[]) =>
     executeCommand(async (client) =>
       [await createMessageRepository(client).fetch(...ids)]
@@ -50,10 +54,10 @@ export const messageCrud = {
 
       await createMessageRepository(client).save(message);
 
-      return message;
-    }) as Promise<Message>,
+      return message.hydrate();
+    }) as Promise<HydratedMessage>,
   delete: (id: string) =>
     executeCommand((client) =>
       createMessageRepository(client).remove(id)
-    ) as Promise<Message>,
+    ) as Promise<void>,
 };
